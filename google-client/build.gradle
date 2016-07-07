@@ -1,0 +1,16 @@
+apply plugin: 'spring-boot'
+
+springBoot {
+    mainClass = 'samples.oauth2.google.client.GoogleOAuth2ClientApplication'
+}
+
+dependencies {
+    compile 'org.springframework.boot:spring-boot-starter-web',
+            'com.google.oauth-client:google-oauth-client:1.21.0',
+            'com.google.oauth-client:google-oauth-client-servlet:1.21.0',
+            'com.google.http-client:google-http-client-jackson:1.22.0',
+            'javax.servlet:javax.servlet-api:3.1.0'
+
+    testCompile 'org.springframework.boot:spring-boot-starter-test'
+
+}
