@@ -1,5 +1,5 @@
 /*
- * Copyright 2012-2016 the original author or authors.
+ * Copyright 2002-2016 the original author or authors.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -13,22 +13,20 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package samples.oauth2.google.client.config;
+package samples.oauth2.google.client.web;
 
-import org.springframework.boot.web.servlet.ServletContextInitializer;
-import org.springframework.context.annotation.Bean;
-import org.springframework.context.annotation.Configuration;
-import samples.oauth2.google.client.web.servlet.DefaultWebApplicationInitializer;
+import org.springframework.stereotype.Controller;
+import org.springframework.web.bind.annotation.RequestMapping;
 
 /**
  * @author Joe Grandja
  */
-@Configuration
-public class WebConfig {
+@Controller
+public class HomeController {
 
-	@Bean
-	public ServletContextInitializer defaultServletContextInitializer() {
-		return new DefaultWebApplicationInitializer();
+	@RequestMapping("/")
+	public String index() {
+		return "index";
 	}
 
 }

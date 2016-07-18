@@ -15,7 +15,8 @@
  */
 package samples.oauth2.google.client.web.servlet;
 
-import org.springframework.boot.context.embedded.ServletContextInitializer;
+import org.springframework.boot.web.servlet.ServletContextInitializer;
+import samples.oauth2.google.client.OAuthProvider;
 
 import javax.servlet.ServletContext;
 import javax.servlet.ServletException;
@@ -28,14 +29,19 @@ public class DefaultWebApplicationInitializer implements ServletContextInitializ
 
 	@Override
 	public void onStartup(ServletContext servletContext) throws ServletException {
+		registerAuthorizationCodeFlowServlet(servletContext, OAuthProvider.GOOGLE);
+		registerAuthorizationCodeFlowServlet(servletContext, OAuthProvider.GITHUB);
+	}
+
+	private void registerAuthorizationCodeFlowServlet(ServletContext servletContext, OAuthProvider provider) {
 		ServletRegistration.Dynamic authorizationCodeFlowServlet =
-				servletContext.addServlet(AuthorizationCodeFlowServlet.class.getSimpleName(), new AuthorizationCodeFlowServlet());
+				servletContext.addServlet(AuthorizationCodeFlowServlet.class.getSimpleName() + "." + provider.name(), new AuthorizationCodeFlowServlet());
 		authorizationCodeFlowServlet.setLoadOnStartup(1);
-		authorizationCodeFlowServlet.addMapping("/");
+		authorizationCodeFlowServlet.addMapping(AuthorizationCodeFlowUtil.AUTH_URI + "/" + provider.name().toLowerCase());
 
 		ServletRegistration.Dynamic authorizationCodeFlowCallbackServlet =
-				servletContext.addServlet(AuthorizationCodeFlowCallbackServlet.class.getSimpleName(), new AuthorizationCodeFlowCallbackServlet());
-		authorizationCodeFlowCallbackServlet.addMapping(AuthorizationCodeFlowConfig.RELATIVE_REDIRECT_URI);
+				servletContext.addServlet(AuthorizationCodeFlowCallbackServlet.class.getSimpleName() + "." + provider.name(), new AuthorizationCodeFlowCallbackServlet());
+		authorizationCodeFlowCallbackServlet.addMapping(AuthorizationCodeFlowUtil.REDIRECT_URI + "/" + provider.name().toLowerCase());
 	}
 
 }

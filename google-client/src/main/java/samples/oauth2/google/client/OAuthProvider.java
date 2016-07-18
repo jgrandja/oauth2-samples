@@ -13,22 +13,12 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package samples.oauth2.google.client.config;
-
-import org.springframework.boot.web.servlet.ServletContextInitializer;
-import org.springframework.context.annotation.Bean;
-import org.springframework.context.annotation.Configuration;
-import samples.oauth2.google.client.web.servlet.DefaultWebApplicationInitializer;
+package samples.oauth2.google.client;
 
 /**
  * @author Joe Grandja
  */
-@Configuration
-public class WebConfig {
-
-	@Bean
-	public ServletContextInitializer defaultServletContextInitializer() {
-		return new DefaultWebApplicationInitializer();
-	}
-
+public enum OAuthProvider {
+	GOOGLE,
+	GITHUB;
 }

@@ -3,5 +3,25 @@ server:
 
 logging:
   level:
-    root: WARN
+    root: INFO
     org.springframework.web: INFO
+
+spring:
+  thymeleaf:
+    cache: false
+
+security:
+  oauth2:
+    client:
+      google:
+        client-id: 309185963195-29o0gs3ptpfjevd20o387ssrhogbc8t5.apps.googleusercontent.com
+        client-secret: d-t-zBvLDh3uwjcAbKMbb1-w
+        authorization-url: https://accounts.google.com/o/oauth2/auth
+        token-url: https://accounts.google.com/o/oauth2/token
+        scopes: https://www.googleapis.com/auth/calendar.readonly
+      github:
+        client-id: dc9f9ddcf70d48611625
+        client-secret: a5b1b9b533c95e3baf99a45cb28ce89a193c8757
+        authorization-url: https://github.com/login/oauth/authorize
+        token-url: https://github.com/login/oauth/access_token
+        scopes: user:email

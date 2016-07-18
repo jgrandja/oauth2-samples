@@ -6,6 +6,7 @@ springBoot {
 
 dependencies {
     compile 'org.springframework.boot:spring-boot-starter-web',
+            'org.springframework.boot:spring-boot-starter-thymeleaf',
             'com.google.oauth-client:google-oauth-client:1.21.0',
             'com.google.oauth-client:google-oauth-client-servlet:1.21.0',
             'com.google.http-client:google-http-client-jackson:1.22.0',

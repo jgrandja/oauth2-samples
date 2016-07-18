@@ -16,12 +16,7 @@
 package samples.oauth2.google.client.web.servlet;
 
 import com.google.api.client.auth.oauth2.AuthorizationCodeFlow;
-import com.google.api.client.auth.oauth2.BearerToken;
-import com.google.api.client.auth.oauth2.ClientParametersAuthentication;
 import com.google.api.client.extensions.servlet.auth.oauth2.AbstractAuthorizationCodeServlet;
-import com.google.api.client.http.GenericUrl;
-import com.google.api.client.http.javanet.NetHttpTransport;
-import com.google.api.client.json.jackson.JacksonFactory;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -29,6 +24,9 @@ import javax.servlet.ServletException;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 import java.io.IOException;
+
+import static samples.oauth2.google.client.web.servlet.AuthorizationCodeFlowUtil.buildAuthorizationCodeFlow;
+import static samples.oauth2.google.client.web.servlet.AuthorizationCodeFlowUtil.buildRedirectUri;
 
 
 /**
@@ -45,32 +43,18 @@ public class AuthorizationCodeFlowServlet extends AbstractAuthorizationCodeServl
 
 	@Override
 	protected String getRedirectUri(HttpServletRequest request) throws ServletException, IOException {
-		GenericUrl url = new GenericUrl(request.getRequestURL().toString());
-		url.setRawPath(AuthorizationCodeFlowConfig.RELATIVE_REDIRECT_URI);
-		return url.build();
+		return buildRedirectUri();
 	}
 
 	@Override
 	protected AuthorizationCodeFlow initializeFlow() throws IOException {
-		AuthorizationCodeFlow.Builder builder = new AuthorizationCodeFlow.Builder(
-				BearerToken.authorizationHeaderAccessMethod(),
-				new NetHttpTransport(),
-				new JacksonFactory(),
-				new GenericUrl(AuthorizationCodeFlowConfig.TOKEN_ENDPOINT_URL),
-				new ClientParametersAuthentication(AuthorizationCodeFlowConfig.CLIENT_ID, AuthorizationCodeFlowConfig.CLIENT_SECRET),
-				AuthorizationCodeFlowConfig.CLIENT_ID,
-				AuthorizationCodeFlowConfig.AUTHORIZATION_ENDPOINT_URL);
-
-		builder.setCredentialDataStore(AuthorizationCodeFlowConfig.CREDENTIAL_DATA_STORE)
-				.setScopes(AuthorizationCodeFlowConfig.SCOPES);
-
-		return builder.build();
+		return buildAuthorizationCodeFlow();
 	}
 
 	@Override
 	protected String getUserId(HttpServletRequest req) throws ServletException, IOException {
 		// NOTE: The implementation should return a unique User Id, for example, the authenticated principal name.
-		return AuthorizationCodeFlowConfig.DEFAULT_USER_ID;
+		return AuthorizationCodeFlowUtil.getClientConfig().getClientId();
 	}
 
 }
