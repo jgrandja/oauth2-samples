@@ -1,0 +1,14 @@
+apply plugin: 'spring-boot'
+
+springBoot {
+    mainClass = 'samples.oauth2.oltu.client.OltuOAuth2ClientApplication'
+}
+
+dependencies {
+    compile 'org.springframework.boot:spring-boot-starter-web',
+            'org.springframework.boot:spring-boot-starter-thymeleaf',
+            'org.apache.oltu.oauth2:org.apache.oltu.oauth2.client:1.0.2'
+
+    testCompile 'org.springframework.boot:spring-boot-starter-test'
+
+}

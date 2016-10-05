@@ -1,3 +1,5 @@
 rootProject.name = 'oauth2-samples'
 
 include 'google-client'
+include 'apache-oltu-client'
+
