@@ -1,5 +1,5 @@
 rootProject.name = 'oauth2-samples'
 
+include 'nimbus-client'
 include 'google-client'
 include 'apache-oltu-client'
-
