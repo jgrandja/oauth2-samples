@@ -15,7 +15,10 @@
  */
 package samples.oauth2.nimbus.client.web;
 
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.security.oauth2.client.config.ClientConfigurationRepository;
 import org.springframework.stereotype.Controller;
+import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.RequestMapping;
 
 /**
@@ -24,9 +27,22 @@ import org.springframework.web.bind.annotation.RequestMapping;
 @Controller
 public class HomeController {
 
+	@Autowired
+	protected ClientConfigurationRepository clientConfigurationRepository;
+
 	@RequestMapping("/")
-	public String index() {
+	public String index(Model model) {
+		model.addAttribute("clientConfigurations", clientConfigurationRepository.getConfigurations());
 		return "index";
 	}
 
+	@RequestMapping("/oauth2/client/google")
+	public String googleClientApp(Model model) {
+		return "authorized";
+	}
+
+	@RequestMapping("/oauth2/client/github")
+	public String githubClientApp(Model model) {
+		return "authorized";
+	}
 }

@@ -8,12 +8,13 @@
         <h1>Nimbus - OAuth Client Sample</h1>
         <div>
             <div>
-                <span>Login with:</span>
+                <span>Authorize with:</span>
             </div>
             <div>
                 <ul>
-                    <li><a href="/authorize?provider=google">Google</a></li>
-                    <li><a href="/authorize?provider=github">GitHub</a></li>
+                    <li th:each="clientConfiguration : ${clientConfigurations}">
+                        <a href="/oauth2/authorize" th:href="@{/oauth2/authorize(client_guid=${clientConfiguration.clientGuid})}"><span th:text="${clientConfiguration.clientName}">Client Name</span></a>
+                    </li>
                 </ul>
             </div>
         </div>

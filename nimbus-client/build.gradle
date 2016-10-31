@@ -6,6 +6,7 @@ springBoot {
 
 dependencies {
     compile 'org.springframework.boot:spring-boot-starter-web',
+            'org.springframework.boot:spring-boot-starter-security',
             'org.springframework.boot:spring-boot-starter-thymeleaf',
             'com.nimbusds:oauth2-oidc-sdk:5.17.1'
 

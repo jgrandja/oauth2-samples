@@ -1,0 +1,149 @@
+/*
+ * Copyright 2012-2016 the original author or authors.
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *      http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+package org.springframework.security.oauth2.client.filter;
+
+import com.nimbusds.oauth2.sdk.*;
+import com.nimbusds.oauth2.sdk.auth.ClientAuthentication;
+import com.nimbusds.oauth2.sdk.auth.ClientSecretBasic;
+import com.nimbusds.oauth2.sdk.auth.Secret;
+import com.nimbusds.oauth2.sdk.id.ClientID;
+import com.nimbusds.oauth2.sdk.token.AccessToken;
+import com.nimbusds.oauth2.sdk.token.RefreshToken;
+import org.springframework.http.server.ServletServerHttpRequest;
+import org.springframework.security.oauth2.client.config.ClientConfiguration;
+import org.springframework.security.oauth2.client.context.ClientContext;
+import org.springframework.security.oauth2.client.context.ClientContextRepository;
+import org.springframework.security.oauth2.client.context.ClientContextResolver;
+import org.springframework.security.oauth2.core.OAuth2Exception;
+import org.springframework.web.util.UriComponentsBuilder;
+
+import javax.servlet.http.HttpServletRequest;
+import javax.servlet.http.HttpServletResponse;
+import java.io.IOException;
+import java.net.URI;
+import java.net.URISyntaxException;
+
+/**
+ * @author Joe Grandja
+ */
+public class NimbusAuthorizationResponseHandler implements AuthorizationResponseHandler {
+	private final ClientContextResolver clientContextResolver;
+
+	private final ClientContextRepository clientContextRepository;
+
+	public NimbusAuthorizationResponseHandler(ClientContextResolver clientContextResolver,
+											  ClientContextRepository clientContextRepository) {
+		this.clientContextResolver = clientContextResolver;
+		this.clientContextRepository = clientContextRepository;
+	}
+
+	@Override
+	public void handle(HttpServletRequest request, HttpServletResponse response) throws IOException {
+
+		// Parse the authorization response from the request callback
+		AuthorizationResponse authorizationResponse;
+		try {
+			authorizationResponse = AuthorizationResponse.parse(toURI(request));
+		} catch (ParseException pe) {
+			// TODO Handle
+			throw new IOException(pe);
+		}
+
+		if (!authorizationResponse.indicatesSuccess()) {
+			AuthorizationErrorResponse authorizationErrorResponse = AuthorizationErrorResponse.class.cast(authorizationResponse);
+
+			// The authorization request was denied or some error occurred
+			// TODO Throw OAuth2-specific exception for proper downstream handling
+			throw new OAuth2Exception(authorizationErrorResponse.getErrorObject().getDescription());
+		}
+
+		AuthorizationSuccessResponse authorizationSuccessResponse = AuthorizationSuccessResponse.class.cast(authorizationResponse);
+
+		ClientContext context = clientContextResolver.resolveContext(request, response);
+
+		// Correlate the authorization request to the callback response
+		if (!context.getAuthorizationRequest().getState().equals(authorizationSuccessResponse.getState().getValue())) {
+			// Unexpected or tampered response
+			// TODO Throw OAuth2-specific exception for proper downstream handling
+			throw new OAuth2Exception("State does not match");
+		}
+
+		// TODO Compare redirect_uri as well?
+
+
+		ClientConfiguration configuration = context.getConfiguration();
+
+		// Build the authorization code grant request for the token endpoint
+		AuthorizationCode authorizationCode = new AuthorizationCode(authorizationSuccessResponse.getAuthorizationCode().getValue());
+		URI redirectUri = toURI(configuration.getRedirectUri());
+		AuthorizationGrant authorizationCodeGrant = new AuthorizationCodeGrant(authorizationCode, redirectUri);
+		URI tokenUri = toURI(configuration.getTokenUri());
+
+		// Set the credentials to authenticate the client at the token endpoint
+		ClientID clientId = new ClientID(configuration.getClientId());
+		Secret clientSecret = new Secret(configuration.getClientSecret());
+		ClientAuthentication clientAuthentication = new ClientSecretBasic(clientId, clientSecret);
+
+		TokenResponse tokenResponse;
+		try {
+			// Send the Access Token request
+			TokenRequest tokenRequest = new TokenRequest(tokenUri, clientAuthentication, authorizationCodeGrant);
+			tokenResponse = TokenResponse.parse(tokenRequest.toHTTPRequest().send());
+		} catch (ParseException pe) {
+			// TODO Throw OAuth2-specific exception for proper downstream handling
+			throw new OAuth2Exception(pe);
+		} catch (IOException ioe) {
+			// TODO Throw OAuth2-specific exception for proper downstream handling
+			throw new OAuth2Exception(ioe);
+		}
+
+		if (!tokenResponse.indicatesSuccess()) {
+			// TODO Throw OAuth2-specific exception for proper downstream handling
+			TokenErrorResponse tokenErrorResponse = TokenErrorResponse.class.cast(tokenResponse);
+			throw new OAuth2Exception(tokenErrorResponse.getErrorObject().getDescription());
+		}
+
+		AccessTokenResponse accessTokenResponse = AccessTokenResponse.class.cast(tokenResponse);
+
+		AccessToken accessToken = accessTokenResponse.getTokens().getAccessToken();
+		String accessTokenValue = null;
+		if (accessToken != null) {
+			accessTokenValue = accessToken.getValue();
+		}
+		RefreshToken refreshToken = accessTokenResponse.getTokens().getRefreshToken();
+		String refreshTokenValue = null;
+		if (refreshToken != null) {
+			refreshTokenValue = refreshToken.getValue();
+		}
+
+		// TODO Save tokens in context
+//		context.saveTokens(accessTokenValue, refreshTokenValue);
+
+		clientContextRepository.saveContext(context, request, response);
+	}
+
+	private URI toURI(HttpServletRequest request) {
+		return UriComponentsBuilder.fromHttpRequest(new ServletServerHttpRequest(request)).build().toUri();
+	}
+
+	private URI toURI(String uriStr) throws IOException {
+		try {
+			return new URI(uriStr);
+		} catch (URISyntaxException ex) {
+			throw new IOException(ex);
+		}
+	}
+}

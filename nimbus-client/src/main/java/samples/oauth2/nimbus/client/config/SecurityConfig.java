@@ -15,28 +15,124 @@
  */
 package samples.oauth2.nimbus.client.config;
 
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.context.properties.ConfigurationProperties;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
-import samples.oauth2.nimbus.client.OAuthClientConfig;
-import samples.oauth2.nimbus.client.OAuthProvider;
+import org.springframework.security.config.annotation.authentication.builders.AuthenticationManagerBuilder;
+import org.springframework.security.config.annotation.web.builders.HttpSecurity;
+import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
+import org.springframework.security.config.annotation.web.configuration.WebSecurityConfigurerAdapter;
+import org.springframework.security.oauth2.client.config.ClientConfiguration;
+import org.springframework.security.oauth2.client.config.ClientConfigurationRepository;
+import org.springframework.security.oauth2.client.config.InMemoryClientConfigurationRepository;
+import org.springframework.security.oauth2.client.context.ClientContextRepository;
+import org.springframework.security.oauth2.client.context.ClientContextResolver;
+import org.springframework.security.oauth2.client.context.DefaultClientContextResolver;
+import org.springframework.security.oauth2.client.context.HttpSessionClientContextRepository;
+import org.springframework.security.oauth2.client.filter.*;
+import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
+
+import javax.servlet.Filter;
+import java.util.List;
 
 /**
  * @author Joe Grandja
  */
 @Configuration
-public class SecurityConfig {
+@EnableWebSecurity
+public class SecurityConfig extends WebSecurityConfigurerAdapter {
+
+	@Autowired
+	protected ClientConfigurationRepository clientConfigurationRepository;
+
+	@Autowired
+	protected AuthorizationRequestRedirectStrategy authorizationRequestRedirectStrategy;
+
+	@Autowired
+	protected AuthorizationResponseHandler authorizationResponseHandler;
+
+	// @formatter:off
+	@Override
+	protected void configure(HttpSecurity http) throws Exception {
+		http
+				.authorizeRequests()
+					.antMatchers("/", "/oauth2/client/**").permitAll()
+					.anyRequest().authenticated()
+					.and()
+				.formLogin()
+					.and()
+				.addFilterBefore(authorizationCodeGrantFlowFilter(), UsernamePasswordAuthenticationFilter.class);
+	}
+	// @formatter:on
+
+	// @formatter:off
+	@Autowired
+	public void configureGlobal(AuthenticationManagerBuilder auth) throws Exception {
+		auth
+				.inMemoryAuthentication()
+					.withUser("user1").password("password").roles("USER");
+	}
+	// @formatter:on
 
 	@ConfigurationProperties(prefix = "security.oauth2.client.google")
 	@Bean
-	public OAuthClientConfig googleClient() {
-		return new OAuthClientConfig(OAuthProvider.GOOGLE);
+	public ClientConfiguration googleClientConfiguration() {
+		return new ClientConfiguration();
 	}
 
 	@ConfigurationProperties(prefix = "security.oauth2.client.github")
 	@Bean
-	public OAuthClientConfig gitHubClient() {
-		return new OAuthClientConfig(OAuthProvider.GITHUB);
+	public ClientConfiguration githubClientConfiguration() {
+		return new ClientConfiguration();
+	}
+
+	@Bean
+	public ClientConfigurationRepository clientConfigurationRepository(List<ClientConfiguration> clientConfigurations) {
+		return new InMemoryClientConfigurationRepository(clientConfigurations);
+	}
+
+	@Bean
+	public ClientContextRepository clientContextRepository() {
+		return new HttpSessionClientContextRepository();
+	}
+
+	@Bean
+	public ClientContextResolver clientContextResolver(
+			ClientContextRepository clientContextRepository, ClientConfigurationRepository clientConfigurationRepository) {
+
+		DefaultClientContextResolver clientContextResolver =
+				new DefaultClientContextResolver(clientContextRepository, clientConfigurationRepository);
+		return clientContextResolver;
+	}
+
+	@Bean
+	public AuthorizationRequestRedirectStrategy authorizationRequestRedirectStrategy(
+			ClientContextResolver clientContextResolver, ClientContextRepository clientContextRepository) {
+
+		NimbusAuthorizationRequestRedirectStrategy authorizationRequestRedirectStrategy =
+				new NimbusAuthorizationRequestRedirectStrategy(clientContextResolver, clientContextRepository);
+		return authorizationRequestRedirectStrategy;
+	}
+
+	@Bean
+	public AuthorizationResponseHandler authorizationResponseHandler(
+			ClientContextResolver clientContextResolver, ClientContextRepository clientContextRepository) {
+
+		NimbusAuthorizationResponseHandler authorizationResponseHandler =
+				new NimbusAuthorizationResponseHandler(clientContextResolver, clientContextRepository);
+		return authorizationResponseHandler;
+	}
+
+	private Filter authorizationCodeGrantFlowFilter() throws Exception {
+		AuthorizationCodeGrantFlowProcessingFilter authorizationCodeGrantFlowFilter =
+				new AuthorizationCodeGrantFlowProcessingFilter(
+						this.clientConfigurationRepository,
+						this.authorizationRequestRedirectStrategy,
+						this.authorizationResponseHandler,
+						this.authenticationManager());
+
+		return authorizationCodeGrantFlowFilter;
 	}
 
 }

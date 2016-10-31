@@ -16,12 +16,16 @@ security:
       google:
         client-id: 309185963195-29o0gs3ptpfjevd20o387ssrhogbc8t5.apps.googleusercontent.com
         client-secret: d-t-zBvLDh3uwjcAbKMbb1-w
-        authorization-url: https://accounts.google.com/o/oauth2/auth
-        token-url: https://accounts.google.com/o/oauth2/token
-        scopes: https://www.googleapis.com/auth/calendar.readonly
+        client-name: Google Client
+        authorize-uri: https://accounts.google.com/o/oauth2/auth
+        token-uri: https://accounts.google.com/o/oauth2/token
+        redirect-uri: http://localhost:8080/oauth2/client/google
+        scope: openid email
       github:
         client-id: dc9f9ddcf70d48611625
         client-secret: a5b1b9b533c95e3baf99a45cb28ce89a193c8757
-        authorization-url: https://github.com/login/oauth/authorize
-        token-url: https://github.com/login/oauth/access_token
-        scopes: user:email
+        client-name: Github Client
+        authorize-uri: https://github.com/login/oauth/authorize
+        token-uri: https://github.com/login/oauth/access_token
+        redirect-uri: http://localhost:8080/oauth2/client/github
+        scope: user:email
