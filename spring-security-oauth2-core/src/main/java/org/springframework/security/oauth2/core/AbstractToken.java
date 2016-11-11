@@ -13,17 +13,21 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.springframework.security.oauth2.client.filter;
+package org.springframework.security.oauth2.core;
 
-import javax.servlet.http.HttpServletRequest;
-import javax.servlet.http.HttpServletResponse;
-import java.io.IOException;
+import java.io.Serializable;
 
 /**
  * @author Joe Grandja
  */
-public interface AuthorizationResponseHandler {
+public abstract class AbstractToken implements Serializable {
+	private final String value;
 
-	AuthorizationResult handle(HttpServletRequest request, HttpServletResponse response) throws IOException;
+	protected AbstractToken(String value) {
+		this.value = value;
+	}
 
+	public final String getValue() {
+		return value;
+	}
 }

@@ -33,7 +33,7 @@ public class DefaultAuthorizationRequestAttributes implements AuthorizationReque
 		this.responseType = responseType;
 		this.clientId = clientId;
 		this.redirectUri = redirectUri;
-		this.scope = new ArrayList(scope);
+		this.scope = new ArrayList<String>(scope);
 		this.state = state;
 	}
 
@@ -54,7 +54,7 @@ public class DefaultAuthorizationRequestAttributes implements AuthorizationReque
 
 	@Override
 	public List<String> getScope() {
-		return new ArrayList(this.scope);
+		return new ArrayList<String>(this.scope);
 	}
 
 	@Override

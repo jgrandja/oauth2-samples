@@ -30,10 +30,10 @@ public class InMemoryClientConfigurationRepository implements ClientConfiguratio
 	}
 
 	@Override
-	public ClientConfiguration getConfiguration(String clientGuid) {
+	public ClientConfiguration getConfiguration(String clientUUID) {
 		List<ClientConfiguration> result =
 				this.clientConfigurations.stream()
-						.filter(c -> c.getClientGuid().equals(clientGuid))
+						.filter(c -> c.getClientIdentifier().equals(clientUUID))
 						.collect(Collectors.toList());
 		if (result.size() > 1) {
 			// TODO Need to handle this scenario...return null for now

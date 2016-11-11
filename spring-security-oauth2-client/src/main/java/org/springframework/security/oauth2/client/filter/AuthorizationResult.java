@@ -13,26 +13,39 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.springframework.security.oauth2.client.context;
+package org.springframework.security.oauth2.client.filter;
 
 import org.springframework.security.oauth2.client.config.ClientConfiguration;
 import org.springframework.security.oauth2.core.AccessToken;
-import org.springframework.security.oauth2.core.AuthorizationRequestAttributes;
 import org.springframework.security.oauth2.core.RefreshToken;
-
-import java.io.Serializable;
 
 /**
  * @author Joe Grandja
  */
-public interface ClientContext extends Serializable {
+public class AuthorizationResult {
+	private final ClientConfiguration configuration;
+	private final AccessToken accessToken;
+	private final RefreshToken refreshToken;
 
-	ClientConfiguration getConfiguration();
+	public AuthorizationResult(ClientConfiguration configuration, AccessToken accessToken) {
+		this(configuration, accessToken, null);
+	}
 
-	AuthorizationRequestAttributes getAuthorizationRequest();
+	public AuthorizationResult(ClientConfiguration configuration, AccessToken accessToken, RefreshToken refreshToken) {
+		this.configuration = configuration;
+		this.accessToken = accessToken;
+		this.refreshToken = refreshToken;
+	}
 
-	AccessToken getAccessToken();
+	public ClientConfiguration getConfiguration() {
+		return configuration;
+	}
 
-	RefreshToken getRefreshToken();
+	public AccessToken getAccessToken() {
+		return accessToken;
+	}
 
+	public RefreshToken getRefreshToken() {
+		return refreshToken;
+	}
 }

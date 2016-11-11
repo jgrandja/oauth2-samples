@@ -8,12 +8,12 @@
         <h1>Nimbus - OAuth Client Sample</h1>
         <div>
             <div>
-                <span>Authorize with:</span>
+                <span>Login with:</span>
             </div>
             <div>
                 <ul>
                     <li th:each="clientConfiguration : ${clientConfigurations}">
-                        <a href="/oauth2/authorize" th:href="@{/oauth2/authorize(client_guid=${clientConfiguration.clientGuid})}"><span th:text="${clientConfiguration.clientName}">Client Name</span></a>
+                        <a href="/login/oidc" th:href="@{/login/oidc(oidc_client_identifier=${clientConfiguration.clientIdentifier})}"><span th:text="${clientConfiguration.clientName}">Client Name</span></a>
                     </li>
                 </ul>
             </div>

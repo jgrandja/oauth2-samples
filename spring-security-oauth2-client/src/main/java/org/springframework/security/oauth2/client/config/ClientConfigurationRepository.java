@@ -22,7 +22,7 @@ import java.util.List;
  */
 public interface ClientConfigurationRepository {
 
-	ClientConfiguration getConfiguration(String clientGuid);
+	ClientConfiguration getConfiguration(String clientUUID);
 
 	List<ClientConfiguration> getConfigurations();
 

@@ -4,9 +4,8 @@
 
 ## Prerequisite Steps
 
-- Register your client (web) application using [Google API Console](https://console.developers.google.com/). __NOTE:__ For the __Authorized Redirect URI__ enter _http://localhost:8080/oauth2callback/google_
-- After registering your client application, enable the __Google Calendar API__ under your Google account. The sample app is requesting one of the supported scopes for the Google Calendar API.
-- Register another client (web) application using [GitHub Developer Applications](https://github.com/settings/developers). __NOTE:__ For the __Authorized Redirect URI__ enter _http://localhost:8080/oauth2callback/github_
+- Register your client (web) application using [Google API Console](https://console.developers.google.com/). __NOTE:__ For the __Authorized Redirect URI__ enter _http://localhost:8080/oauth2/client/google_
+- Register another client (web) application using [GitHub Developer Applications](https://github.com/settings/developers). __NOTE:__ For the __Authorized Redirect URI__ enter _http://localhost:8080/oauth2/client/github_
 - The final step is to enter the Client Id and Client Secret for your registered clients (google and github) in `application.yml` for each sample application.
 
 ## Nimbus OAuth Client

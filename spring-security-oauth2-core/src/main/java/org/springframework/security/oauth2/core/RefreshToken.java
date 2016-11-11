@@ -13,17 +13,14 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.springframework.security.oauth2.client.filter;
-
-import javax.servlet.http.HttpServletRequest;
-import javax.servlet.http.HttpServletResponse;
-import java.io.IOException;
+package org.springframework.security.oauth2.core;
 
 /**
  * @author Joe Grandja
  */
-public interface AuthorizationResponseHandler {
+public class RefreshToken extends AbstractToken {
 
-	AuthorizationResult handle(HttpServletRequest request, HttpServletResponse response) throws IOException;
-
+	public RefreshToken(String value) {
+		super(value);
+	}
 }

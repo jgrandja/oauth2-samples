@@ -16,7 +16,9 @@
 package org.springframework.security.oauth2.client.context;
 
 import org.springframework.security.oauth2.client.config.ClientConfiguration;
+import org.springframework.security.oauth2.core.AccessToken;
 import org.springframework.security.oauth2.core.AuthorizationRequestAttributes;
+import org.springframework.security.oauth2.core.RefreshToken;
 
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
@@ -67,6 +69,32 @@ public class HttpSessionClientContextRepository implements ClientContextReposito
 	}
 
 	@Override
+	public void updateContext(ClientContext context, AccessToken accessToken,
+							  HttpServletRequest request, HttpServletResponse response) {
+
+		if (!DefaultClientContext.class.isInstance(context)) {
+			// TODO Handle this scenario
+		}
+
+		DefaultClientContext defaultClientContext = DefaultClientContext.class.cast(context);
+		defaultClientContext.setAccessToken(accessToken);
+		saveContext(defaultClientContext, request, response);
+	}
+
+	@Override
+	public void updateContext(ClientContext context, RefreshToken refreshToken,
+							  HttpServletRequest request, HttpServletResponse response) {
+
+		if (!DefaultClientContext.class.isInstance(context)) {
+			// TODO Handle this scenario
+		}
+
+		DefaultClientContext defaultClientContext = DefaultClientContext.class.cast(context);
+		defaultClientContext.setRefreshToken(refreshToken);
+		saveContext(defaultClientContext, request, response);
+	}
+
+	@Override
 	public ClientContext createContext(ClientConfiguration configuration,
 									   HttpServletRequest request, HttpServletResponse response) {
 
@@ -78,6 +106,8 @@ public class HttpSessionClientContextRepository implements ClientContextReposito
 	private class DefaultClientContext implements ClientContext {
 		private ClientConfiguration configuration;
 		private AuthorizationRequestAttributes authorizationRequest;
+		private AccessToken accessToken;
+		private RefreshToken refreshToken;
 
 		private DefaultClientContext(ClientConfiguration configuration) {
 			this.configuration = configuration;
@@ -93,8 +123,26 @@ public class HttpSessionClientContextRepository implements ClientContextReposito
 			return this.authorizationRequest;
 		}
 
+		@Override
+		public AccessToken getAccessToken() {
+			return this.accessToken;
+		}
+
+		@Override
+		public RefreshToken getRefreshToken() {
+			return this.refreshToken;
+		}
+
 		private void setAuthorizationRequest(AuthorizationRequestAttributes authorizationRequest) {
 			this.authorizationRequest = authorizationRequest;
+		}
+
+		private void setAccessToken(AccessToken accessToken) {
+			this.accessToken = accessToken;
+		}
+
+		private void setRefreshToken(RefreshToken refreshToken) {
+			this.refreshToken = refreshToken;
 		}
 	}
 }

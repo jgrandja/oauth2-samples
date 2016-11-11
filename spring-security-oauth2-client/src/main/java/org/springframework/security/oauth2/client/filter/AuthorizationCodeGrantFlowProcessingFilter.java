@@ -18,8 +18,11 @@ package org.springframework.security.oauth2.client.filter;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.security.authentication.AuthenticationManager;
+import org.springframework.security.core.Authentication;
+import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.oauth2.client.config.ClientConfigurationRepository;
 import org.springframework.security.oauth2.core.OAuth2Attributes;
+import org.springframework.security.oidc.rp.authentication.OpenIDConnectAuthenticationToken;
 import org.springframework.security.web.util.matcher.AntPathRequestMatcher;
 import org.springframework.security.web.util.matcher.RequestMatcher;
 import org.springframework.util.Assert;
@@ -41,9 +44,9 @@ import java.io.IOException;
 public class AuthorizationCodeGrantFlowProcessingFilter extends GenericFilterBean {
 	private static final Logger logger = LoggerFactory.getLogger(AuthorizationCodeGrantFlowProcessingFilter.class);
 
-	private static final String DEFAULT_AUTHORIZE_PROCESSING_URL = "/oauth2/authorize";
+	private static final String DEFAULT_FILTER_PROCESSING_URL = "/login/oidc";
 
-	private RequestMatcher authorizeRequestMatcher;
+	private RequestMatcher requiresAuthenticationRequestMatcher;
 
 	private ClientConfigurationRepository clientConfigurationRepository;
 
@@ -58,18 +61,18 @@ public class AuthorizationCodeGrantFlowProcessingFilter extends GenericFilterBea
 													  AuthorizationResponseHandler authorizationResponseHandler,
 													  AuthenticationManager authenticationManager) {
 
-		this(DEFAULT_AUTHORIZE_PROCESSING_URL, clientConfigurationRepository, authorizationRequestRedirectStrategy,
+		this(DEFAULT_FILTER_PROCESSING_URL, clientConfigurationRepository, authorizationRequestRedirectStrategy,
 				authorizationResponseHandler, authenticationManager);
 	}
 
-	public AuthorizationCodeGrantFlowProcessingFilter(String authorizeProcessingUrl,
+	public AuthorizationCodeGrantFlowProcessingFilter(String filterProcessingUrl,
 													  ClientConfigurationRepository clientConfigurationRepository,
 													  AuthorizationRequestRedirectStrategy authorizationRequestRedirectStrategy,
 													  AuthorizationResponseHandler authorizationResponseHandler,
 													  AuthenticationManager authenticationManager) {
 
-		Assert.notNull(authorizeProcessingUrl, "authorizeProcessingUrl cannot be null");
-		this.authorizeRequestMatcher = new AntPathRequestMatcher(authorizeProcessingUrl);
+		Assert.notNull(filterProcessingUrl, "filterProcessingUrl cannot be null");
+		this.requiresAuthenticationRequestMatcher = new AntPathRequestMatcher(filterProcessingUrl);
 
 		Assert.notNull(clientConfigurationRepository, "clientConfigurationRepository cannot be null");
 		this.clientConfigurationRepository = clientConfigurationRepository;
@@ -95,18 +98,23 @@ public class AuthorizationCodeGrantFlowProcessingFilter extends GenericFilterBea
 		}
 
 		if (authorizationResponse(request)) {
-			authorizationResponseHandler.handle(request, response);
+			AuthorizationResult result = authorizationResponseHandler.handle(request, response);
+			OpenIDConnectAuthenticationToken authenticationRequest =
+					new OpenIDConnectAuthenticationToken(result.getConfiguration(), result.getAccessToken(), result.getRefreshToken());
+
+			Authentication authenticationResult = this.authenticationManager.authenticate(authenticationRequest);
+			SecurityContextHolder.getContext().setAuthentication(authenticationResult);
 		}
 
 		chain.doFilter(req, res);
 	}
 
 	private boolean authorizationRequest(HttpServletRequest request) {
-		return authorizeRequestMatcher.matches(request);
+		return requiresAuthenticationRequestMatcher.matches(request);
 	}
 
 	private boolean authorizationResponse(HttpServletRequest request) {
-		// TODO Also check for matching redirect_uri param in ClientConfigurations
-		return !StringUtils.isEmpty(request.getParameter(OAuth2Attributes.CODE));
+		return !StringUtils.isEmpty(request.getParameter(OAuth2Attributes.CODE)) &&
+				!StringUtils.isEmpty(request.getParameter(OAuth2Attributes.STATE));
 	}
 }

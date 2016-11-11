@@ -27,12 +27,13 @@ public class ClientConfiguration implements Serializable {
 	private String clientName;
 	private String authorizeUri;		// TODO URI instead of String?
 	private String tokenUri;			// TODO URI instead of String?
+	private String userInfoUri;			// TODO URI instead of String?
 	private String redirectUri;			// TODO URI instead of String?
 	private List<String> scope;
 
 	// TODO Make this class immutable and supply a builder class
 
-	public String getClientGuid() {
+	public String getClientIdentifier() {			// TODO Should the return type be UUID?
 		// TODO Produce HASH of...
 		// TODO Create ClientGuid/ClientIdentifier class?
 		return getAuthorizeUri() + ":" + getClientId();
@@ -76,6 +77,14 @@ public class ClientConfiguration implements Serializable {
 
 	public void setTokenUri(String tokenUri) {
 		this.tokenUri = tokenUri;
+	}
+
+	public String getUserInfoUri() {
+		return userInfoUri;
+	}
+
+	public void setUserInfoUri(String userInfoUri) {
+		this.userInfoUri = userInfoUri;
 	}
 
 	public String getRedirectUri() {

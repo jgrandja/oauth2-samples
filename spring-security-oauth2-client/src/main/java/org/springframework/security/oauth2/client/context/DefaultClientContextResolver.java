@@ -26,7 +26,7 @@ import javax.servlet.http.HttpServletResponse;
  * @author Joe Grandja
  */
 public class DefaultClientContextResolver implements ClientContextResolver {
-	public static final String CLIENT_IDENTIFIER_PARAM = "client_guid";
+	public static final String DEFAULT_CLIENT_IDENTIFIER_PARAM = "oidc_client_identifier";
 
 	private final ClientContextRepository clientContextRepository;
 
@@ -46,9 +46,9 @@ public class DefaultClientContextResolver implements ClientContextResolver {
 		}
 
 		// Client context not initialized...check for well-known 'client selector' parameter
-		String clientGuid = request.getParameter(CLIENT_IDENTIFIER_PARAM);
-		if (!StringUtils.isEmpty(clientGuid)) {
-			ClientConfiguration clientConfiguration = clientConfigurationRepository.getConfiguration(clientGuid);
+		String clientIdentifier = request.getParameter(DEFAULT_CLIENT_IDENTIFIER_PARAM);
+		if (!StringUtils.isEmpty(clientIdentifier)) {
+			ClientConfiguration clientConfiguration = clientConfigurationRepository.getConfiguration(clientIdentifier);
 			if (clientConfiguration != null) {
 				context = clientContextRepository.createContext(clientConfiguration, request, response);
 			}
