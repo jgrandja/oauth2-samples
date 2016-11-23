@@ -18,12 +18,14 @@ package org.springframework.security.oauth2.client.config;
 import java.io.Serializable;
 import java.util.List;
 
+
 /**
  * @author Joe Grandja
  */
 public class ClientConfiguration implements Serializable {
 	private String clientId;
 	private String clientSecret;
+	private ClientType clientType = ClientType.OAUTH2;
 	private String clientName;
 	private String authorizeUri;		// TODO URI instead of String?
 	private String tokenUri;			// TODO URI instead of String?
@@ -31,7 +33,22 @@ public class ClientConfiguration implements Serializable {
 	private String redirectUri;			// TODO URI instead of String?
 	private List<String> scope;
 
-	// TODO Make this class immutable and supply a builder class
+	public enum ClientType {
+		OPENID_CONNECT("openid-connect"),
+		OAUTH2("oauth2");
+
+		private String value;
+
+		ClientType(String value) {
+			this.value = value;
+		}
+
+		public String value() {
+			return value;
+		}
+	}
+
+	// TODO Make this class immutable and provide a builder
 
 	public String getClientIdentifier() {			// TODO Should the return type be UUID?
 		// TODO Produce HASH of...
@@ -53,6 +70,14 @@ public class ClientConfiguration implements Serializable {
 
 	public void setClientSecret(String clientSecret) {
 		this.clientSecret = clientSecret;
+	}
+
+	public ClientType getClientType() {
+		return clientType;
+	}
+
+	public void setClientType(ClientType clientType) {
+		this.clientType = clientType;
 	}
 
 	public String getClientName() {
@@ -105,5 +130,13 @@ public class ClientConfiguration implements Serializable {
 
 	public String[] getScopeAsArray() {
 		return getScope().toArray(new String[getScope().size()]);
+	}
+
+	public boolean isClientOpenIDConnect() {
+		return ClientType.OPENID_CONNECT.equals(this.getClientType());
+	}
+
+	public boolean isClientOAuth2() {
+		return ClientType.OAUTH2.equals(this.getClientType());
 	}
 }

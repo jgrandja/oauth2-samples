@@ -13,17 +13,35 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.springframework.security.oauth2.core;
+package org.springframework.security.oauth2.core.userdetails;
+
+import java.io.Serializable;
 
 /**
  * @author Joe Grandja
  */
-public interface OAuth2Attributes {
+public class OAuth2UserAttribute implements Serializable {
+	private final String name;
+	private final Object value;
 
-	String CODE = "code";
+	public OAuth2UserAttribute(String name, Object value) {
+		this.name = name;
+		this.value = value;
+	}
 
-	String STATE = "state";
+	public final String getName() {
+		return this.name;
+	}
 
-	String REDIRECT_URI = "redirect_uri";
+	public final Object getValue() {
+		return this.value;
+	}
 
+	@Override
+	public String toString() {
+		StringBuilder sb = new StringBuilder();
+		sb.append(this.getName()).append("=");
+		sb.append(this.getValue() != null ? this.getValue().toString() : "");
+		return sb.toString();
+	}
 }

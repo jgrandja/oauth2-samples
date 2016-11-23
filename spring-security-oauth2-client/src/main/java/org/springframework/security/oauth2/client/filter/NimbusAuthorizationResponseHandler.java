@@ -19,9 +19,11 @@ import com.nimbusds.oauth2.sdk.*;
 import com.nimbusds.oauth2.sdk.auth.ClientAuthentication;
 import com.nimbusds.oauth2.sdk.auth.ClientSecretBasic;
 import com.nimbusds.oauth2.sdk.auth.Secret;
+import com.nimbusds.oauth2.sdk.http.HTTPRequest;
 import com.nimbusds.oauth2.sdk.id.ClientID;
 import com.nimbusds.oauth2.sdk.token.AccessToken;
 import com.nimbusds.oauth2.sdk.token.RefreshToken;
+import org.springframework.http.MediaType;
 import org.springframework.http.server.ServletServerHttpRequest;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.oauth2.client.config.ClientConfiguration;
@@ -116,7 +118,9 @@ public class NimbusAuthorizationResponseHandler implements AuthorizationResponse
 		try {
 			// Send the Access Token request
 			TokenRequest tokenRequest = new TokenRequest(tokenUri, clientAuthentication, authorizationCodeGrant);
-			tokenResponse = TokenResponse.parse(tokenRequest.toHTTPRequest().send());
+			HTTPRequest httpRequest = tokenRequest.toHTTPRequest();
+			httpRequest.setAccept(MediaType.APPLICATION_JSON_VALUE);
+			tokenResponse = TokenResponse.parse(httpRequest.send());
 		} catch (ParseException pe) {
 			// TODO Throw OAuth2-specific exception for downstream handling
 			throw new OAuth2Exception(pe);

@@ -24,7 +24,7 @@ import org.springframework.security.config.annotation.authentication.builders.Au
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
 import org.springframework.security.config.annotation.web.configuration.WebSecurityConfigurerAdapter;
-import org.springframework.security.core.userdetails.AuthenticationUserDetailsService;
+import org.springframework.security.oauth2.client.authentication.OAuth2AuthenticationProvider;
 import org.springframework.security.oauth2.client.config.ClientConfiguration;
 import org.springframework.security.oauth2.client.config.ClientConfigurationRepository;
 import org.springframework.security.oauth2.client.config.InMemoryClientConfigurationRepository;
@@ -33,9 +33,8 @@ import org.springframework.security.oauth2.client.context.ClientContextResolver;
 import org.springframework.security.oauth2.client.context.DefaultClientContextResolver;
 import org.springframework.security.oauth2.client.context.HttpSessionClientContextRepository;
 import org.springframework.security.oauth2.client.filter.*;
-import org.springframework.security.oidc.rp.authentication.NimbusAuthenticationUserDetailsService;
-import org.springframework.security.oidc.rp.authentication.OpenIDConnectAuthenticationProvider;
-import org.springframework.security.oidc.rp.authentication.OpenIDConnectAuthenticationToken;
+import org.springframework.security.oauth2.client.userdetails.UserInfoUserDetailsService;
+import org.springframework.security.oauth2.client.userdetails.nimbus.NimbusUserInfoUserDetailsService;
 import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
 
 import javax.servlet.Filter;
@@ -74,7 +73,7 @@ public class SecurityConfig extends WebSecurityConfigurerAdapter {
 	// @formatter:off
 	@Autowired
 	public void configureGlobal(AuthenticationManagerBuilder auth) throws Exception {
-		auth.authenticationProvider(openIDConnectAuthenticationProvider());
+		auth.authenticationProvider(oauth2AuthenticationProvider());
 //		auth
 //				.inMemoryAuthentication()
 //					.withUser("user").password("password").roles("USER");
@@ -113,8 +112,8 @@ public class SecurityConfig extends WebSecurityConfigurerAdapter {
 	}
 
 	@Bean
-	public AuthenticationProvider openIDConnectAuthenticationProvider() {
-		return new OpenIDConnectAuthenticationProvider(nimbusAuthenticationUserDetailsService());
+	public AuthenticationProvider oauth2AuthenticationProvider() {
+		return new OAuth2AuthenticationProvider(nimbusUserInfoUserDetailsService());
 	}
 
 	@Bean
@@ -136,8 +135,8 @@ public class SecurityConfig extends WebSecurityConfigurerAdapter {
 	}
 
 	@Bean
-	public AuthenticationUserDetailsService<OpenIDConnectAuthenticationToken> nimbusAuthenticationUserDetailsService() {
-		return new NimbusAuthenticationUserDetailsService();
+	public UserInfoUserDetailsService nimbusUserInfoUserDetailsService() {
+		return new NimbusUserInfoUserDetailsService();
 	}
 
 	private Filter authorizationCodeGrantFlowFilter() throws Exception {

@@ -22,7 +22,7 @@ import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.oauth2.client.config.ClientConfigurationRepository;
 import org.springframework.security.oauth2.core.OAuth2Attributes;
-import org.springframework.security.oidc.rp.authentication.OpenIDConnectAuthenticationToken;
+import org.springframework.security.oauth2.client.authentication.OAuth2AuthenticationToken;
 import org.springframework.security.web.util.matcher.AntPathRequestMatcher;
 import org.springframework.security.web.util.matcher.RequestMatcher;
 import org.springframework.util.Assert;
@@ -99,8 +99,8 @@ public class AuthorizationCodeGrantFlowProcessingFilter extends GenericFilterBea
 
 		if (authorizationResponse(request)) {
 			AuthorizationResult result = authorizationResponseHandler.handle(request, response);
-			OpenIDConnectAuthenticationToken authenticationRequest =
-					new OpenIDConnectAuthenticationToken(result.getConfiguration(), result.getAccessToken(), result.getRefreshToken());
+			OAuth2AuthenticationToken authenticationRequest =
+					new OAuth2AuthenticationToken(result.getConfiguration(), result.getAccessToken(), result.getRefreshToken());
 
 			Authentication authenticationResult = this.authenticationManager.authenticate(authenticationRequest);
 			SecurityContextHolder.getContext().setAuthentication(authenticationResult);

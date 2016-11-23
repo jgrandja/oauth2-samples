@@ -13,17 +13,19 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.springframework.security.oauth2.core;
+package org.springframework.security.oauth2.core.userdetails;
+
+import org.springframework.security.core.userdetails.UserDetails;
+
+import java.util.List;
 
 /**
  * @author Joe Grandja
  */
-public interface OAuth2Attributes {
+public interface OAuth2UserDetails extends UserDetails {
 
-	String CODE = "code";
+	OAuth2UserAttribute getIdentifier();
 
-	String STATE = "state";
-
-	String REDIRECT_URI = "redirect_uri";
+	List<OAuth2UserAttribute> getAttributes();
 
 }

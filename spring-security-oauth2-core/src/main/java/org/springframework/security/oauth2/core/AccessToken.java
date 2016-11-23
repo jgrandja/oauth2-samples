@@ -41,7 +41,7 @@ public class AccessToken extends AbstractToken {
 		super(value);
 		this.accessTokenType = accessTokenType;
 		this.expiredAt = expiredAt;
-		this.scope = scope;
+		this.scope = Collections.unmodifiableList(scope);
 	}
 
 	public final AccessTokenType getAccessTokenType() {

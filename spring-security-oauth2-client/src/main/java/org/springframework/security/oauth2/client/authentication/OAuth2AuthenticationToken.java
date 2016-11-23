@@ -13,11 +13,13 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.springframework.security.oidc.rp.authentication;
+package org.springframework.security.oauth2.client.authentication;
 
 import org.springframework.security.authentication.AbstractAuthenticationToken;
 import org.springframework.security.core.GrantedAuthority;
+import org.springframework.security.core.SpringSecurityCoreVersion;
 import org.springframework.security.core.authority.AuthorityUtils;
+import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.security.oauth2.client.config.ClientConfiguration;
 import org.springframework.security.oauth2.core.AccessToken;
 import org.springframework.security.oauth2.core.RefreshToken;
@@ -27,31 +29,37 @@ import java.util.Collection;
 /**
  * @author Joe Grandja
  */
-public class OpenIDConnectAuthenticationToken extends AbstractAuthenticationToken {
+// TODO Might need to split this class up to OAuth2UserAuthenticationToken and OAuth2ClientAuthenticationToken
+//		OAuth2ClientAuthenticationToken would be used for client_credentials grant and
+//		OAuth2UserAuthenticationToken would be used for grants dependent on user authentication
+//		Provide base class AbstractOAuth2AuthenticationToken
+public class OAuth2AuthenticationToken extends AbstractAuthenticationToken {
+	private static final long serialVersionUID = SpringSecurityCoreVersion.SERIAL_VERSION_UID;
+
+	private final UserDetails principal;
 	private final ClientConfiguration configuration;
 	private final AccessToken accessToken;
 	private final RefreshToken refreshToken;
-	private final Object principal;
 
-	public OpenIDConnectAuthenticationToken(ClientConfiguration configuration,
-											AccessToken accessToken,
-											RefreshToken refreshToken) {
+	public OAuth2AuthenticationToken(ClientConfiguration configuration,
+									 AccessToken accessToken,
+									 RefreshToken refreshToken) {
 
 		this(null, AuthorityUtils.NO_AUTHORITIES, configuration, accessToken, refreshToken);
 	}
 
-	public OpenIDConnectAuthenticationToken(Object principal,
-											Collection<? extends GrantedAuthority> authorities,
-											ClientConfiguration configuration,
-											AccessToken accessToken,
-											RefreshToken refreshToken) {
+	public OAuth2AuthenticationToken(UserDetails principal,
+									 Collection<? extends GrantedAuthority> authorities,
+									 ClientConfiguration configuration,
+									 AccessToken accessToken,
+									 RefreshToken refreshToken) {
+
 		super(authorities);
-		this.principal = principal;			// TODO Assert type OpenIDConnectUserDetails?
+		this.principal = principal;			// TODO Assert type OAuth2UserDetails?
 		this.configuration = configuration;
 		this.accessToken = accessToken;
 		this.refreshToken = refreshToken;
 		setAuthenticated(principal != null);
-
 	}
 
 	@Override
@@ -61,8 +69,8 @@ public class OpenIDConnectAuthenticationToken extends AbstractAuthenticationToke
 
 	@Override
 	public final Object getCredentials() {
-		// TODO id_token or access_token or null?
-		return null;
+		// TODO This should return null
+		return this.principal.getPassword();
 	}
 
 	public final ClientConfiguration getConfiguration() {

@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.springframework.security.oidc.rp.authentication;
+package org.springframework.security.oauth2.client.authentication;
 
 import org.springframework.security.authentication.AuthenticationProvider;
 import org.springframework.security.core.Authentication;
@@ -21,45 +21,44 @@ import org.springframework.security.core.AuthenticationException;
 import org.springframework.security.core.GrantedAuthority;
 import org.springframework.security.core.authority.mapping.GrantedAuthoritiesMapper;
 import org.springframework.security.core.authority.mapping.NullAuthoritiesMapper;
-import org.springframework.security.core.userdetails.AuthenticationUserDetailsService;
 import org.springframework.security.core.userdetails.UserDetails;
+import org.springframework.security.oauth2.client.userdetails.UserInfoUserDetailsService;
 
 import java.util.Collection;
 
 /**
  * @author Joe Grandja
  */
-public class OpenIDConnectAuthenticationProvider implements AuthenticationProvider {
-	private final AuthenticationUserDetailsService<OpenIDConnectAuthenticationToken> userDetailsService;
+public class OAuth2AuthenticationProvider implements AuthenticationProvider {
+	private final UserInfoUserDetailsService userInfoUserDetailsService;
 	private GrantedAuthoritiesMapper authoritiesMapper = new NullAuthoritiesMapper();
 
-	public OpenIDConnectAuthenticationProvider(AuthenticationUserDetailsService<OpenIDConnectAuthenticationToken> userDetailsService) {
-		this.userDetailsService = userDetailsService;
+	public OAuth2AuthenticationProvider(UserInfoUserDetailsService userInfoUserDetailsService) {
+		this.userInfoUserDetailsService = userInfoUserDetailsService;
 	}
 
 	@Override
 	public Authentication authenticate(Authentication authentication) throws AuthenticationException {
-		OpenIDConnectAuthenticationToken openIDConnectAuthentication = OpenIDConnectAuthenticationToken.class.cast(authentication);
+		OAuth2AuthenticationToken authenticationRequest = OAuth2AuthenticationToken.class.cast(authentication);
 
-		UserDetails userDetails = this.userDetailsService.loadUserDetails(openIDConnectAuthentication);
+		UserDetails userDetails = this.userInfoUserDetailsService.loadUserDetails(authenticationRequest);
 
-		Collection<? extends GrantedAuthority> authorities = this.authoritiesMapper.mapAuthorities(userDetails.getAuthorities());
+		Collection<? extends GrantedAuthority> authorities =
+				this.authoritiesMapper.mapAuthorities(userDetails.getAuthorities());
 
-		openIDConnectAuthentication = new OpenIDConnectAuthenticationToken(userDetails,
-																			authorities,
-																			openIDConnectAuthentication.getConfiguration(),
-																			openIDConnectAuthentication.getAccessToken(),
-																			openIDConnectAuthentication.getRefreshToken());
+		OAuth2AuthenticationToken authenticationResult = new OAuth2AuthenticationToken(userDetails, authorities,
+				authenticationRequest.getConfiguration(), authenticationRequest.getAccessToken(),
+				authenticationRequest.getRefreshToken());
 
-		return openIDConnectAuthentication;
-	}
-
-	public void setAuthoritiesMapper(GrantedAuthoritiesMapper authoritiesMapper) {
-		this.authoritiesMapper = authoritiesMapper;
+		return authenticationResult;
 	}
 
 	@Override
 	public boolean supports(Class<?> authentication) {
-		return OpenIDConnectAuthenticationToken.class.isAssignableFrom(authentication);
+		return OAuth2AuthenticationToken.class.isAssignableFrom(authentication);
+	}
+
+	public final void setAuthoritiesMapper(GrantedAuthoritiesMapper authoritiesMapper) {
+		this.authoritiesMapper = authoritiesMapper;
 	}
 }

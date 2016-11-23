@@ -18,7 +18,7 @@ package samples.oauth2.nimbus.client.web;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.security.oauth2.client.config.ClientConfigurationRepository;
-import org.springframework.security.oidc.rp.authentication.OpenIDConnectUserDetails;
+import org.springframework.security.oauth2.core.userdetails.OAuth2UserDetails;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.RequestMapping;
@@ -39,19 +39,19 @@ public class HomeController {
 	}
 
 	@RequestMapping("/oauth2/client/google")
-	public String googleClientApp(Model model, @AuthenticationPrincipal OpenIDConnectUserDetails user) {
-		populateAuthenticationAttrs(model, user);
+	public String googleClientApp(Model model, @AuthenticationPrincipal OAuth2UserDetails user) {
+		populateUserInfo(model, user);
 		return "authorized";
 	}
 
 	@RequestMapping("/oauth2/client/github")
-	public String githubClientApp(Model model, @AuthenticationPrincipal OpenIDConnectUserDetails user) {
-		populateAuthenticationAttrs(model, user);
+	public String githubClientApp(Model model, @AuthenticationPrincipal OAuth2UserDetails user) {
+		populateUserInfo(model, user);
 		return "authorized";
 	}
 
-	public void populateAuthenticationAttrs(Model model, OpenIDConnectUserDetails user) {
-		model.addAttribute("subject_identifier", user.getIdentifier());
-		model.addAttribute("user_name", user.getName());
+	public void populateUserInfo(Model model, OAuth2UserDetails user) {
+		model.addAttribute("userIdentifier", user.getIdentifier().toString());
+		model.addAttribute("userAttributes", user.getAttributes().toString());
 	}
 }

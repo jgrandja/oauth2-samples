@@ -13,17 +13,13 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.springframework.security.oidc.rp.authentication;
+package org.springframework.security.oauth2.client.userdetails;
 
-import org.springframework.security.core.userdetails.UserDetails;
+import org.springframework.security.core.userdetails.AuthenticationUserDetailsService;
+import org.springframework.security.oauth2.client.authentication.OAuth2AuthenticationToken;
 
 /**
  * @author Joe Grandja
  */
-public interface OpenIDConnectUserDetails extends UserDetails {
-
-	// Subject Identifier
-	String getIdentifier();
-
-	String getName();
+public interface UserInfoUserDetailsService extends AuthenticationUserDetailsService<OAuth2AuthenticationToken> {
 }
