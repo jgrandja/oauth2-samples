@@ -37,15 +37,15 @@ public class AuthorizationResult {
 		this.refreshToken = refreshToken;
 	}
 
-	public ClientConfiguration getConfiguration() {
+	public final ClientConfiguration getConfiguration() {
 		return configuration;
 	}
 
-	public AccessToken getAccessToken() {
+	public final AccessToken getAccessToken() {
 		return accessToken;
 	}
 
-	public RefreshToken getRefreshToken() {
+	public final RefreshToken getRefreshToken() {
 		return refreshToken;
 	}
 }

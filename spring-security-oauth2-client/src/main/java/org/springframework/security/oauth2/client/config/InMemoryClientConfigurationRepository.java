@@ -15,7 +15,7 @@
  */
 package org.springframework.security.oauth2.client.config;
 
-import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 import java.util.stream.Collectors;
 
@@ -26,14 +26,14 @@ public class InMemoryClientConfigurationRepository implements ClientConfiguratio
 	private final List<ClientConfiguration> clientConfigurations;
 
 	public InMemoryClientConfigurationRepository(List<ClientConfiguration> clientConfigurations) {
-		this.clientConfigurations = clientConfigurations;
+		this.clientConfigurations = Collections.unmodifiableList(clientConfigurations);
 	}
 
 	@Override
-	public ClientConfiguration getConfiguration(String clientUUID) {
+	public ClientConfiguration getConfigurationByAlias(String clientAlias) {
 		List<ClientConfiguration> result =
-				this.clientConfigurations.stream()
-						.filter(c -> c.getClientIdentifier().equals(clientUUID))
+				this.getConfigurations().stream()
+						.filter(c -> c.getClientAlias().equalsIgnoreCase(clientAlias))
 						.collect(Collectors.toList());
 		if (result.size() > 1) {
 			// TODO Need to handle this scenario...return null for now
@@ -44,6 +44,6 @@ public class InMemoryClientConfigurationRepository implements ClientConfiguratio
 
 	@Override
 	public List<ClientConfiguration> getConfigurations() {
-		return new ArrayList<>(this.clientConfigurations);
+		return this.clientConfigurations;
 	}
 }

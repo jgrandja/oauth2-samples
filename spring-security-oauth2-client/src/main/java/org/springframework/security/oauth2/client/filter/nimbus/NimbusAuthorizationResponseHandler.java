@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.springframework.security.oauth2.client.filter;
+package org.springframework.security.oauth2.client.filter.nimbus;
 
 import com.nimbusds.oauth2.sdk.*;
 import com.nimbusds.oauth2.sdk.auth.ClientAuthentication;
@@ -30,6 +30,8 @@ import org.springframework.security.oauth2.client.config.ClientConfiguration;
 import org.springframework.security.oauth2.client.context.ClientContext;
 import org.springframework.security.oauth2.client.context.ClientContextRepository;
 import org.springframework.security.oauth2.client.context.ClientContextResolver;
+import org.springframework.security.oauth2.client.filter.AuthorizationResponseHandler;
+import org.springframework.security.oauth2.client.filter.AuthorizationResult;
 import org.springframework.security.oauth2.core.AccessTokenType;
 import org.springframework.security.oauth2.core.OAuth2Exception;
 import org.springframework.web.util.UriComponentsBuilder;
@@ -84,22 +86,10 @@ public class NimbusAuthorizationResponseHandler implements AuthorizationResponse
 		AuthorizationSuccessResponse authorizationSuccessResponse = AuthorizationSuccessResponse.class.cast(authorizationResponse);
 
 		ClientContext context = clientContextResolver.resolveContext(request, response);
-
-		// Correlate the authorization request to the callback response
-		if (!context.getAuthorizationRequest().getState().equals(authorizationSuccessResponse.getState().getValue())) {
-			// Unexpected or tampered response
-			// TODO Throw OAuth2-specific exception for downstream handling
-			throw new OAuth2Exception("State does not match");
+		if (context == null) {
+			// context should not be null as it was saved during the authorization request
+			// TODO Throw OAuth2-specific exception for downstream handling OR ClientContextResolver should throw?
 		}
-
-		// TODO Compare redirect_uri as well?
-		// TODO Compare nonce?
-		// TODO Compare other data? Need to ensure we accurately correlate this callback
-
-		// TODO RE-FACTOR - The ClientContextResolver should resolve the ClientContext based on State, Code, redirect_uri, nonce, etc.....
-		//			These checks should NOT be done in this handler class. Throw appropriate exception if can't resolve...for example, State does not match
-
-
 
 		ClientConfiguration configuration = context.getConfiguration();
 
@@ -137,6 +127,7 @@ public class NimbusAuthorizationResponseHandler implements AuthorizationResponse
 
 		AccessTokenResponse accessTokenResponse = AccessTokenResponse.class.cast(tokenResponse);
 
+		// TODO Should be able to save the AccessToken and optional RefreshToken in 1 call instead of 2
 		org.springframework.security.oauth2.core.AccessToken accessToken =
 				convert(accessTokenResponse.getTokens().getAccessToken());
 		clientContextRepository.updateContext(context, accessToken, request, response);
@@ -163,7 +154,7 @@ public class NimbusAuthorizationResponseHandler implements AuthorizationResponse
 			tokenType = AccessTokenType.MAC;
 		}
 		long expiryAt = accessToken.getLifetime();
-		List<String> scope = Collections.EMPTY_LIST;
+		List<String> scope = Collections.emptyList();
 		if (accessToken.getScope() != null) {
 			scope = accessToken.getScope().toStringList();
 		}

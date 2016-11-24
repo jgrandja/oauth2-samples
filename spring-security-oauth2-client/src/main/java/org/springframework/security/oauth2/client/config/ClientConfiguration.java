@@ -27,6 +27,7 @@ public class ClientConfiguration implements Serializable {
 	private String clientSecret;
 	private ClientType clientType = ClientType.OAUTH2;
 	private String clientName;
+	private String clientAlias;
 	private String authorizeUri;		// TODO URI instead of String?
 	private String tokenUri;			// TODO URI instead of String?
 	private String userInfoUri;			// TODO URI instead of String?
@@ -49,12 +50,6 @@ public class ClientConfiguration implements Serializable {
 	}
 
 	// TODO Make this class immutable and provide a builder
-
-	public String getClientIdentifier() {			// TODO Should the return type be UUID?
-		// TODO Produce HASH of...
-		// TODO Create ClientGuid/ClientIdentifier class?
-		return getAuthorizeUri() + ":" + getClientId();
-	}
 
 	public String getClientId() {
 		return clientId;
@@ -86,6 +81,14 @@ public class ClientConfiguration implements Serializable {
 
 	public void setClientName(String clientName) {
 		this.clientName = clientName;
+	}
+
+	public String getClientAlias() {
+		return clientAlias;
+	}
+
+	public void setClientAlias(String clientAlias) {
+		this.clientAlias = clientAlias;
 	}
 
 	public String getAuthorizeUri() {

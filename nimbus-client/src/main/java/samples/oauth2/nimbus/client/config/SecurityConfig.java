@@ -20,6 +20,7 @@ import org.springframework.boot.context.properties.ConfigurationProperties;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.security.authentication.AuthenticationProvider;
+import org.springframework.security.config.annotation.ObjectPostProcessor;
 import org.springframework.security.config.annotation.authentication.builders.AuthenticationManagerBuilder;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
@@ -33,8 +34,11 @@ import org.springframework.security.oauth2.client.context.ClientContextResolver;
 import org.springframework.security.oauth2.client.context.DefaultClientContextResolver;
 import org.springframework.security.oauth2.client.context.HttpSessionClientContextRepository;
 import org.springframework.security.oauth2.client.filter.*;
+import org.springframework.security.oauth2.client.filter.nimbus.NimbusAuthorizationRequestRedirectStrategy;
+import org.springframework.security.oauth2.client.filter.nimbus.NimbusAuthorizationResponseHandler;
 import org.springframework.security.oauth2.client.userdetails.UserInfoUserDetailsService;
 import org.springframework.security.oauth2.client.userdetails.nimbus.NimbusUserInfoUserDetailsService;
+import org.springframework.security.web.authentication.LoginUrlAuthenticationEntryPoint;
 import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
 
 import javax.servlet.Filter;
@@ -46,6 +50,7 @@ import java.util.List;
 @Configuration
 @EnableWebSecurity
 public class SecurityConfig extends WebSecurityConfigurerAdapter {
+	private static final String LOGIN_URL = "/login/oauth2";
 
 	@Autowired
 	protected ClientConfigurationRepository clientConfigurationRepository;
@@ -56,17 +61,21 @@ public class SecurityConfig extends WebSecurityConfigurerAdapter {
 	@Autowired
 	protected AuthorizationResponseHandler authorizationResponseHandler;
 
+	@Autowired
+	protected ObjectPostProcessor objectPostProcessor;
+
 	// @formatter:off
 	@Override
 	protected void configure(HttpSecurity http) throws Exception {
 		http
 				.authorizeRequests()
-					.antMatchers("/", "/oauth2/client/**").permitAll()
-					.anyRequest().authenticated()
+					.antMatchers(LOGIN_URL).permitAll()
+					.anyRequest().fullyAuthenticated()
 					.and()
-				.formLogin()
+				.exceptionHandling()
+					.authenticationEntryPoint(new LoginUrlAuthenticationEntryPoint(LOGIN_URL))
 					.and()
-				.addFilterBefore(authorizationCodeGrantFlowFilter(), UsernamePasswordAuthenticationFilter.class);
+				.addFilterBefore(authorizationCodeGrantProcessingFilter(), UsernamePasswordAuthenticationFilter.class);
 	}
 	// @formatter:on
 
@@ -74,9 +83,6 @@ public class SecurityConfig extends WebSecurityConfigurerAdapter {
 	@Autowired
 	public void configureGlobal(AuthenticationManagerBuilder auth) throws Exception {
 		auth.authenticationProvider(oauth2AuthenticationProvider());
-//		auth
-//				.inMemoryAuthentication()
-//					.withUser("user").password("password").roles("USER");
 	}
 	// @formatter:on
 
@@ -139,15 +145,18 @@ public class SecurityConfig extends WebSecurityConfigurerAdapter {
 		return new NimbusUserInfoUserDetailsService();
 	}
 
-	private Filter authorizationCodeGrantFlowFilter() throws Exception {
-		AuthorizationCodeGrantFlowProcessingFilter authorizationCodeGrantFlowFilter =
-				new AuthorizationCodeGrantFlowProcessingFilter(
+	private Filter authorizationCodeGrantProcessingFilter() throws Exception {
+		AuthorizationCodeGrantProcessingFilter authorizationCodeGrantProcessingFilter =
+				new AuthorizationCodeGrantProcessingFilter(
+						LOGIN_URL,
 						this.clientConfigurationRepository,
 						this.authorizationRequestRedirectStrategy,
 						this.authorizationResponseHandler,
 						this.authenticationManager());
 
-		return authorizationCodeGrantFlowFilter;
-	}
+		// TODO This is temporary until we have a SecurityConfigurer for AuthorizationCodeGrantProcessingFilter
+		this.objectPostProcessor.postProcess(authorizationCodeGrantProcessingFilter);
 
+		return authorizationCodeGrantProcessingFilter;
+	}
 }

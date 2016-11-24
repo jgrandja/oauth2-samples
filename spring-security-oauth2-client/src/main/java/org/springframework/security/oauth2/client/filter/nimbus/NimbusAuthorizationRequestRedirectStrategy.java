@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.springframework.security.oauth2.client.filter;
+package org.springframework.security.oauth2.client.filter.nimbus;
 
 import com.nimbusds.oauth2.sdk.AuthorizationRequest;
 import com.nimbusds.oauth2.sdk.ResponseType;
@@ -24,6 +24,7 @@ import org.springframework.security.oauth2.client.config.ClientConfiguration;
 import org.springframework.security.oauth2.client.context.ClientContext;
 import org.springframework.security.oauth2.client.context.ClientContextRepository;
 import org.springframework.security.oauth2.client.context.ClientContextResolver;
+import org.springframework.security.oauth2.client.filter.AuthorizationRequestRedirectStrategy;
 import org.springframework.security.oauth2.core.AuthorizationRequestAttributes;
 import org.springframework.security.oauth2.core.DefaultAuthorizationRequestAttributes;
 import org.springframework.security.web.DefaultRedirectStrategy;

@@ -32,25 +32,19 @@ public class HomeController {
 	@Autowired
 	protected ClientConfigurationRepository clientConfigurationRepository;
 
-	@RequestMapping("/")
-	public String index(Model model) {
+	@RequestMapping("/login/oauth2")
+	public String login(Model model) {
 		model.addAttribute("clientConfigurations", clientConfigurationRepository.getConfigurations());
-		return "index";
+		return "login";
 	}
 
-	@RequestMapping("/oauth2/client/google")
-	public String googleClientApp(Model model, @AuthenticationPrincipal OAuth2UserDetails user) {
+	@RequestMapping("/")
+	public String index(Model model, @AuthenticationPrincipal OAuth2UserDetails user) {
 		populateUserInfo(model, user);
-		return "authorized";
+		return "user-details";
 	}
 
-	@RequestMapping("/oauth2/client/github")
-	public String githubClientApp(Model model, @AuthenticationPrincipal OAuth2UserDetails user) {
-		populateUserInfo(model, user);
-		return "authorized";
-	}
-
-	public void populateUserInfo(Model model, OAuth2UserDetails user) {
+	private void populateUserInfo(Model model, OAuth2UserDetails user) {
 		model.addAttribute("userIdentifier", user.getIdentifier().toString());
 		model.addAttribute("userAttributes", user.getAttributes().toString());
 	}
