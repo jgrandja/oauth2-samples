@@ -131,10 +131,6 @@ public class ClientConfiguration implements Serializable {
 		this.scope = scope;
 	}
 
-	public String[] getScopeAsArray() {
-		return getScope().toArray(new String[getScope().size()]);
-	}
-
 	public boolean isClientOpenIDConnect() {
 		return ClientType.OPENID_CONNECT.equals(this.getClientType());
 	}

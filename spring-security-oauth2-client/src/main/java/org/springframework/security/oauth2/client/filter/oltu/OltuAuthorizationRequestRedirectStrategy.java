@@ -13,13 +13,10 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.springframework.security.oauth2.client.filter.nimbus;
+package org.springframework.security.oauth2.client.filter.oltu;
 
-import com.nimbusds.oauth2.sdk.AuthorizationRequest;
-import com.nimbusds.oauth2.sdk.ResponseType;
-import com.nimbusds.oauth2.sdk.Scope;
-import com.nimbusds.oauth2.sdk.id.ClientID;
-import com.nimbusds.oauth2.sdk.id.State;
+import org.apache.oltu.oauth2.client.request.OAuthClientRequest;
+import org.apache.oltu.oauth2.common.exception.OAuthSystemException;
 import org.springframework.security.crypto.keygen.StringKeyGenerator;
 import org.springframework.security.oauth2.client.config.ClientConfiguration;
 import org.springframework.security.oauth2.client.context.ClientContext;
@@ -29,19 +26,19 @@ import org.springframework.security.oauth2.client.filter.AuthorizationRequestRed
 import org.springframework.security.oauth2.core.AuthorizationRequestAttributes;
 import org.springframework.security.oauth2.core.DefaultAuthorizationRequestAttributes;
 import org.springframework.security.oauth2.core.DefaultStateGenerator;
+import org.springframework.security.oauth2.core.ResponseType;
 import org.springframework.security.web.DefaultRedirectStrategy;
 import org.springframework.security.web.RedirectStrategy;
 
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 import java.io.IOException;
-import java.net.URI;
-import java.net.URISyntaxException;
+import java.util.stream.Collectors;
 
 /**
  * @author Joe Grandja
  */
-public class NimbusAuthorizationRequestRedirectStrategy implements AuthorizationRequestRedirectStrategy {
+public class OltuAuthorizationRequestRedirectStrategy implements AuthorizationRequestRedirectStrategy {
 	private final ClientContextResolver clientContextResolver;
 
 	private final ClientContextRepository clientContextRepository;
@@ -50,8 +47,8 @@ public class NimbusAuthorizationRequestRedirectStrategy implements Authorization
 
 	private final RedirectStrategy redirectStrategy = new DefaultRedirectStrategy();
 
-	public NimbusAuthorizationRequestRedirectStrategy(ClientContextResolver clientContextResolver,
-													  ClientContextRepository clientContextRepository) {
+	public OltuAuthorizationRequestRedirectStrategy(ClientContextResolver clientContextResolver,
+													ClientContextRepository clientContextRepository) {
 		this.clientContextResolver = clientContextResolver;
 		this.clientContextRepository = clientContextRepository;
 	}
@@ -62,44 +59,31 @@ public class NimbusAuthorizationRequestRedirectStrategy implements Authorization
 
 		ClientConfiguration configuration = context.getConfiguration();
 
-		ClientID clientId = new ClientID(configuration.getClientId());
-		URI authorizationUri = toURI(configuration.getAuthorizeUri());
-		Scope scope = new Scope(configuration.getScope().stream().toArray(String[]::new));
-		URI redirectUri = toURI(configuration.getRedirectUri());		// TODO Redirect URI may be null
-		State state = new State(this.stateGenerator.generateKey());
-
-		AuthorizationRequest authorizationRequest = new AuthorizationRequest.Builder(
-				new ResponseType(ResponseType.Value.CODE), clientId)
-				.endpointURI(authorizationUri)
-				.scope(scope)
-				.redirectionURI(redirectUri)
-				.state(state)
-				.build();
-
 		// Save the request so we can correlate and validate on the authorization response callback
-		AuthorizationRequestAttributes authorizationRequestAttributes = convert(authorizationRequest);
-		clientContextRepository.updateContext(context, authorizationRequestAttributes, request, response);
-
-		redirectStrategy.sendRedirect(request, response, authorizationRequest.toURI().toString());
-	}
-
-	private AuthorizationRequestAttributes convert(AuthorizationRequest authorizationRequest) {
 		AuthorizationRequestAttributes authorizationRequestAttributes =
 				new DefaultAuthorizationRequestAttributes(
-						org.springframework.security.oauth2.core.ResponseType.valueOf(authorizationRequest.getResponseType().toString().toUpperCase()),
-						authorizationRequest.getClientID().getValue(),
-						authorizationRequest.getRedirectionURI().toString(),
-						authorizationRequest.getScope().toStringList(),
-						authorizationRequest.getState().getValue());
+						ResponseType.CODE,
+						configuration.getClientId(),
+						configuration.getRedirectUri(),
+						configuration.getScope(),
+						this.stateGenerator.generateKey());
+		clientContextRepository.updateContext(context, authorizationRequestAttributes, request, response);
 
-		return authorizationRequestAttributes;
-	}
-
-	private URI toURI(String uriStr) throws IOException {
+		OAuthClientRequest authorizationRequest;
 		try {
-			return new URI(uriStr);
-		} catch (URISyntaxException ex) {
-			throw new IOException(ex);
+			authorizationRequest = OAuthClientRequest
+					.authorizationLocation(configuration.getAuthorizeUri())
+					.setClientId(authorizationRequestAttributes.getClientId())
+					.setRedirectURI(authorizationRequestAttributes.getRedirectUri())
+					.setResponseType(org.apache.oltu.oauth2.common.message.types.ResponseType.valueOf(
+							authorizationRequestAttributes.getResponseType().value().toUpperCase()).toString())
+					.setScope(authorizationRequestAttributes.getScope().stream().collect(Collectors.joining(" ")))
+					.setState(authorizationRequestAttributes.getState())
+					.buildQueryMessage();
+		} catch (OAuthSystemException se) {
+			throw new IOException(se);
 		}
+
+		redirectStrategy.sendRedirect(request, response, authorizationRequest.getLocationUri());
 	}
 }

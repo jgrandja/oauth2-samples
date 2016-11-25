@@ -12,8 +12,9 @@
             </div>
             <div>
                 <ul>
-                    <li><a href="/authorize?provider=google">Google</a></li>
-                    <li><a href="/authorize?provider=github">GitHub</a></li>
+                    <li th:each="clientConfiguration : ${clientConfigurations}">
+                        <a href="/login/oauth2" th:href="@{'/login/oauth2/' + ${clientConfiguration.clientAlias}}"><span th:text="${clientConfiguration.clientName}">Client Name</span></a>
+                    </li>
                 </ul>
             </div>
         </div>

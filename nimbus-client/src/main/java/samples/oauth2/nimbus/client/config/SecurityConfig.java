@@ -33,7 +33,9 @@ import org.springframework.security.oauth2.client.context.ClientContextRepositor
 import org.springframework.security.oauth2.client.context.ClientContextResolver;
 import org.springframework.security.oauth2.client.context.DefaultClientContextResolver;
 import org.springframework.security.oauth2.client.context.HttpSessionClientContextRepository;
-import org.springframework.security.oauth2.client.filter.*;
+import org.springframework.security.oauth2.client.filter.AuthorizationCodeGrantProcessingFilter;
+import org.springframework.security.oauth2.client.filter.AuthorizationRequestRedirectStrategy;
+import org.springframework.security.oauth2.client.filter.AuthorizationResponseHandler;
 import org.springframework.security.oauth2.client.filter.nimbus.NimbusAuthorizationRequestRedirectStrategy;
 import org.springframework.security.oauth2.client.filter.nimbus.NimbusAuthorizationResponseHandler;
 import org.springframework.security.oauth2.client.userdetails.UserInfoUserDetailsService;
@@ -45,6 +47,11 @@ import javax.servlet.Filter;
 import java.util.List;
 
 /**
+ * TODO
+ * NOTE:
+ * 		Most of the configuration in this class will eventually go into a SecurityConfigurer,
+ * 		for example, OAuth2ClientSecurityConfigurer and then applied to HttpSecurity.
+ *
  * @author Joe Grandja
  */
 @Configuration
@@ -119,11 +126,16 @@ public class SecurityConfig extends WebSecurityConfigurerAdapter {
 
 	@Bean
 	public AuthenticationProvider oauth2AuthenticationProvider() {
-		return new OAuth2AuthenticationProvider(nimbusUserInfoUserDetailsService());
+		return new OAuth2AuthenticationProvider(userInfoUserDetailsService());
 	}
 
+
+
+	// ********************************************* //
+	// *****  Nimbus-specific implementations  ***** //
+	// ********************************************* //
 	@Bean
-	public AuthorizationRequestRedirectStrategy nimbusAuthorizationRequestRedirectStrategy(
+	public AuthorizationRequestRedirectStrategy authorizationRequestRedirectStrategy(
 			ClientContextResolver clientContextResolver, ClientContextRepository clientContextRepository) {
 
 		NimbusAuthorizationRequestRedirectStrategy authorizationRequestRedirectStrategy =
@@ -132,18 +144,23 @@ public class SecurityConfig extends WebSecurityConfigurerAdapter {
 	}
 
 	@Bean
-	public AuthorizationResponseHandler nimbusAuthorizationResponseHandler(
+	public AuthorizationResponseHandler authorizationResponseHandler(
 			ClientContextResolver clientContextResolver, ClientContextRepository clientContextRepository) throws Exception {
 
 		NimbusAuthorizationResponseHandler authorizationResponseHandler =
-				new NimbusAuthorizationResponseHandler(clientContextResolver, clientContextRepository, this.authenticationManager());
+				new NimbusAuthorizationResponseHandler(clientContextResolver, clientContextRepository);
 		return authorizationResponseHandler;
 	}
 
 	@Bean
-	public UserInfoUserDetailsService nimbusUserInfoUserDetailsService() {
+	public UserInfoUserDetailsService userInfoUserDetailsService() {
 		return new NimbusUserInfoUserDetailsService();
 	}
+	// ********************************************* //
+	// *****  Nimbus-specific implementations  ***** //
+	// ********************************************* //
+
+
 
 	private Filter authorizationCodeGrantProcessingFilter() throws Exception {
 		AuthorizationCodeGrantProcessingFilter authorizationCodeGrantProcessingFilter =
@@ -154,7 +171,7 @@ public class SecurityConfig extends WebSecurityConfigurerAdapter {
 						this.authorizationResponseHandler,
 						this.authenticationManager());
 
-		// TODO This is temporary until we have a SecurityConfigurer for AuthorizationCodeGrantProcessingFilter
+		// TODO This is temporary until we have a SecurityConfigurer
 		this.objectPostProcessor.postProcess(authorizationCodeGrantProcessingFilter);
 
 		return authorizationCodeGrantProcessingFilter;

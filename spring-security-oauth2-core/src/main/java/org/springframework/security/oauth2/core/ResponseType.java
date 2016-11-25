@@ -15,22 +15,20 @@
  */
 package org.springframework.security.oauth2.core;
 
-import java.io.Serializable;
-import java.util.List;
-
 /**
  * @author Joe Grandja
  */
-public interface AuthorizationRequestAttributes extends Serializable {
+public enum ResponseType {
+	CODE("code"),
+	TOKEN("token");
 
-	ResponseType getResponseType();
+	private final String value;
 
-	String getClientId();
+	ResponseType(String value) {
+		this.value = value;
+	}
 
-	// TODO Return URI instead of String?
-	String getRedirectUri();
-
-	List<String> getScope();
-
-	String getState();
+	public String value() {
+		return this.value;
+	}
 }

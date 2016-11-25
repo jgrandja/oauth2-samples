@@ -15,30 +15,30 @@
  */
 package org.springframework.security.oauth2.core;
 
-import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 
 /**
  * @author Joe Grandja
  */
 public class DefaultAuthorizationRequestAttributes implements AuthorizationRequestAttributes {
-	private String responseType;
+	private ResponseType responseType;
 	private String clientId;
 	private String redirectUri;
 	private List<String> scope;
 	private String state;
 
-	public DefaultAuthorizationRequestAttributes(String responseType, String clientId,
+	public DefaultAuthorizationRequestAttributes(ResponseType responseType, String clientId,
 												 String redirectUri, List<String> scope, String state) {
 		this.responseType = responseType;
 		this.clientId = clientId;
 		this.redirectUri = redirectUri;
-		this.scope = new ArrayList<String>(scope);
+		this.scope = Collections.unmodifiableList(scope);
 		this.state = state;
 	}
 
 	@Override
-	public String getResponseType() {
+	public ResponseType getResponseType() {
 		return this.responseType;
 	}
 
@@ -54,7 +54,7 @@ public class DefaultAuthorizationRequestAttributes implements AuthorizationReque
 
 	@Override
 	public List<String> getScope() {
-		return new ArrayList<String>(this.scope);
+		return this.scope;
 	}
 
 	@Override

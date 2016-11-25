@@ -13,12 +13,32 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package samples.oauth2.oltu.client;
+package org.springframework.security.oauth2.client.userdetails.oltu;
+
+import org.apache.oltu.oauth2.client.request.OAuthClientRequest;
 
 /**
  * @author Joe Grandja
  */
-public enum OAuthProvider {
-	GOOGLE,
-	GITHUB;
+public class OltuUserInfoRequest extends OAuthClientRequest {
+
+	public OltuUserInfoRequest(String url) {
+		super(url);
+	}
+
+	public static UserInfoRequestBuilder userInfoLocation(String url) {
+		return new UserInfoRequestBuilder(url);
+	}
+
+	public static class UserInfoRequestBuilder extends OAuthRequestBuilder {
+
+		public UserInfoRequestBuilder(String url) {
+			super(url);
+		}
+
+		public UserInfoRequestBuilder accessToken(String accessToken) {
+			this.parameters.put("token", accessToken);
+			return this;
+		}
+	}
 }

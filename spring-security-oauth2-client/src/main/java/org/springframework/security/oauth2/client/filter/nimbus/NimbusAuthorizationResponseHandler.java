@@ -25,7 +25,6 @@ import com.nimbusds.oauth2.sdk.token.AccessToken;
 import com.nimbusds.oauth2.sdk.token.RefreshToken;
 import org.springframework.http.MediaType;
 import org.springframework.http.server.ServletServerHttpRequest;
-import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.oauth2.client.config.ClientConfiguration;
 import org.springframework.security.oauth2.client.context.ClientContext;
 import org.springframework.security.oauth2.client.context.ClientContextRepository;
@@ -52,15 +51,11 @@ public class NimbusAuthorizationResponseHandler implements AuthorizationResponse
 
 	private final ClientContextRepository clientContextRepository;
 
-	private final AuthenticationManager authenticationManager;
-
 	public NimbusAuthorizationResponseHandler(ClientContextResolver clientContextResolver,
-											  ClientContextRepository clientContextRepository,
-											  AuthenticationManager authenticationManager) {
+											  ClientContextRepository clientContextRepository) {
 
 		this.clientContextResolver = clientContextResolver;
 		this.clientContextRepository = clientContextRepository;
-		this.authenticationManager = authenticationManager;
 	}
 
 	@Override
