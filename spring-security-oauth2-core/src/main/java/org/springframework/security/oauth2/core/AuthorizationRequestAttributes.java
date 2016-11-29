@@ -23,6 +23,9 @@ import java.util.List;
  */
 public interface AuthorizationRequestAttributes extends Serializable {
 
+	// TODO Return URI instead of String?
+	String getAuthorizeUri();
+
 	ResponseType getResponseType();
 
 	String getClientId();

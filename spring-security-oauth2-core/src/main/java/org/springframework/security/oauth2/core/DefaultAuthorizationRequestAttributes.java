@@ -22,19 +22,26 @@ import java.util.List;
  * @author Joe Grandja
  */
 public class DefaultAuthorizationRequestAttributes implements AuthorizationRequestAttributes {
+	private String authorizeUri;
 	private ResponseType responseType;
 	private String clientId;
 	private String redirectUri;
 	private List<String> scope;
 	private String state;
 
-	public DefaultAuthorizationRequestAttributes(ResponseType responseType, String clientId,
+	public DefaultAuthorizationRequestAttributes(String authorizeUri, ResponseType responseType, String clientId,
 												 String redirectUri, List<String> scope, String state) {
+		this.authorizeUri = authorizeUri;
 		this.responseType = responseType;
 		this.clientId = clientId;
 		this.redirectUri = redirectUri;
 		this.scope = Collections.unmodifiableList(scope);
 		this.state = state;
+	}
+
+	@Override
+	public String getAuthorizeUri() {
+		return this.authorizeUri;
 	}
 
 	@Override

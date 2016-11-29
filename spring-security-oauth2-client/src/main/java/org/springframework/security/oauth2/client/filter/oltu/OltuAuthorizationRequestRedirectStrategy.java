@@ -17,62 +17,32 @@ package org.springframework.security.oauth2.client.filter.oltu;
 
 import org.apache.oltu.oauth2.client.request.OAuthClientRequest;
 import org.apache.oltu.oauth2.common.exception.OAuthSystemException;
-import org.springframework.security.crypto.keygen.StringKeyGenerator;
-import org.springframework.security.oauth2.client.config.ClientConfiguration;
-import org.springframework.security.oauth2.client.context.ClientContext;
 import org.springframework.security.oauth2.client.context.ClientContextRepository;
 import org.springframework.security.oauth2.client.context.ClientContextResolver;
-import org.springframework.security.oauth2.client.filter.AuthorizationRequestRedirectStrategy;
+import org.springframework.security.oauth2.client.filter.AbstractAuthorizationRequestRedirectStrategy;
 import org.springframework.security.oauth2.core.AuthorizationRequestAttributes;
-import org.springframework.security.oauth2.core.DefaultAuthorizationRequestAttributes;
-import org.springframework.security.oauth2.core.DefaultStateGenerator;
-import org.springframework.security.oauth2.core.ResponseType;
-import org.springframework.security.web.DefaultRedirectStrategy;
-import org.springframework.security.web.RedirectStrategy;
+import org.springframework.security.oauth2.core.OAuth2Exception;
 
-import javax.servlet.http.HttpServletRequest;
-import javax.servlet.http.HttpServletResponse;
-import java.io.IOException;
+import java.net.URI;
+import java.net.URISyntaxException;
 import java.util.stream.Collectors;
 
 /**
  * @author Joe Grandja
  */
-public class OltuAuthorizationRequestRedirectStrategy implements AuthorizationRequestRedirectStrategy {
-	private final ClientContextResolver clientContextResolver;
-
-	private final ClientContextRepository clientContextRepository;
-
-	private final StringKeyGenerator stateGenerator = new DefaultStateGenerator();
-
-	private final RedirectStrategy redirectStrategy = new DefaultRedirectStrategy();
+public class OltuAuthorizationRequestRedirectStrategy extends AbstractAuthorizationRequestRedirectStrategy {
 
 	public OltuAuthorizationRequestRedirectStrategy(ClientContextResolver clientContextResolver,
 													ClientContextRepository clientContextRepository) {
-		this.clientContextResolver = clientContextResolver;
-		this.clientContextRepository = clientContextRepository;
+		super(clientContextResolver, clientContextRepository);
 	}
 
 	@Override
-	public void sendRedirect(HttpServletRequest request, HttpServletResponse response) throws IOException {
-		ClientContext context = clientContextResolver.resolveContext(request, response);
-
-		ClientConfiguration configuration = context.getConfiguration();
-
-		// Save the request so we can correlate and validate on the authorization response callback
-		AuthorizationRequestAttributes authorizationRequestAttributes =
-				new DefaultAuthorizationRequestAttributes(
-						ResponseType.CODE,
-						configuration.getClientId(),
-						configuration.getRedirectUri(),
-						configuration.getScope(),
-						this.stateGenerator.generateKey());
-		clientContextRepository.updateContext(context, authorizationRequestAttributes, request, response);
-
-		OAuthClientRequest authorizationRequest;
+	public URI buildRedirect(AuthorizationRequestAttributes authorizationRequestAttributes) {
+		URI result;
 		try {
-			authorizationRequest = OAuthClientRequest
-					.authorizationLocation(configuration.getAuthorizeUri())
+			OAuthClientRequest authorizationRequest = OAuthClientRequest
+					.authorizationLocation(authorizationRequestAttributes.getAuthorizeUri())
 					.setClientId(authorizationRequestAttributes.getClientId())
 					.setRedirectURI(authorizationRequestAttributes.getRedirectUri())
 					.setResponseType(org.apache.oltu.oauth2.common.message.types.ResponseType.valueOf(
@@ -80,10 +50,17 @@ public class OltuAuthorizationRequestRedirectStrategy implements AuthorizationRe
 					.setScope(authorizationRequestAttributes.getScope().stream().collect(Collectors.joining(" ")))
 					.setState(authorizationRequestAttributes.getState())
 					.buildQueryMessage();
-		} catch (OAuthSystemException se) {
-			throw new IOException(se);
+
+			result = new URI(authorizationRequest.getLocationUri());
+
+		} catch (OAuthSystemException sysex) {
+			// TODO Throw "appropriate" exception for downstream handling
+			throw new OAuth2Exception(sysex.getMessage(), sysex);
+		} catch (URISyntaxException uriex) {
+			// TODO Throw "appropriate" exception for downstream handling
+			throw new OAuth2Exception(uriex.getMessage(), uriex);
 		}
 
-		redirectStrategy.sendRedirect(request, response, authorizationRequest.getLocationUri());
+		return result;
 	}
 }
