@@ -15,36 +15,32 @@
  */
 package org.springframework.security.oauth2.client.filter;
 
-import org.springframework.security.oauth2.client.config.ClientConfiguration;
 import org.springframework.security.oauth2.core.AccessToken;
+import org.springframework.security.oauth2.core.AccessTokenResponseAttributes;
 import org.springframework.security.oauth2.core.RefreshToken;
 
 /**
  * @author Joe Grandja
  */
-public class AuthorizationResult {
-	private final ClientConfiguration configuration;
+public class AuthorizationResult implements AccessTokenResponseAttributes {
 	private final AccessToken accessToken;
 	private final RefreshToken refreshToken;
 
-	public AuthorizationResult(ClientConfiguration configuration, AccessToken accessToken) {
-		this(configuration, accessToken, null);
+	public AuthorizationResult(AccessToken accessToken) {
+		this(accessToken, null);
 	}
 
-	public AuthorizationResult(ClientConfiguration configuration, AccessToken accessToken, RefreshToken refreshToken) {
-		this.configuration = configuration;
+	public AuthorizationResult(AccessToken accessToken, RefreshToken refreshToken) {
 		this.accessToken = accessToken;
 		this.refreshToken = refreshToken;
 	}
 
-	public final ClientConfiguration getConfiguration() {
-		return configuration;
-	}
-
+	@Override
 	public final AccessToken getAccessToken() {
 		return accessToken;
 	}
 
+	@Override
 	public final RefreshToken getRefreshToken() {
 		return refreshToken;
 	}

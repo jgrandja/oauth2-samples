@@ -18,20 +18,5 @@ package org.springframework.security.oauth2.core;
 /**
  * @author Joe Grandja
  */
-public enum GrantType {
-	AUTHORIZATION_CODE("authorization_code"),
-	IMPLICIT("implicit"),
-	PASSWORD("password"),
-	CLIENT_CREDENTIALS("client_credentials"),
-	REFRESH_TOKEN("refresh_token");
-
-	private final String value;
-
-	GrantType(String value) {
-		this.value = value;
-	}
-
-	public String value() {
-		return this.value;
-	}
+public interface AuthorizationErrorResponseAttributes extends AuthorizationResponseAttributes, ErrorResponseAttributes {
 }

@@ -13,22 +13,14 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.springframework.security.oauth2.client.filter;
+package org.springframework.security.oauth2.core;
 
-import org.springframework.security.oauth2.core.OAuth2Attributes;
-import org.springframework.security.web.util.matcher.RequestMatcher;
-import org.springframework.util.StringUtils;
-
-import javax.servlet.http.HttpServletRequest;
+import java.io.Serializable;
 
 /**
  * @author Joe Grandja
  */
-public class DefaultAuthorizationResponseRequestMatcher implements RequestMatcher {
+public interface AuthorizationResponseAttributes extends Serializable {
 
-	@Override
-	public boolean matches(HttpServletRequest request) {
-		return !StringUtils.isEmpty(request.getParameter(OAuth2Attributes.CODE)) &&
-				!StringUtils.isEmpty(request.getParameter(OAuth2Attributes.STATE));
-	}
+	String getState();
 }

@@ -13,25 +13,22 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.springframework.security.oauth2.core;
+package org.springframework.security.oauth2.client.filter;
+
+import org.springframework.security.oauth2.core.OAuth2Attributes;
+import org.springframework.security.web.util.matcher.RequestMatcher;
+import org.springframework.util.StringUtils;
+
+import javax.servlet.http.HttpServletRequest;
 
 /**
  * @author Joe Grandja
  */
-public enum GrantType {
-	AUTHORIZATION_CODE("authorization_code"),
-	IMPLICIT("implicit"),
-	PASSWORD("password"),
-	CLIENT_CREDENTIALS("client_credentials"),
-	REFRESH_TOKEN("refresh_token");
+public class DefaultAuthorizationSuccessResponseRequestMatcher implements RequestMatcher {
 
-	private final String value;
-
-	GrantType(String value) {
-		this.value = value;
-	}
-
-	public String value() {
-		return this.value;
+	@Override
+	public boolean matches(HttpServletRequest request) {
+		return !StringUtils.isEmpty(request.getParameter(OAuth2Attributes.CODE)) &&
+				!StringUtils.isEmpty(request.getParameter(OAuth2Attributes.STATE));
 	}
 }

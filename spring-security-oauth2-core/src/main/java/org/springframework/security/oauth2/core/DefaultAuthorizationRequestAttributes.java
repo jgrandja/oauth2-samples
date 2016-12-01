@@ -22,12 +22,12 @@ import java.util.List;
  * @author Joe Grandja
  */
 public class DefaultAuthorizationRequestAttributes implements AuthorizationRequestAttributes {
-	private String authorizeUri;
-	private ResponseType responseType;
-	private String clientId;
-	private String redirectUri;
-	private List<String> scope;
-	private String state;
+	private final String authorizeUri;
+	private final ResponseType responseType;
+	private final String clientId;
+	private final String redirectUri;
+	private final List<String> scope;
+	private final String state;
 
 	public DefaultAuthorizationRequestAttributes(String authorizeUri, ResponseType responseType, String clientId,
 												 String redirectUri, List<String> scope, String state) {
@@ -40,32 +40,32 @@ public class DefaultAuthorizationRequestAttributes implements AuthorizationReque
 	}
 
 	@Override
-	public String getAuthorizeUri() {
+	public final String getAuthorizeUri() {
 		return this.authorizeUri;
 	}
 
 	@Override
-	public ResponseType getResponseType() {
+	public final ResponseType getResponseType() {
 		return this.responseType;
 	}
 
 	@Override
-	public String getClientId() {
+	public final String getClientId() {
 		return this.clientId;
 	}
 
 	@Override
-	public String getRedirectUri() {
+	public final String getRedirectUri() {
 		return this.redirectUri;
 	}
 
 	@Override
-	public List<String> getScope() {
+	public final List<String> getScope() {
 		return this.scope;
 	}
 
 	@Override
-	public String getState() {
+	public final String getState() {
 		return this.state;
 	}
 }

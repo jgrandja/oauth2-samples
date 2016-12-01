@@ -28,6 +28,7 @@ import org.springframework.security.web.DefaultRedirectStrategy;
 import org.springframework.security.web.RedirectStrategy;
 import org.springframework.util.Assert;
 
+import javax.servlet.ServletException;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 import java.io.IOException;
@@ -53,7 +54,7 @@ public abstract class AbstractAuthorizationRequestRedirectStrategy implements Au
 	}
 
 	@Override
-	public final void sendRedirect(HttpServletRequest request, HttpServletResponse response) throws IOException {
+	public final void sendRedirect(HttpServletRequest request, HttpServletResponse response) throws IOException, ServletException {
 		ClientContext context = this.clientContextResolver.resolveContext(request, response);
 
 		ClientConfiguration configuration = context.getConfiguration();

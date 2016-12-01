@@ -15,23 +15,17 @@
  */
 package org.springframework.security.oauth2.core;
 
+import java.io.Serializable;
+import java.net.URI;
+
 /**
  * @author Joe Grandja
  */
-public enum GrantType {
-	AUTHORIZATION_CODE("authorization_code"),
-	IMPLICIT("implicit"),
-	PASSWORD("password"),
-	CLIENT_CREDENTIALS("client_credentials"),
-	REFRESH_TOKEN("refresh_token");
+public interface ErrorResponseAttributes extends Serializable {
 
-	private final String value;
+	String getErrorCode();
 
-	GrantType(String value) {
-		this.value = value;
-	}
+	String getErrorDescription();
 
-	public String value() {
-		return this.value;
-	}
+	URI getErrorUri();
 }

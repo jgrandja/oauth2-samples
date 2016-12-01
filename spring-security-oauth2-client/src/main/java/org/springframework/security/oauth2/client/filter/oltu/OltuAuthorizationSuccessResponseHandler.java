@@ -18,7 +18,6 @@ package org.springframework.security.oauth2.client.filter.oltu;
 import org.apache.oltu.oauth2.client.OAuthClient;
 import org.apache.oltu.oauth2.client.URLConnectionClient;
 import org.apache.oltu.oauth2.client.request.OAuthClientRequest;
-import org.apache.oltu.oauth2.client.response.OAuthAuthzResponse;
 import org.apache.oltu.oauth2.client.response.OAuthJSONAccessTokenResponse;
 import org.apache.oltu.oauth2.common.exception.OAuthProblemException;
 import org.apache.oltu.oauth2.common.exception.OAuthSystemException;
@@ -26,16 +25,12 @@ import org.apache.oltu.oauth2.common.message.types.GrantType;
 import org.springframework.http.MediaType;
 import org.springframework.security.oauth2.client.config.ClientConfiguration;
 import org.springframework.security.oauth2.client.context.ClientContext;
-import org.springframework.security.oauth2.client.context.ClientContextRepository;
-import org.springframework.security.oauth2.client.context.ClientContextResolver;
-import org.springframework.security.oauth2.client.filter.AuthorizationResponseHandler;
 import org.springframework.security.oauth2.client.filter.AuthorizationResult;
-import org.springframework.security.oauth2.core.AccessToken;
-import org.springframework.security.oauth2.core.AccessTokenType;
-import org.springframework.security.oauth2.core.OAuth2Exception;
-import org.springframework.security.oauth2.core.RefreshToken;
+import org.springframework.security.oauth2.client.filter.AuthorizationSuccessResponseHandler;
+import org.springframework.security.oauth2.core.*;
 import org.springframework.util.StringUtils;
 
+import javax.servlet.ServletException;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 import java.io.IOException;
@@ -47,37 +42,16 @@ import java.util.stream.Collectors;
 /**
  * @author Joe Grandja
  */
-public class OltuAuthorizationResponseHandler implements AuthorizationResponseHandler {
-	private final ClientContextResolver clientContextResolver;
-
-	private final ClientContextRepository clientContextRepository;
-
-	public OltuAuthorizationResponseHandler(ClientContextResolver clientContextResolver,
-											ClientContextRepository clientContextRepository) {
-
-		this.clientContextResolver = clientContextResolver;
-		this.clientContextRepository = clientContextRepository;
-	}
+public class OltuAuthorizationSuccessResponseHandler implements AuthorizationSuccessResponseHandler {
 
 	@Override
-	public AuthorizationResult handle(HttpServletRequest request, HttpServletResponse response) throws IOException {
+	public AuthorizationResult onAuthorizationSuccess(HttpServletRequest request,
+													  HttpServletResponse response,
+													  ClientContext clientContext,
+													  AuthorizationSuccessResponseAttributes authorizationResponseAttributes)
+															throws IOException, ServletException {
 
-		// Parse the authorization response from the request callback
-		OAuthAuthzResponse authorizationResponse;
-		try {
-			authorizationResponse = OAuthAuthzResponse.oauthCodeAuthzResponse(request);
-		} catch (OAuthProblemException pe) {
-			// The authorization request was denied or some error occurred
-			// TODO Throw OAuth2-specific exception for downstream handling
-			throw new OAuth2Exception(pe.getMessage(), pe);
-		}
-
-		ClientContext context = clientContextResolver.resolveContext(request, response);
-		if (context == null) {
-			// context should not be null as it was saved during the authorization request
-			// TODO Throw OAuth2-specific exception for downstream handling OR ClientContextResolver should throw?
-		}
-		ClientConfiguration configuration = context.getConfiguration();
+		ClientConfiguration configuration = clientContext.getConfiguration();
 
 		OAuthJSONAccessTokenResponse tokenResponse;
 		try {
@@ -88,7 +62,7 @@ public class OltuAuthorizationResponseHandler implements AuthorizationResponseHa
 					.setClientId(configuration.getClientId())
 					.setClientSecret(configuration.getClientSecret())
 					.setRedirectURI(configuration.getRedirectUri())
-					.setCode(authorizationResponse.getCode())
+					.setCode(authorizationResponseAttributes.getCode())
 					.setScope(configuration.getScope().stream().collect(Collectors.joining(" ")))
 					.buildBodyMessage();
 			tokenRequest.setHeader("Accept", MediaType.APPLICATION_JSON_VALUE);
@@ -106,15 +80,12 @@ public class OltuAuthorizationResponseHandler implements AuthorizationResponseHa
 		}
 
 		AccessToken accessToken = getAccessToken(tokenResponse);
-		clientContextRepository.updateContext(context, accessToken, request, response);
-
 		RefreshToken refreshToken = null;
 		if (!StringUtils.isEmpty(tokenResponse.getRefreshToken())) {
 			refreshToken = new RefreshToken(tokenResponse.getRefreshToken());
-			clientContextRepository.updateContext(context, refreshToken, request, response);
 		}
 
-		AuthorizationResult result = new AuthorizationResult(configuration, accessToken, refreshToken);
+		AuthorizationResult result = new AuthorizationResult(accessToken, refreshToken);
 
 		return result;
 	}

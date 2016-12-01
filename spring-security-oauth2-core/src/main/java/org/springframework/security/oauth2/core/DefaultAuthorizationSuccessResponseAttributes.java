@@ -18,20 +18,22 @@ package org.springframework.security.oauth2.core;
 /**
  * @author Joe Grandja
  */
-public enum GrantType {
-	AUTHORIZATION_CODE("authorization_code"),
-	IMPLICIT("implicit"),
-	PASSWORD("password"),
-	CLIENT_CREDENTIALS("client_credentials"),
-	REFRESH_TOKEN("refresh_token");
+public class DefaultAuthorizationSuccessResponseAttributes
+		extends AbstractAuthorizationResponseAttributes implements AuthorizationSuccessResponseAttributes {
 
-	private final String value;
+	private final String code;
 
-	GrantType(String value) {
-		this.value = value;
+	public DefaultAuthorizationSuccessResponseAttributes(String code) {
+		this(code, null);
 	}
 
-	public String value() {
-		return this.value;
+	public DefaultAuthorizationSuccessResponseAttributes(String code, String state) {
+		super(state);
+		this.code = code;
+	}
+
+	@Override
+	public final String getCode() {
+		return this.code;
 	}
 }

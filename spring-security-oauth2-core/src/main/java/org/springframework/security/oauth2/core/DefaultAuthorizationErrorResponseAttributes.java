@@ -15,23 +15,31 @@
  */
 package org.springframework.security.oauth2.core;
 
+import java.net.URI;
+
 /**
  * @author Joe Grandja
  */
-public enum GrantType {
-	AUTHORIZATION_CODE("authorization_code"),
-	IMPLICIT("implicit"),
-	PASSWORD("password"),
-	CLIENT_CREDENTIALS("client_credentials"),
-	REFRESH_TOKEN("refresh_token");
+public class DefaultAuthorizationErrorResponseAttributes
+		extends DefaultErrorResponseAttributes implements AuthorizationErrorResponseAttributes {
 
-	private final String value;
+	private final String state;
 
-	GrantType(String value) {
-		this.value = value;
+	public DefaultAuthorizationErrorResponseAttributes(String errorCode) {
+		this(errorCode, null);
 	}
 
-	public String value() {
-		return this.value;
+	public DefaultAuthorizationErrorResponseAttributes(String errorCode, String state) {
+		this(errorCode, state, null, null);
+	}
+
+	public DefaultAuthorizationErrorResponseAttributes(String errorCode, String state, String errorDescription, URI errorUri) {
+		super(errorCode, errorDescription, errorUri);
+		this.state = state;
+	}
+
+	@Override
+	public final String getState() {
+		return this.state;
 	}
 }

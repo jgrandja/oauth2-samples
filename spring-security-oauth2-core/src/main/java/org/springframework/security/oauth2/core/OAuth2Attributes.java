@@ -26,4 +26,10 @@ public interface OAuth2Attributes {
 
 	String REDIRECT_URI = "redirect_uri";
 
+	String ERROR = "error";
+
+	String ERROR_DESCRIPTION = "error_description";
+
+	String ERROR_URI = "error_uri";
+
 }

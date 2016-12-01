@@ -35,9 +35,9 @@ import org.springframework.security.oauth2.client.context.DefaultClientContextRe
 import org.springframework.security.oauth2.client.context.HttpSessionClientContextRepository;
 import org.springframework.security.oauth2.client.filter.AuthorizationCodeGrantProcessingFilter;
 import org.springframework.security.oauth2.client.filter.AuthorizationRequestRedirectStrategy;
-import org.springframework.security.oauth2.client.filter.AuthorizationResponseHandler;
+import org.springframework.security.oauth2.client.filter.AuthorizationSuccessResponseHandler;
 import org.springframework.security.oauth2.client.filter.nimbus.NimbusAuthorizationRequestRedirectStrategy;
-import org.springframework.security.oauth2.client.filter.nimbus.NimbusAuthorizationResponseHandler;
+import org.springframework.security.oauth2.client.filter.nimbus.NimbusAuthorizationSuccessResponseHandler;
 import org.springframework.security.oauth2.client.userdetails.UserInfoUserDetailsService;
 import org.springframework.security.oauth2.client.userdetails.nimbus.NimbusUserInfoUserDetailsService;
 import org.springframework.security.web.authentication.LoginUrlAuthenticationEntryPoint;
@@ -63,10 +63,16 @@ public class SecurityConfig extends WebSecurityConfigurerAdapter {
 	protected ClientConfigurationRepository clientConfigurationRepository;
 
 	@Autowired
+	protected ClientContextRepository clientContextRepository;
+
+	@Autowired
+	protected ClientContextResolver clientContextResolver;
+
+	@Autowired
 	protected AuthorizationRequestRedirectStrategy authorizationRequestRedirectStrategy;
 
 	@Autowired
-	protected AuthorizationResponseHandler authorizationResponseHandler;
+	protected AuthorizationSuccessResponseHandler authorizationSuccessResponseHandler;
 
 	@Autowired
 	protected ObjectPostProcessor objectPostProcessor;
@@ -138,18 +144,12 @@ public class SecurityConfig extends WebSecurityConfigurerAdapter {
 	public AuthorizationRequestRedirectStrategy authorizationRequestRedirectStrategy(
 			ClientContextResolver clientContextResolver, ClientContextRepository clientContextRepository) {
 
-		NimbusAuthorizationRequestRedirectStrategy authorizationRequestRedirectStrategy =
-				new NimbusAuthorizationRequestRedirectStrategy(clientContextResolver, clientContextRepository);
-		return authorizationRequestRedirectStrategy;
+		return new NimbusAuthorizationRequestRedirectStrategy(clientContextResolver, clientContextRepository);
 	}
 
 	@Bean
-	public AuthorizationResponseHandler authorizationResponseHandler(
-			ClientContextResolver clientContextResolver, ClientContextRepository clientContextRepository) throws Exception {
-
-		NimbusAuthorizationResponseHandler authorizationResponseHandler =
-				new NimbusAuthorizationResponseHandler(clientContextResolver, clientContextRepository);
-		return authorizationResponseHandler;
+	public AuthorizationSuccessResponseHandler authorizationSuccessResponseHandler(){
+		return new NimbusAuthorizationSuccessResponseHandler();
 	}
 
 	@Bean
@@ -168,8 +168,10 @@ public class SecurityConfig extends WebSecurityConfigurerAdapter {
 						LOGIN_URL,
 						this.clientConfigurationRepository,
 						this.authorizationRequestRedirectStrategy,
-						this.authorizationResponseHandler,
+						this.authorizationSuccessResponseHandler,
 						this.authenticationManager());
+		authorizationCodeGrantProcessingFilter.setClientContextRepository(this.clientContextRepository);
+		authorizationCodeGrantProcessingFilter.setClientContextResolver(this.clientContextResolver);
 
 		// TODO This is temporary until we have a SecurityConfigurer
 		this.objectPostProcessor.postProcess(authorizationCodeGrantProcessingFilter);

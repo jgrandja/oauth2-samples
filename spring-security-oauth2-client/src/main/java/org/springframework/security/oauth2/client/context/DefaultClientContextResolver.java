@@ -17,7 +17,7 @@ package org.springframework.security.oauth2.client.context;
 
 import org.springframework.security.oauth2.client.config.ClientConfiguration;
 import org.springframework.security.oauth2.client.config.ClientConfigurationRepository;
-import org.springframework.security.oauth2.client.filter.DefaultAuthorizationResponseRequestMatcher;
+import org.springframework.security.oauth2.client.filter.DefaultAuthorizationSuccessResponseRequestMatcher;
 import org.springframework.security.oauth2.core.OAuth2Attributes;
 import org.springframework.security.oauth2.core.OAuth2Exception;
 import org.springframework.security.web.util.matcher.RequestMatcher;
@@ -34,7 +34,7 @@ public class DefaultClientContextResolver implements ClientContextResolver {
 
 	private final ClientConfigurationRepository clientConfigurationRepository;
 
-	private final RequestMatcher authorizationResponseRequestMatcher = new DefaultAuthorizationResponseRequestMatcher();
+	private final RequestMatcher authorizationResponseRequestMatcher = new DefaultAuthorizationSuccessResponseRequestMatcher();
 
 	public DefaultClientContextResolver(ClientContextRepository clientContextRepository,
 										ClientConfigurationRepository clientConfigurationRepository) {

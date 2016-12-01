@@ -16,9 +16,8 @@
 package org.springframework.security.oauth2.client.context;
 
 import org.springframework.security.oauth2.client.config.ClientConfiguration;
-import org.springframework.security.oauth2.core.AccessToken;
+import org.springframework.security.oauth2.core.AccessTokenResponseAttributes;
 import org.springframework.security.oauth2.core.AuthorizationRequestAttributes;
-import org.springframework.security.oauth2.core.RefreshToken;
 
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
@@ -36,10 +35,7 @@ public interface ClientContextRepository {
 	void updateContext(ClientContext context, AuthorizationRequestAttributes authorizationRequest,
 					 HttpServletRequest request, HttpServletResponse response);
 
-	void updateContext(ClientContext context, AccessToken accessToken,
-					   HttpServletRequest request, HttpServletResponse response);
-
-	void updateContext(ClientContext context, RefreshToken refreshToken,
+	void updateContext(ClientContext context, AccessTokenResponseAttributes accessTokenResponse,
 					   HttpServletRequest request, HttpServletResponse response);
 
 	ClientContext createContext(ClientConfiguration configuration,

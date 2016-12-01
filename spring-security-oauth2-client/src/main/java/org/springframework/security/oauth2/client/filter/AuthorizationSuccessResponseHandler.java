@@ -15,6 +15,9 @@
  */
 package org.springframework.security.oauth2.client.filter;
 
+import org.springframework.security.oauth2.client.context.ClientContext;
+import org.springframework.security.oauth2.core.AuthorizationSuccessResponseAttributes;
+
 import javax.servlet.ServletException;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
@@ -23,8 +26,12 @@ import java.io.IOException;
 /**
  * @author Joe Grandja
  */
-public interface AuthorizationRequestRedirectStrategy {
+public interface AuthorizationSuccessResponseHandler {
 
-	void sendRedirect(HttpServletRequest request, HttpServletResponse response) throws IOException, ServletException;
-
+	// TODO Not sure if the class name of the return type makes sense? Should it be TokenResponseResult or similar?
+	AuthorizationResult onAuthorizationSuccess(HttpServletRequest request,
+											   HttpServletResponse response,
+											   ClientContext clientContext,
+											   AuthorizationSuccessResponseAttributes authorizationResponseAttributes)
+													throws IOException, ServletException;
 }
