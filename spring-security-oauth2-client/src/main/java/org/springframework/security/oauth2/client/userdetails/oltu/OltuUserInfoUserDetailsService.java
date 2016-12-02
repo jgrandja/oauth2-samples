@@ -21,23 +21,14 @@ import org.apache.oltu.oauth2.client.request.OAuthClientRequest;
 import org.apache.oltu.oauth2.common.exception.OAuthProblemException;
 import org.apache.oltu.oauth2.common.exception.OAuthSystemException;
 import org.springframework.http.MediaType;
-import org.springframework.security.core.GrantedAuthority;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.security.oauth2.client.authentication.OAuth2AuthenticationToken;
 import org.springframework.security.oauth2.client.userdetails.UserInfoUserDetailsService;
 import org.springframework.security.oauth2.core.OAuth2Exception;
 import org.springframework.security.oauth2.core.userdetails.OAuth2User;
-import org.springframework.security.oauth2.core.userdetails.OAuth2UserAttribute;
-import org.springframework.security.oauth2.core.userdetails.OAuth2UserDetails;
-import org.springframework.security.openid.connect.core.OpenIDConnectAttributes;
-import org.springframework.security.openid.connect.core.userdetails.OpenIDConnectUser;
-
-import java.util.Collections;
-import java.util.List;
-import java.util.Optional;
-import java.util.Set;
-import java.util.stream.Collectors;
+import org.springframework.security.oauth2.core.userdetails.OAuth2UserBuilder;
+import org.springframework.security.openid.connect.core.userdetails.OpenIDConnectUserBuilder;
 
 /**
  * @author Joe Grandja
@@ -62,11 +53,11 @@ public class OltuUserInfoUserDetailsService implements UserInfoUserDetailsServic
 
 			if (authenticationRequest.getConfiguration().isClientOpenIDConnect()) {
 				oauth2User = new OpenIDConnectUserBuilder()
-						.userInfoResponse(userInfoResponse)
+						.userAttributes(userInfoResponse.getAttributes())
 						.build();
 			} else {
 				oauth2User = new OAuth2UserBuilder()
-						.userInfoResponse(userInfoResponse)
+						.userAttributes(userInfoResponse.getAttributes())
 						.build();
 			}
 
@@ -79,76 +70,5 @@ public class OltuUserInfoUserDetailsService implements UserInfoUserDetailsServic
 		}
 
 		return oauth2User;
-	}
-
-	private class OAuth2UserBuilder extends AbstractOAuth2UserDetailsBuilder<OAuth2User> {
-		static final String DEFAULT_IDENTIFIER_ATTRIBUTE_NAME = "id";
-
-		OAuth2UserBuilder() {
-			this.identifierAttributeName = DEFAULT_IDENTIFIER_ATTRIBUTE_NAME;
-		}
-
-		@Override
-		OAuth2User build() {
-			List<OAuth2UserAttribute> userAttributes = this.getUserAttributes();
-			OAuth2UserAttribute identifierAttribute = this.findIdentifier(userAttributes);
-			Set<GrantedAuthority> authorities = this.loadAuthorities(identifierAttribute);
-			return new OAuth2User(identifierAttribute, userAttributes, authorities);
-		}
-	}
-
-	private class OpenIDConnectUserBuilder extends AbstractOAuth2UserDetailsBuilder<OpenIDConnectUser> {
-
-		OpenIDConnectUserBuilder() {
-			this.identifierAttributeName = OpenIDConnectAttributes.Claim.SUB;
-		}
-
-		@Override
-		OpenIDConnectUser build() {
-			List<OAuth2UserAttribute> userAttributes = this.getUserAttributes();
-			OAuth2UserAttribute identifierAttribute = this.findIdentifier(userAttributes);
-			Set<GrantedAuthority> authorities = this.loadAuthorities(identifierAttribute);
-			return new OpenIDConnectUser(identifierAttribute, userAttributes, authorities);
-		}
-	}
-
-	private abstract class AbstractOAuth2UserDetailsBuilder<O extends OAuth2UserDetails> {
-		OltuUserInfoResponse userInfoResponse;
-		String identifierAttributeName;
-
-		AbstractOAuth2UserDetailsBuilder<O> userInfoResponse(OltuUserInfoResponse userInfoResponse) {
-			this.userInfoResponse = userInfoResponse;
-			return this;
-		}
-
-		AbstractOAuth2UserDetailsBuilder<O> identifierAttributeName(String identifierAttributeName) {
-			this.identifierAttributeName = identifierAttributeName;
-			return this;
-		}
-
-		abstract O build();
-
-		List<OAuth2UserAttribute> getUserAttributes() {
-			List<OAuth2UserAttribute> userAttributes = this.userInfoResponse .getAttributes().entrySet().stream()
-					.map(e -> new OAuth2UserAttribute(e.getKey(), e.getValue())).collect(Collectors.toList());
-			return userAttributes;
-		}
-
-		OAuth2UserAttribute findIdentifier(List<OAuth2UserAttribute> userAttributes) {
-			Optional<OAuth2UserAttribute> identifierAttribute = userAttributes.stream()
-					.filter(e -> e.getName().equalsIgnoreCase(this.identifierAttributeName)).findFirst();
-			if (!identifierAttribute.isPresent()) {
-				// TODO Throw
-			}
-			return identifierAttribute.get();
-		}
-
-		Set<GrantedAuthority> loadAuthorities(OAuth2UserAttribute identifierAttribute) {
-			Set<GrantedAuthority> authorities = Collections.emptySet();
-
-			// TODO Load authorities - see MappableAttributesRetriever and Attributes2GrantedAuthoritiesMapper
-
-			return authorities;
-		}
 	}
 }
