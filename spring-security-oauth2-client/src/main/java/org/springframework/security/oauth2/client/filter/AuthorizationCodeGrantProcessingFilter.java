@@ -18,11 +18,14 @@ package org.springframework.security.oauth2.client.filter;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
+import org.springframework.security.crypto.keygen.StringKeyGenerator;
 import org.springframework.security.oauth2.client.authentication.OAuth2AuthenticationToken;
 import org.springframework.security.oauth2.client.config.ClientConfiguration;
 import org.springframework.security.oauth2.client.config.ClientConfigurationRepository;
 import org.springframework.security.oauth2.client.context.*;
 import org.springframework.security.oauth2.core.*;
+import org.springframework.security.web.DefaultRedirectStrategy;
+import org.springframework.security.web.RedirectStrategy;
 import org.springframework.security.web.authentication.AuthenticationSuccessHandler;
 import org.springframework.security.web.authentication.SavedRequestAwareAuthenticationSuccessHandler;
 import org.springframework.security.web.util.matcher.AntPathRequestMatcher;
@@ -50,11 +53,11 @@ import java.util.stream.Collectors;
  * @author Joe Grandja
  */
 public class AuthorizationCodeGrantProcessingFilter extends GenericFilterBean {
-	private static final String DEFAULT_FILTER_PROCESSING_BASE_URI = "/login/oauth2";
-
 	private static final RequestAttributesParser<AuthorizationSuccessResponseAttributes> authorizationSuccessResponseParser = new AuthorizationSuccessResponseParser();
 
 	private static final RequestAttributesParser<AuthorizationErrorResponseAttributes> authorizationErrorResponseParser = new AuthorizationErrorResponseParser();
+
+	private static final String DEFAULT_FILTER_PROCESSING_BASE_URI = "/login/oauth2";
 
 	private final String filterProcessingBaseUri;
 
@@ -64,13 +67,17 @@ public class AuthorizationCodeGrantProcessingFilter extends GenericFilterBean {
 
 	private ClientContextResolver clientContextResolver;
 
-	private final AuthorizationRequestRedirectStrategy authorizationRequestRedirectStrategy;
+	private final AuthorizationRequestUriBuilder authorizationRequestUriBuilder;
 
 	private final AuthorizationSuccessResponseHandler authorizationSuccessResponseHandler;
 
 	private final AuthenticationSuccessHandler authenticationSuccessHandler = new SavedRequestAwareAuthenticationSuccessHandler();
 
 	private final AuthenticationManager authenticationManager;
+
+	private final StringKeyGenerator stateGenerator = new DefaultStateGenerator();
+
+	private final RedirectStrategy authorizationRedirectStrategy = new DefaultRedirectStrategy();
 
 	private RequestMatcher authorizationRequestRequestMatcher;
 
@@ -80,17 +87,17 @@ public class AuthorizationCodeGrantProcessingFilter extends GenericFilterBean {
 
 
 	public AuthorizationCodeGrantProcessingFilter(ClientConfigurationRepository clientConfigurationRepository,
-												  AuthorizationRequestRedirectStrategy authorizationRequestRedirectStrategy,
+												  AuthorizationRequestUriBuilder authorizationRequestUriBuilder,
 												  AuthorizationSuccessResponseHandler authorizationSuccessResponseHandler,
 												  AuthenticationManager authenticationManager) {
 
-		this(DEFAULT_FILTER_PROCESSING_BASE_URI, clientConfigurationRepository, authorizationRequestRedirectStrategy,
+		this(DEFAULT_FILTER_PROCESSING_BASE_URI, clientConfigurationRepository, authorizationRequestUriBuilder,
 				authorizationSuccessResponseHandler, authenticationManager);
 	}
 
 	public AuthorizationCodeGrantProcessingFilter(String filterProcessingBaseUri,
 												  ClientConfigurationRepository clientConfigurationRepository,
-												  AuthorizationRequestRedirectStrategy authorizationRequestRedirectStrategy,
+												  AuthorizationRequestUriBuilder authorizationRequestUriBuilder,
 												  AuthorizationSuccessResponseHandler authorizationSuccessResponseHandler,
 												  AuthenticationManager authenticationManager) {
 
@@ -100,8 +107,8 @@ public class AuthorizationCodeGrantProcessingFilter extends GenericFilterBean {
 		Assert.notNull(clientConfigurationRepository, "clientConfigurationRepository cannot be null");
 		this.clientConfigurationRepository = clientConfigurationRepository;
 
-		Assert.notNull(authorizationRequestRedirectStrategy, "authorizationRequestRedirectStrategy cannot be null");
-		this.authorizationRequestRedirectStrategy = authorizationRequestRedirectStrategy;
+		Assert.notNull(authorizationRequestUriBuilder, "authorizationRequestUriBuilder cannot be null");
+		this.authorizationRequestUriBuilder = authorizationRequestUriBuilder;
 
 		Assert.notNull(authorizationSuccessResponseHandler, "authorizationSuccessResponseHandler cannot be null");
 		this.authorizationSuccessResponseHandler = authorizationSuccessResponseHandler;
@@ -133,22 +140,50 @@ public class AuthorizationCodeGrantProcessingFilter extends GenericFilterBean {
 		HttpServletRequest request = (HttpServletRequest) req;
 		HttpServletResponse response = (HttpServletResponse) res;
 
+		// Authorization Request
 		if (this.authorizationRequestRequestMatcher.matches(request)) {
-			this.authorizationRequestRedirectStrategy.sendRedirect(request, response);
+			this.obtainAuthorization(request, response, chain);
 			return;
 		}
 
+		// Authorization Error Response
 		if (this.authorizationErrorResponseRequestMatcher.matches(request)) {
 			this.unsuccessfulAuthorization(request, response, chain);
 			return;
 		}
 
+		// Authorization Success Response
 		if (this.authorizationSuccessResponseRequestMatcher.matches(request)) {
 			this.successfulAuthorization(request, response, chain);
 			return;
 		}
 
 		chain.doFilter(req, res);
+	}
+
+	protected void obtainAuthorization(HttpServletRequest request, HttpServletResponse response,
+										   FilterChain chain) throws IOException, ServletException {
+
+		// TODO ClientContext is being created in ClientContextResolver. Wondering if that logic belongs in here?
+		ClientContext clientContext = this.clientContextResolver.resolveContext(request, response);
+
+		ClientConfiguration configuration = clientContext.getConfiguration();
+
+		// Save the request attributes so we can correlate and validate on the authorization response callback
+		AuthorizationRequestAttributes authorizationRequestAttributes =
+				new DefaultAuthorizationRequestAttributes(
+						configuration.getAuthorizeUri(),
+						ResponseType.CODE,
+						configuration.getClientId(),
+						configuration.getRedirectUri(),
+						configuration.getScope(),
+						this.stateGenerator.generateKey());
+		this.clientContextRepository.updateContext(clientContext, authorizationRequestAttributes, request, response);
+
+		URI redirectUri = this.authorizationRequestUriBuilder.build(authorizationRequestAttributes);
+		Assert.notNull(redirectUri, "Authorization redirectUri cannot be null");
+
+		this.authorizationRedirectStrategy.sendRedirect(request, response, redirectUri.toString());
 	}
 
 	protected void successfulAuthorization(HttpServletRequest request, HttpServletResponse response,

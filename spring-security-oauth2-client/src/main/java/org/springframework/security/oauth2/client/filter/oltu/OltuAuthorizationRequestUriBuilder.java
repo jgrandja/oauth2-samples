@@ -17,9 +17,7 @@ package org.springframework.security.oauth2.client.filter.oltu;
 
 import org.apache.oltu.oauth2.client.request.OAuthClientRequest;
 import org.apache.oltu.oauth2.common.exception.OAuthSystemException;
-import org.springframework.security.oauth2.client.context.ClientContextRepository;
-import org.springframework.security.oauth2.client.context.ClientContextResolver;
-import org.springframework.security.oauth2.client.filter.AbstractAuthorizationRequestRedirectStrategy;
+import org.springframework.security.oauth2.client.filter.AuthorizationRequestUriBuilder;
 import org.springframework.security.oauth2.core.AuthorizationRequestAttributes;
 import org.springframework.security.oauth2.core.OAuth2Exception;
 
@@ -28,17 +26,14 @@ import java.net.URISyntaxException;
 import java.util.stream.Collectors;
 
 /**
+ * TODO AuthorizationRequestUriBuilder and associated implementations seem redundant. May be removed
+ *
  * @author Joe Grandja
  */
-public class OltuAuthorizationRequestRedirectStrategy extends AbstractAuthorizationRequestRedirectStrategy {
-
-	public OltuAuthorizationRequestRedirectStrategy(ClientContextResolver clientContextResolver,
-													ClientContextRepository clientContextRepository) {
-		super(clientContextResolver, clientContextRepository);
-	}
+public class OltuAuthorizationRequestUriBuilder implements AuthorizationRequestUriBuilder {
 
 	@Override
-	public URI buildRedirect(AuthorizationRequestAttributes authorizationRequestAttributes) {
+	public URI build(AuthorizationRequestAttributes authorizationRequestAttributes) {
 		URI result;
 		try {
 			OAuthClientRequest authorizationRequest = OAuthClientRequest

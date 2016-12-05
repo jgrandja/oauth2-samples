@@ -20,9 +20,7 @@ import com.nimbusds.oauth2.sdk.ResponseType;
 import com.nimbusds.oauth2.sdk.Scope;
 import com.nimbusds.oauth2.sdk.id.ClientID;
 import com.nimbusds.oauth2.sdk.id.State;
-import org.springframework.security.oauth2.client.context.ClientContextRepository;
-import org.springframework.security.oauth2.client.context.ClientContextResolver;
-import org.springframework.security.oauth2.client.filter.AbstractAuthorizationRequestRedirectStrategy;
+import org.springframework.security.oauth2.client.filter.AuthorizationRequestUriBuilder;
 import org.springframework.security.oauth2.core.AuthorizationRequestAttributes;
 import org.springframework.security.oauth2.core.OAuth2Exception;
 
@@ -30,17 +28,14 @@ import java.net.URI;
 import java.net.URISyntaxException;
 
 /**
+ * TODO AuthorizationRequestUriBuilder and associated implementations seem redundant. May be removed
+ *
  * @author Joe Grandja
  */
-public class NimbusAuthorizationRequestRedirectStrategy extends AbstractAuthorizationRequestRedirectStrategy {
-
-	public NimbusAuthorizationRequestRedirectStrategy(ClientContextResolver clientContextResolver,
-													  ClientContextRepository clientContextRepository) {
-		super(clientContextResolver, clientContextRepository);
-	}
+public class NimbusAuthorizationRequestUriBuilder implements AuthorizationRequestUriBuilder {
 
 	@Override
-	public URI buildRedirect(AuthorizationRequestAttributes authorizationRequestAttributes) {
+	public URI build(AuthorizationRequestAttributes authorizationRequestAttributes) {
 		URI result;
 		try {
 			URI authorizationUri = new URI(authorizationRequestAttributes.getAuthorizeUri());

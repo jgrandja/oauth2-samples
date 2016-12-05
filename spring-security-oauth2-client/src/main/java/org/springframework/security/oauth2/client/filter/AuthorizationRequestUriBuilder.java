@@ -15,16 +15,14 @@
  */
 package org.springframework.security.oauth2.client.filter;
 
-import javax.servlet.ServletException;
-import javax.servlet.http.HttpServletRequest;
-import javax.servlet.http.HttpServletResponse;
-import java.io.IOException;
+import org.springframework.security.oauth2.core.AuthorizationRequestAttributes;
+
+import java.net.URI;
 
 /**
  * @author Joe Grandja
  */
-public interface AuthorizationRequestRedirectStrategy {
+public interface AuthorizationRequestUriBuilder {
 
-	void sendRedirect(HttpServletRequest request, HttpServletResponse response) throws IOException, ServletException;
-
+	URI build(AuthorizationRequestAttributes authorizationRequestAttributes);
 }
