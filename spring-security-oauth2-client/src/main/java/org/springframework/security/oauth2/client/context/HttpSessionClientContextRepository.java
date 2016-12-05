@@ -43,7 +43,7 @@ public class HttpSessionClientContextRepository implements ClientContextReposito
 		ClientContext context = null;
 		HttpSession session = request.getSession(false);
 		if (session != null) {
-			context = ClientContext.class.cast(session.getAttribute(CLIENT_CONTEXT_KEY));
+			context = (ClientContext) session.getAttribute(CLIENT_CONTEXT_KEY);
 		}
 		return context;
 	}
@@ -64,7 +64,7 @@ public class HttpSessionClientContextRepository implements ClientContextReposito
 			// TODO Handle this scenario
 		}
 
-		DefaultClientContext defaultClientContext = DefaultClientContext.class.cast(context);
+		DefaultClientContext defaultClientContext = (DefaultClientContext) context;
 		defaultClientContext.setAuthorizationRequest(authorizationRequest);
 		saveContext(defaultClientContext, request, response);
 	}
@@ -77,7 +77,7 @@ public class HttpSessionClientContextRepository implements ClientContextReposito
 			// TODO Handle this scenario
 		}
 
-		DefaultClientContext defaultClientContext = DefaultClientContext.class.cast(context);
+		DefaultClientContext defaultClientContext = (DefaultClientContext) context;
 		defaultClientContext.setAccessToken(accessTokenResponse.getAccessToken());
 		defaultClientContext.setRefreshToken(accessTokenResponse.getRefreshToken());
 		saveContext(defaultClientContext, request, response);

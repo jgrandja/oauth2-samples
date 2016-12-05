@@ -39,7 +39,7 @@ public class OAuth2AuthenticationProvider implements AuthenticationProvider {
 
 	@Override
 	public Authentication authenticate(Authentication authentication) throws AuthenticationException {
-		OAuth2AuthenticationToken authenticationRequest = OAuth2AuthenticationToken.class.cast(authentication);
+		OAuth2AuthenticationToken authenticationRequest = (OAuth2AuthenticationToken) authentication;
 
 		UserDetails userDetails = this.userInfoUserDetailsService.loadUserDetails(authenticationRequest);
 

@@ -79,11 +79,11 @@ public class NimbusAuthorizationSuccessResponseHandler implements AuthorizationS
 
 		if (!tokenResponse.indicatesSuccess()) {
 			// TODO Throw OAuth2-specific exception for downstream handling
-			TokenErrorResponse tokenErrorResponse = TokenErrorResponse.class.cast(tokenResponse);
+			TokenErrorResponse tokenErrorResponse = (TokenErrorResponse) tokenResponse;
 			throw new OAuth2Exception(tokenErrorResponse.getErrorObject().getDescription());
 		}
 
-		AccessTokenResponse accessTokenResponse = AccessTokenResponse.class.cast(tokenResponse);
+		AccessTokenResponse accessTokenResponse = (AccessTokenResponse) tokenResponse;
 
 		AccessToken accessToken = this.getAccessToken(accessTokenResponse);
 		RefreshToken refreshToken = this.getRefreshToken(accessTokenResponse);

@@ -95,7 +95,7 @@ class AuthorizationCodeFlowUtil {
 	}
 
 	private static HttpServletRequest getCurrentRequest() {
-		return ServletRequestAttributes.class.cast(RequestContextHolder.currentRequestAttributes()).getRequest();
+		return ((ServletRequestAttributes) RequestContextHolder.currentRequestAttributes()).getRequest();
 	}
 
 	@Autowired
