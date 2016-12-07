@@ -29,11 +29,8 @@ import org.springframework.security.oauth2.client.authentication.OAuth2Authentic
 import org.springframework.security.oauth2.client.config.ClientConfiguration;
 import org.springframework.security.oauth2.client.config.ClientConfigurationRepository;
 import org.springframework.security.oauth2.client.config.InMemoryClientConfigurationRepository;
-import org.springframework.security.oauth2.client.context.ClientContextRepository;
-import org.springframework.security.oauth2.client.context.ClientContextResolver;
-import org.springframework.security.oauth2.client.context.DefaultClientContextResolver;
-import org.springframework.security.oauth2.client.context.HttpSessionClientContextRepository;
 import org.springframework.security.oauth2.client.filter.AuthorizationCodeGrantProcessingFilter;
+import org.springframework.security.oauth2.client.filter.AuthorizationRequestRedirectFilter;
 import org.springframework.security.oauth2.client.filter.AuthorizationRequestUriBuilder;
 import org.springframework.security.oauth2.client.filter.AuthorizationSuccessResponseHandler;
 import org.springframework.security.oauth2.client.filter.nimbus.NimbusAuthorizationRequestUriBuilder;
@@ -41,7 +38,7 @@ import org.springframework.security.oauth2.client.filter.nimbus.NimbusAuthorizat
 import org.springframework.security.oauth2.client.userdetails.UserInfoUserDetailsService;
 import org.springframework.security.oauth2.client.userdetails.nimbus.NimbusUserInfoUserDetailsService;
 import org.springframework.security.web.authentication.LoginUrlAuthenticationEntryPoint;
-import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
+import org.springframework.security.web.authentication.preauth.AbstractPreAuthenticatedProcessingFilter;
 
 import javax.servlet.Filter;
 import java.util.List;
@@ -63,12 +60,6 @@ public class SecurityConfig extends WebSecurityConfigurerAdapter {
 	protected ClientConfigurationRepository clientConfigurationRepository;
 
 	@Autowired
-	protected ClientContextRepository clientContextRepository;
-
-	@Autowired
-	protected ClientContextResolver clientContextResolver;
-
-	@Autowired
 	protected AuthorizationRequestUriBuilder authorizationRequestUriBuilder;
 
 	@Autowired
@@ -88,7 +79,8 @@ public class SecurityConfig extends WebSecurityConfigurerAdapter {
 				.exceptionHandling()
 					.authenticationEntryPoint(new LoginUrlAuthenticationEntryPoint(LOGIN_URL))
 					.and()
-				.addFilterBefore(authorizationCodeGrantProcessingFilter(), UsernamePasswordAuthenticationFilter.class);
+				.addFilterAfter(authorizationRequestRedirectFilter(), AbstractPreAuthenticatedProcessingFilter.class)
+				.addFilterAfter(authorizationCodeGrantProcessingFilter(), AuthorizationRequestRedirectFilter.class);
 	}
 	// @formatter:on
 
@@ -114,20 +106,6 @@ public class SecurityConfig extends WebSecurityConfigurerAdapter {
 	@Bean
 	public ClientConfigurationRepository clientConfigurationRepository(List<ClientConfiguration> clientConfigurations) {
 		return new InMemoryClientConfigurationRepository(clientConfigurations);
-	}
-
-	@Bean
-	public ClientContextRepository clientContextRepository() {
-		return new HttpSessionClientContextRepository();
-	}
-
-	@Bean
-	public ClientContextResolver clientContextResolver(
-			ClientContextRepository clientContextRepository, ClientConfigurationRepository clientConfigurationRepository) {
-
-		DefaultClientContextResolver clientContextResolver =
-				new DefaultClientContextResolver(clientContextRepository, clientConfigurationRepository);
-		return clientContextResolver;
 	}
 
 	@Bean
@@ -160,16 +138,25 @@ public class SecurityConfig extends WebSecurityConfigurerAdapter {
 
 
 
+	private Filter authorizationRequestRedirectFilter() throws Exception {
+		AuthorizationRequestRedirectFilter authorizationRequestRedirectFilter =
+				new AuthorizationRequestRedirectFilter(
+						LOGIN_URL,
+						this.clientConfigurationRepository,
+						this.authorizationRequestUriBuilder);
+
+		// TODO This is temporary until we have a SecurityConfigurer
+		this.objectPostProcessor.postProcess(authorizationRequestRedirectFilter);
+
+		return authorizationRequestRedirectFilter;
+	}
+
 	private Filter authorizationCodeGrantProcessingFilter() throws Exception {
 		AuthorizationCodeGrantProcessingFilter authorizationCodeGrantProcessingFilter =
 				new AuthorizationCodeGrantProcessingFilter(
-						LOGIN_URL,
 						this.clientConfigurationRepository,
-						this.authorizationRequestUriBuilder,
 						this.authorizationSuccessResponseHandler,
 						this.authenticationManager());
-		authorizationCodeGrantProcessingFilter.setClientContextRepository(this.clientContextRepository);
-		authorizationCodeGrantProcessingFilter.setClientContextResolver(this.clientContextResolver);
 
 		// TODO This is temporary until we have a SecurityConfigurer
 		this.objectPostProcessor.postProcess(authorizationCodeGrantProcessingFilter);
