@@ -17,10 +17,9 @@ package org.springframework.security.oauth2.client.context;
 
 import org.springframework.security.oauth2.client.config.ClientConfiguration;
 import org.springframework.security.oauth2.client.config.ClientConfigurationRepository;
-import org.springframework.security.oauth2.client.filter.DefaultAuthorizationSuccessResponseRequestMatcher;
 import org.springframework.security.oauth2.core.OAuth2Attributes;
 import org.springframework.security.oauth2.core.OAuth2Exception;
-import org.springframework.security.web.util.matcher.RequestMatcher;
+import org.springframework.util.StringUtils;
 
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
@@ -34,8 +33,6 @@ public class DefaultClientContextResolver implements ClientContextResolver {
 
 	private final ClientConfigurationRepository clientConfigurationRepository;
 
-	private final RequestMatcher authorizationResponseRequestMatcher = new DefaultAuthorizationSuccessResponseRequestMatcher();
-
 	public DefaultClientContextResolver(ClientContextRepository clientContextRepository,
 										ClientConfigurationRepository clientConfigurationRepository) {
 		this.clientContextRepository = clientContextRepository;
@@ -45,7 +42,7 @@ public class DefaultClientContextResolver implements ClientContextResolver {
 	@Override
 	public ClientContext resolveContext(HttpServletRequest request, HttpServletResponse response) {
 		// Check for Authorization Response callback
-		if (this.authorizationResponseRequestMatcher.matches(request)) {
+		if (this.isAuthorizationSuccess(request)) {
 			return resolveContextFromAuthorizationResponse(request, response);
 		}
 
@@ -95,5 +92,10 @@ public class DefaultClientContextResolver implements ClientContextResolver {
 		// TODO Compare other data? Need to ensure we accurately correlate the callback
 
 		return context;
+	}
+
+	private boolean isAuthorizationSuccess(HttpServletRequest request) {
+		return !StringUtils.isEmpty(request.getParameter(OAuth2Attributes.CODE)) &&
+				!StringUtils.isEmpty(request.getParameter(OAuth2Attributes.STATE));
 	}
 }
