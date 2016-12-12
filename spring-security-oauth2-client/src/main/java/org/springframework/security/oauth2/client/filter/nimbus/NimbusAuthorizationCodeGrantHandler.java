@@ -23,9 +23,7 @@ import com.nimbusds.oauth2.sdk.http.HTTPRequest;
 import com.nimbusds.oauth2.sdk.id.ClientID;
 import org.springframework.http.MediaType;
 import org.springframework.security.oauth2.client.config.ClientConfiguration;
-import org.springframework.security.oauth2.client.context.ClientContext;
-import org.springframework.security.oauth2.client.filter.AuthorizationResult;
-import org.springframework.security.oauth2.client.filter.AuthorizationSuccessResponseHandler;
+import org.springframework.security.oauth2.client.filter.AuthorizationCodeGrantHandler;
 import org.springframework.security.oauth2.core.*;
 
 import javax.servlet.ServletException;
@@ -40,19 +38,18 @@ import java.util.List;
 /**
  * @author Joe Grandja
  */
-public class NimbusAuthorizationSuccessResponseHandler implements AuthorizationSuccessResponseHandler {
+public class NimbusAuthorizationCodeGrantHandler implements AuthorizationCodeGrantHandler {
 
 	@Override
-	public AuthorizationResult onAuthorizationSuccess(HttpServletRequest request,
-													  HttpServletResponse response,
-													  ClientContext clientContext,
-													  AuthorizationSuccessResponseAttributes authorizationResponseAttributes)
-															throws IOException, ServletException {
+	public AccessTokenResponseAttributes handle(HttpServletRequest request,
+												HttpServletResponse response,
+												ClientConfiguration configuration,
+												AuthorizationCodeGrantResponseAttributes authorizationCodeGrantResponse)
+			throws IOException, ServletException {
 
-		ClientConfiguration configuration = clientContext.getConfiguration();
 
 		// Build the authorization code grant request for the token endpoint
-		AuthorizationCode authorizationCode = new AuthorizationCode(authorizationResponseAttributes.getCode());
+		AuthorizationCode authorizationCode = new AuthorizationCode(authorizationCodeGrantResponse.getCode());
 		URI redirectUri = toURI(configuration.getRedirectUri());
 		AuthorizationGrant authorizationCodeGrant = new AuthorizationCodeGrant(authorizationCode, redirectUri);
 		URI tokenUri = toURI(configuration.getTokenUri());
@@ -88,7 +85,7 @@ public class NimbusAuthorizationSuccessResponseHandler implements AuthorizationS
 		AccessToken accessToken = this.getAccessToken(accessTokenResponse);
 		RefreshToken refreshToken = this.getRefreshToken(accessTokenResponse);
 
-		AuthorizationResult result = new AuthorizationResult(accessToken, refreshToken);
+		AccessTokenResponseAttributes result = new DefaultAccessTokenResponseAttributes(accessToken, refreshToken);
 
 		return result;
 	}
@@ -122,11 +119,11 @@ public class NimbusAuthorizationSuccessResponseHandler implements AuthorizationS
 		return new RefreshToken(accessTokenResponse.getTokens().getRefreshToken().getValue());
 	}
 
-	private URI toURI(String uriStr) throws IOException {
+	private URI toURI(String uriStr) {
 		try {
 			return new URI(uriStr);
 		} catch (URISyntaxException ex) {
-			throw new IOException(ex);
+			throw new IllegalArgumentException(ex);
 		}
 	}
 }

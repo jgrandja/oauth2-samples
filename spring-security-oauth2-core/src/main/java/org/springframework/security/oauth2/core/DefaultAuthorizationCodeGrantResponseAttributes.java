@@ -18,16 +18,16 @@ package org.springframework.security.oauth2.core;
 /**
  * @author Joe Grandja
  */
-public class DefaultAuthorizationSuccessResponseAttributes
-		extends AbstractAuthorizationResponseAttributes implements AuthorizationSuccessResponseAttributes {
+public class DefaultAuthorizationCodeGrantResponseAttributes
+		extends AbstractAuthorizationResponseAttributes implements AuthorizationCodeGrantResponseAttributes {
 
 	private final String code;
 
-	public DefaultAuthorizationSuccessResponseAttributes(String code) {
+	public DefaultAuthorizationCodeGrantResponseAttributes(String code) {
 		this(code, null);
 	}
 
-	public DefaultAuthorizationSuccessResponseAttributes(String code, String state) {
+	public DefaultAuthorizationCodeGrantResponseAttributes(String code, String state) {
 		super(state);
 		this.code = code;
 	}

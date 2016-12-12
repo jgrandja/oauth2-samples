@@ -22,8 +22,9 @@ import org.springframework.security.core.AuthenticationException;
 import org.springframework.security.oauth2.client.authentication.OAuth2AuthenticationToken;
 import org.springframework.security.oauth2.client.config.ClientConfigurationRepository;
 import org.springframework.security.oauth2.client.context.*;
+import org.springframework.security.oauth2.core.AccessTokenResponseAttributes;
+import org.springframework.security.oauth2.core.AuthorizationCodeGrantResponseAttributes;
 import org.springframework.security.oauth2.core.AuthorizationErrorResponseAttributes;
-import org.springframework.security.oauth2.core.AuthorizationSuccessResponseAttributes;
 import org.springframework.security.web.authentication.AbstractAuthenticationProcessingFilter;
 import org.springframework.util.Assert;
 
@@ -36,14 +37,14 @@ import static org.springframework.security.oauth2.client.filter.AuthorizationUti
 
 
 /**
- * Handles an Authorization Response callback for the Authorization Code Grant flow.
+ * Handles an OAuth 2.0 Authorization Response for the Authorization Code Grant flow.
  *
  * @author Joe Grandja
  */
 public class AuthorizationCodeGrantProcessingFilter extends AbstractAuthenticationProcessingFilter {
 	private final ClientConfigurationRepository clientConfigurationRepository;
 
-	private final AuthorizationSuccessResponseHandler authorizationSuccessHandler;
+	private final AuthorizationCodeGrantHandler authorizationCodeGrantHandler;
 
 	private ClientContextRepository clientContextRepository = new HttpSessionClientContextRepository();
 
@@ -51,7 +52,7 @@ public class AuthorizationCodeGrantProcessingFilter extends AbstractAuthenticati
 
 
 	public AuthorizationCodeGrantProcessingFilter(ClientConfigurationRepository clientConfigurationRepository,
-												  AuthorizationSuccessResponseHandler authorizationSuccessHandler,
+												  AuthorizationCodeGrantHandler authorizationCodeGrantHandler,
 												  AuthenticationManager authenticationManager) {
 
 		super(AuthorizationUtil::isAuthorizationResponse);
@@ -59,8 +60,8 @@ public class AuthorizationCodeGrantProcessingFilter extends AbstractAuthenticati
 		Assert.notNull(clientConfigurationRepository, "clientConfigurationRepository cannot be null");
 		this.clientConfigurationRepository = clientConfigurationRepository;
 
-		Assert.notNull(authorizationSuccessHandler, "authorizationSuccessHandler cannot be null");
-		this.authorizationSuccessHandler = authorizationSuccessHandler;
+		Assert.notNull(authorizationCodeGrantHandler, "authorizationCodeGrantHandler cannot be null");
+		this.authorizationCodeGrantHandler = authorizationCodeGrantHandler;
 
 		Assert.notNull(authenticationManager, "authenticationManager cannot be null");
 		this.setAuthenticationManager(authenticationManager);
@@ -80,7 +81,7 @@ public class AuthorizationCodeGrantProcessingFilter extends AbstractAuthenticati
 			// The authorization request was denied or some error occurred
 			AuthorizationErrorResponseAttributes authorizationErrorAttributes = parseAuthorizationErrorAttributes(request);
 
-			// TODO Throw OAuth2-specific exception which extends AuthenticationServiceException
+			// TODO Throw OAuth2-specific exception (extend AuthenticationServiceException)
 			throw new AuthenticationServiceException("Authorization error: " + authorizationErrorAttributes.getErrorCode());
 		}
 
@@ -90,29 +91,35 @@ public class AuthorizationCodeGrantProcessingFilter extends AbstractAuthenticati
 			// TODO Throw OAuth2-specific exception for downstream handling OR ClientContextResolver should throw?
 		}
 
-		AuthorizationSuccessResponseAttributes authorizationSuccessAttributes = parseAuthorizationSuccessAttributes(request);
+		AuthorizationCodeGrantResponseAttributes authorizationCodeGrantResponse = parseAuthorizationCodeGrantAttributes(request);
 
-		AuthorizationResult result = this.authorizationSuccessHandler.onAuthorizationSuccess(
-				request, response, clientContext, authorizationSuccessAttributes);
+		AccessTokenResponseAttributes accessTokenResponse;
+		try {
+			accessTokenResponse = this.authorizationCodeGrantHandler.handle(
+					request, response, clientContext.getConfiguration(), authorizationCodeGrantResponse);
+		} catch (Exception ex) {
+			// TODO Throw OAuth2-specific exception (extend AuthenticationServiceException)
+			throw new AuthenticationServiceException("Token response error: " + ex);
+		}
 
-		this.clientContextRepository.updateContext(clientContext, result, request, response);
+		this.clientContextRepository.updateContext(clientContext, accessTokenResponse, request, response);
 
 		OAuth2AuthenticationToken authRequest = new OAuth2AuthenticationToken(
-				clientContext.getConfiguration(), result.getAccessToken(), result.getRefreshToken());
+				clientContext.getConfiguration(), accessTokenResponse.getAccessToken(), accessTokenResponse.getRefreshToken());
 
 		authRequest.setDetails(this.authenticationDetailsSource.buildDetails(request));
 
-		Authentication authentication = this.getAuthenticationManager().authenticate(authRequest);
+		Authentication authenticated = this.getAuthenticationManager().authenticate(authRequest);
 
-		return authentication;
+		return authenticated;
 	}
 
 	protected final ClientConfigurationRepository getClientConfigurationRepository() {
 		return this.clientConfigurationRepository;
 	}
 
-	protected final AuthorizationSuccessResponseHandler getAuthorizationSuccessHandler() {
-		return this.authorizationSuccessHandler;
+	protected final AuthorizationCodeGrantHandler getAuthorizationCodeGrantHandler() {
+		return authorizationCodeGrantHandler;
 	}
 
 	protected final ClientContextRepository getClientContextRepository() {

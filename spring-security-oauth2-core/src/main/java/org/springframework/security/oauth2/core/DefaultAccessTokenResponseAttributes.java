@@ -13,24 +13,20 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.springframework.security.oauth2.client.filter;
-
-import org.springframework.security.oauth2.core.AccessToken;
-import org.springframework.security.oauth2.core.AccessTokenResponseAttributes;
-import org.springframework.security.oauth2.core.RefreshToken;
+package org.springframework.security.oauth2.core;
 
 /**
  * @author Joe Grandja
  */
-public class AuthorizationResult implements AccessTokenResponseAttributes {
+public class DefaultAccessTokenResponseAttributes implements AccessTokenResponseAttributes {
 	private final AccessToken accessToken;
 	private final RefreshToken refreshToken;
 
-	public AuthorizationResult(AccessToken accessToken) {
+	public DefaultAccessTokenResponseAttributes(AccessToken accessToken) {
 		this(accessToken, null);
 	}
 
-	public AuthorizationResult(AccessToken accessToken, RefreshToken refreshToken) {
+	public DefaultAccessTokenResponseAttributes(AccessToken accessToken, RefreshToken refreshToken) {
 		this.accessToken = accessToken;
 		this.refreshToken = refreshToken;
 	}

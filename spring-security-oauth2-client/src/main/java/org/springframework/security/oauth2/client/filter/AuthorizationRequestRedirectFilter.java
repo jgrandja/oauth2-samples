@@ -45,7 +45,7 @@ import java.util.stream.Collectors;
 
 
 /**
- * Initiates an Authorization Request redirect for Authorization Code and Implicit Grant flows.
+ * Initiates an OAuth 2.0 Authorization Request redirect for the Authorization Code and Implicit Grant flows.
  *
  * @author Joe Grandja
  */

@@ -24,9 +24,7 @@ import org.apache.oltu.oauth2.common.exception.OAuthSystemException;
 import org.apache.oltu.oauth2.common.message.types.GrantType;
 import org.springframework.http.MediaType;
 import org.springframework.security.oauth2.client.config.ClientConfiguration;
-import org.springframework.security.oauth2.client.context.ClientContext;
-import org.springframework.security.oauth2.client.filter.AuthorizationResult;
-import org.springframework.security.oauth2.client.filter.AuthorizationSuccessResponseHandler;
+import org.springframework.security.oauth2.client.filter.AuthorizationCodeGrantHandler;
 import org.springframework.security.oauth2.core.*;
 import org.springframework.util.StringUtils;
 
@@ -42,16 +40,14 @@ import java.util.stream.Collectors;
 /**
  * @author Joe Grandja
  */
-public class OltuAuthorizationSuccessResponseHandler implements AuthorizationSuccessResponseHandler {
+public class OltuAuthorizationCodeGrantHandler implements AuthorizationCodeGrantHandler {
 
 	@Override
-	public AuthorizationResult onAuthorizationSuccess(HttpServletRequest request,
-													  HttpServletResponse response,
-													  ClientContext clientContext,
-													  AuthorizationSuccessResponseAttributes authorizationResponseAttributes)
-															throws IOException, ServletException {
-
-		ClientConfiguration configuration = clientContext.getConfiguration();
+	public AccessTokenResponseAttributes handle(HttpServletRequest request,
+												HttpServletResponse response,
+												ClientConfiguration configuration,
+												AuthorizationCodeGrantResponseAttributes authorizationCodeGrantResponse)
+			throws IOException, ServletException {
 
 		OAuthJSONAccessTokenResponse tokenResponse;
 		try {
@@ -62,7 +58,7 @@ public class OltuAuthorizationSuccessResponseHandler implements AuthorizationSuc
 					.setClientId(configuration.getClientId())
 					.setClientSecret(configuration.getClientSecret())
 					.setRedirectURI(configuration.getRedirectUri())
-					.setCode(authorizationResponseAttributes.getCode())
+					.setCode(authorizationCodeGrantResponse.getCode())
 					.setScope(configuration.getScope().stream().collect(Collectors.joining(" ")))
 					.buildBodyMessage();
 			tokenRequest.setHeader("Accept", MediaType.APPLICATION_JSON_VALUE);
@@ -85,7 +81,7 @@ public class OltuAuthorizationSuccessResponseHandler implements AuthorizationSuc
 			refreshToken = new RefreshToken(tokenResponse.getRefreshToken());
 		}
 
-		AuthorizationResult result = new AuthorizationResult(accessToken, refreshToken);
+		AccessTokenResponseAttributes result = new DefaultAccessTokenResponseAttributes(accessToken, refreshToken);
 
 		return result;
 	}

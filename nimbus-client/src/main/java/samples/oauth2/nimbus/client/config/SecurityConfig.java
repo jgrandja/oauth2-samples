@@ -29,12 +29,12 @@ import org.springframework.security.oauth2.client.authentication.OAuth2Authentic
 import org.springframework.security.oauth2.client.config.ClientConfiguration;
 import org.springframework.security.oauth2.client.config.ClientConfigurationRepository;
 import org.springframework.security.oauth2.client.config.InMemoryClientConfigurationRepository;
+import org.springframework.security.oauth2.client.filter.AuthorizationCodeGrantHandler;
 import org.springframework.security.oauth2.client.filter.AuthorizationCodeGrantProcessingFilter;
 import org.springframework.security.oauth2.client.filter.AuthorizationRequestRedirectFilter;
 import org.springframework.security.oauth2.client.filter.AuthorizationRequestUriBuilder;
-import org.springframework.security.oauth2.client.filter.AuthorizationSuccessResponseHandler;
+import org.springframework.security.oauth2.client.filter.nimbus.NimbusAuthorizationCodeGrantHandler;
 import org.springframework.security.oauth2.client.filter.nimbus.NimbusAuthorizationRequestUriBuilder;
-import org.springframework.security.oauth2.client.filter.nimbus.NimbusAuthorizationSuccessResponseHandler;
 import org.springframework.security.oauth2.client.userdetails.UserInfoUserDetailsService;
 import org.springframework.security.oauth2.client.userdetails.nimbus.NimbusUserInfoUserDetailsService;
 import org.springframework.security.web.authentication.LoginUrlAuthenticationEntryPoint;
@@ -63,7 +63,7 @@ public class SecurityConfig extends WebSecurityConfigurerAdapter {
 	protected AuthorizationRequestUriBuilder authorizationRequestUriBuilder;
 
 	@Autowired
-	protected AuthorizationSuccessResponseHandler authorizationSuccessResponseHandler;
+	protected AuthorizationCodeGrantHandler authorizationCodeGrantHandler;
 
 	@Autowired
 	protected ObjectPostProcessor objectPostProcessor;
@@ -124,8 +124,8 @@ public class SecurityConfig extends WebSecurityConfigurerAdapter {
 	}
 
 	@Bean
-	public AuthorizationSuccessResponseHandler authorizationSuccessResponseHandler(){
-		return new NimbusAuthorizationSuccessResponseHandler();
+	public AuthorizationCodeGrantHandler authorizationCodeGrantHandler() {
+		return new NimbusAuthorizationCodeGrantHandler();
 	}
 
 	@Bean
@@ -155,7 +155,7 @@ public class SecurityConfig extends WebSecurityConfigurerAdapter {
 		AuthorizationCodeGrantProcessingFilter authorizationCodeGrantProcessingFilter =
 				new AuthorizationCodeGrantProcessingFilter(
 						this.clientConfigurationRepository,
-						this.authorizationSuccessResponseHandler,
+						this.authorizationCodeGrantHandler,
 						this.authenticationManager());
 
 		// TODO This is temporary until we have a SecurityConfigurer

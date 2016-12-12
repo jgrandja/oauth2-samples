@@ -29,10 +29,6 @@ import java.util.Collection;
 /**
  * @author Joe Grandja
  */
-// TODO Might need to split this class up to OAuth2UserAuthenticationToken and OAuth2ClientAuthenticationToken
-//		OAuth2ClientAuthenticationToken would be used for client_credentials grant and
-//		OAuth2UserAuthenticationToken would be used for grants dependent on user authentication
-//		Provide base class AbstractOAuth2AuthenticationToken
 public class OAuth2AuthenticationToken extends AbstractAuthenticationToken {
 	private static final long serialVersionUID = SpringSecurityCoreVersion.SERIAL_VERSION_UID;
 
@@ -40,6 +36,7 @@ public class OAuth2AuthenticationToken extends AbstractAuthenticationToken {
 	private final ClientConfiguration configuration;
 	private final AccessToken accessToken;
 	private final RefreshToken refreshToken;
+
 
 	public OAuth2AuthenticationToken(ClientConfiguration configuration,
 									 AccessToken accessToken,
@@ -62,6 +59,7 @@ public class OAuth2AuthenticationToken extends AbstractAuthenticationToken {
 		setAuthenticated(principal != null);
 	}
 
+
 	@Override
 	public final Object getPrincipal() {
 		return this.principal;
@@ -74,14 +72,14 @@ public class OAuth2AuthenticationToken extends AbstractAuthenticationToken {
 	}
 
 	public final ClientConfiguration getConfiguration() {
-		return configuration;
+		return this.configuration;
 	}
 
 	public final AccessToken getAccessToken() {
-		return accessToken;
+		return this.accessToken;
 	}
 
 	public final RefreshToken getRefreshToken() {
-		return refreshToken;
+		return this.refreshToken;
 	}
 }

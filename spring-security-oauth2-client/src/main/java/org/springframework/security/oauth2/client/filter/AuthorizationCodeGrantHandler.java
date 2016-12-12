@@ -15,8 +15,9 @@
  */
 package org.springframework.security.oauth2.client.filter;
 
-import org.springframework.security.oauth2.client.context.ClientContext;
-import org.springframework.security.oauth2.core.AuthorizationSuccessResponseAttributes;
+import org.springframework.security.oauth2.client.config.ClientConfiguration;
+import org.springframework.security.oauth2.core.AccessTokenResponseAttributes;
+import org.springframework.security.oauth2.core.AuthorizationCodeGrantResponseAttributes;
 
 import javax.servlet.ServletException;
 import javax.servlet.http.HttpServletRequest;
@@ -26,12 +27,11 @@ import java.io.IOException;
 /**
  * @author Joe Grandja
  */
-public interface AuthorizationSuccessResponseHandler {
+public interface AuthorizationCodeGrantHandler {
 
-	// TODO Not sure if the class name of the return type makes sense? Should it be TokenResponseResult or similar?
-	AuthorizationResult onAuthorizationSuccess(HttpServletRequest request,
-											   HttpServletResponse response,
-											   ClientContext clientContext,
-											   AuthorizationSuccessResponseAttributes authorizationResponseAttributes)
-													throws IOException, ServletException;
+	AccessTokenResponseAttributes handle(HttpServletRequest request,
+										 HttpServletResponse response,
+										 ClientConfiguration clientConfiguration,
+										 AuthorizationCodeGrantResponseAttributes authorizationCodeGrantResponse)
+			throws IOException, ServletException;
 }

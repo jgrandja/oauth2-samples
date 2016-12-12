@@ -18,7 +18,7 @@ package org.springframework.security.oauth2.core;
 /**
  * @author Joe Grandja
  */
-public interface AuthorizationSuccessResponseAttributes extends AuthorizationResponseAttributes {
+public interface AuthorizationCodeGrantResponseAttributes extends AuthorizationResponseAttributes {
 
 	String getCode();
 

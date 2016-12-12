@@ -33,15 +33,15 @@ class AuthorizationUtil {
 				!StringUtils.isEmpty(request.getParameter(OAuth2Attributes.STATE));
 	}
 
-	static AuthorizationSuccessResponseAttributes parseAuthorizationSuccessAttributes(HttpServletRequest request) {
-		AuthorizationSuccessResponseAttributes result;
+	static AuthorizationCodeGrantResponseAttributes parseAuthorizationCodeGrantAttributes(HttpServletRequest request) {
+		AuthorizationCodeGrantResponseAttributes result;
 
 		String code = request.getParameter(OAuth2Attributes.CODE);
 		Assert.hasText(code, OAuth2Attributes.CODE + " attribute is required");
 
 		String state = request.getParameter(OAuth2Attributes.STATE);
 
-		result = new DefaultAuthorizationSuccessResponseAttributes(code, state);
+		result = new DefaultAuthorizationCodeGrantResponseAttributes(code, state);
 
 		return result;
 	}
