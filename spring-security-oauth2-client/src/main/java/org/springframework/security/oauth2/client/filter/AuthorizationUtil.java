@@ -15,11 +15,15 @@
  */
 package org.springframework.security.oauth2.client.filter;
 
-import org.springframework.security.oauth2.core.*;
+import org.springframework.security.oauth2.core.OAuth2Attributes;
+import org.springframework.security.oauth2.core.protocol.AuthorizationCodeGrantAuthorizationResponseAttributes;
+import org.springframework.security.oauth2.core.protocol.AuthorizationRequestAttributes;
+import org.springframework.security.oauth2.core.protocol.ErrorResponseAttributes;
 import org.springframework.util.Assert;
 import org.springframework.util.StringUtils;
 
 import javax.servlet.http.HttpServletRequest;
+import javax.servlet.http.HttpSession;
 import java.net.URI;
 import java.net.URISyntaxException;
 
@@ -27,31 +31,47 @@ import java.net.URISyntaxException;
  * @author Joe Grandja
  */
 class AuthorizationUtil {
+	private static final String SAVED_AUTHORIZATION_REQUEST = "SPRING_SECURITY_OAUTH2_SAVED_AUTHORIZATION_REQUEST";
 
-	static boolean isAuthorizationSuccess(HttpServletRequest request) {
+	static void saveAuthorizationRequest(HttpServletRequest request, AuthorizationRequestAttributes authorizationRequest) {
+		HttpSession session = request.getSession();
+		session.setAttribute(SAVED_AUTHORIZATION_REQUEST, authorizationRequest);
+	}
+
+	static AuthorizationRequestAttributes getAuthorizationRequest(HttpServletRequest request) {
+		AuthorizationRequestAttributes authorizationRequest = null;
+		HttpSession session = request.getSession(false);
+		if (session != null) {
+			authorizationRequest = (AuthorizationRequestAttributes) session.getAttribute(SAVED_AUTHORIZATION_REQUEST);
+		}
+		return authorizationRequest;
+	}
+
+	static boolean isAuthorizationCodeGrantSuccess(HttpServletRequest request) {
 		return !StringUtils.isEmpty(request.getParameter(OAuth2Attributes.CODE)) &&
 				!StringUtils.isEmpty(request.getParameter(OAuth2Attributes.STATE));
 	}
 
-	static AuthorizationCodeGrantResponseAttributes parseAuthorizationCodeGrantAttributes(HttpServletRequest request) {
-		AuthorizationCodeGrantResponseAttributes result;
+	static AuthorizationCodeGrantAuthorizationResponseAttributes parseAuthorizationCodeGrantAttributes(HttpServletRequest request) {
+		AuthorizationCodeGrantAuthorizationResponseAttributes result;
 
 		String code = request.getParameter(OAuth2Attributes.CODE);
 		Assert.hasText(code, OAuth2Attributes.CODE + " attribute is required");
 
 		String state = request.getParameter(OAuth2Attributes.STATE);
 
-		result = new DefaultAuthorizationCodeGrantResponseAttributes(code, state);
+		result = new AuthorizationCodeGrantAuthorizationResponseAttributes(code, state);
 
 		return result;
 	}
 
-	static boolean isAuthorizationError(HttpServletRequest request) {
-		return !StringUtils.isEmpty(request.getParameter(OAuth2Attributes.ERROR));
+	static boolean isAuthorizationCodeGrantError(HttpServletRequest request) {
+		return !StringUtils.isEmpty(request.getParameter(OAuth2Attributes.ERROR)) &&
+				!StringUtils.isEmpty(request.getParameter(OAuth2Attributes.STATE));
 	}
 
-	static AuthorizationErrorResponseAttributes parseAuthorizationErrorAttributes(HttpServletRequest request) {
-		AuthorizationErrorResponseAttributes result;
+	static ErrorResponseAttributes parseErrorAttributes(HttpServletRequest request) {
+		ErrorResponseAttributes result;
 
 		String error = request.getParameter(OAuth2Attributes.ERROR);
 		Assert.hasText(error, OAuth2Attributes.ERROR + " attribute is required");
@@ -71,12 +91,12 @@ class AuthorizationUtil {
 
 		String state = request.getParameter(OAuth2Attributes.STATE);
 
-		result = new DefaultAuthorizationErrorResponseAttributes(error, state, errorDescription, errorUri);
+		result = new ErrorResponseAttributes(error, errorDescription, errorUri, state);
 
 		return result;
 	}
 
-	static boolean isAuthorizationResponse(HttpServletRequest request) {
-		return isAuthorizationSuccess(request) || isAuthorizationError(request);
+	static boolean isAuthorizationCodeGrantResponse(HttpServletRequest request) {
+		return isAuthorizationCodeGrantSuccess(request) || isAuthorizationCodeGrantError(request);
 	}
 }

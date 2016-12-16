@@ -18,8 +18,8 @@ package org.springframework.security.oauth2.client.filter.oltu;
 import org.apache.oltu.oauth2.client.request.OAuthClientRequest;
 import org.apache.oltu.oauth2.common.exception.OAuthSystemException;
 import org.springframework.security.oauth2.client.filter.AuthorizationRequestUriBuilder;
-import org.springframework.security.oauth2.core.AuthorizationRequestAttributes;
 import org.springframework.security.oauth2.core.OAuth2Exception;
+import org.springframework.security.oauth2.core.protocol.AuthorizationRequestAttributes;
 
 import java.net.URI;
 import java.net.URISyntaxException;

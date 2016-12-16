@@ -21,8 +21,8 @@ import com.nimbusds.oauth2.sdk.Scope;
 import com.nimbusds.oauth2.sdk.id.ClientID;
 import com.nimbusds.oauth2.sdk.id.State;
 import org.springframework.security.oauth2.client.filter.AuthorizationRequestUriBuilder;
-import org.springframework.security.oauth2.core.AuthorizationRequestAttributes;
 import org.springframework.security.oauth2.core.OAuth2Exception;
+import org.springframework.security.oauth2.core.protocol.AuthorizationRequestAttributes;
 
 import java.net.URI;
 import java.net.URISyntaxException;

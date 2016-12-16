@@ -13,17 +13,23 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.springframework.security.oauth2.core;
+package org.springframework.security.oauth2.core.protocol;
 
-import java.io.Serializable;
+import org.springframework.security.oauth2.core.AuthorizationGrantType;
+import org.springframework.util.Assert;
 
 /**
  * @author Joe Grandja
  */
-public interface AccessTokenResponseAttributes extends Serializable {
+public abstract class AbstractTokenRequestAttributes {
+	private final AuthorizationGrantType authorizationGrantType;
 
-	AccessToken getAccessToken();
+	protected AbstractTokenRequestAttributes(AuthorizationGrantType authorizationGrantType) {
+		Assert.notNull(authorizationGrantType, "authorizationGrantType cannot be null");
+		this.authorizationGrantType = authorizationGrantType;
+	}
 
-	RefreshToken getRefreshToken();
-
+	public final AuthorizationGrantType getGrantType() {
+		return this.authorizationGrantType;
+	}
 }

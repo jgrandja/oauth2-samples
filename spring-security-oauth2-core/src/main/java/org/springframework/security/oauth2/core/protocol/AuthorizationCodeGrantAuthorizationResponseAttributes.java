@@ -13,27 +13,28 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.springframework.security.oauth2.core;
+package org.springframework.security.oauth2.core.protocol;
+
+import org.springframework.util.Assert;
 
 /**
  * @author Joe Grandja
  */
-public class DefaultAuthorizationCodeGrantResponseAttributes
-		extends AbstractAuthorizationResponseAttributes implements AuthorizationCodeGrantResponseAttributes {
-
+public class AuthorizationCodeGrantAuthorizationResponseAttributes {
 	private final String code;
+	private final String state;
 
-	public DefaultAuthorizationCodeGrantResponseAttributes(String code) {
-		this(code, null);
-	}
-
-	public DefaultAuthorizationCodeGrantResponseAttributes(String code, String state) {
-		super(state);
+	public AuthorizationCodeGrantAuthorizationResponseAttributes(String code, String state) {
+		Assert.notNull(code, "code cannot be null");
 		this.code = code;
+		this.state = state;
 	}
 
-	@Override
 	public final String getCode() {
 		return this.code;
+	}
+
+	public final String getState() {
+		return this.state;
 	}
 }

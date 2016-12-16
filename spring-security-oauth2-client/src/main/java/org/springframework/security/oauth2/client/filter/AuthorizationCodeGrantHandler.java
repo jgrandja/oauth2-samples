@@ -16,8 +16,8 @@
 package org.springframework.security.oauth2.client.filter;
 
 import org.springframework.security.oauth2.client.config.ClientConfiguration;
-import org.springframework.security.oauth2.core.AccessTokenResponseAttributes;
-import org.springframework.security.oauth2.core.AuthorizationCodeGrantResponseAttributes;
+import org.springframework.security.oauth2.core.protocol.AuthorizationCodeGrantAuthorizationResponseAttributes;
+import org.springframework.security.oauth2.core.protocol.TokenResponseAttributes;
 
 import javax.servlet.ServletException;
 import javax.servlet.http.HttpServletRequest;
@@ -29,9 +29,9 @@ import java.io.IOException;
  */
 public interface AuthorizationCodeGrantHandler {
 
-	AccessTokenResponseAttributes handle(HttpServletRequest request,
-										 HttpServletResponse response,
-										 ClientConfiguration clientConfiguration,
-										 AuthorizationCodeGrantResponseAttributes authorizationCodeGrantResponse)
+	TokenResponseAttributes handle(HttpServletRequest request,
+								   HttpServletResponse response,
+								   ClientConfiguration clientConfiguration,
+								   AuthorizationCodeGrantAuthorizationResponseAttributes authorizationCodeGrantAttributes)
 			throws IOException, ServletException;
 }

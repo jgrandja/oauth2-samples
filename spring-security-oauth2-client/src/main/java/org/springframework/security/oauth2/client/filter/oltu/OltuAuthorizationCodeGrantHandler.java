@@ -25,8 +25,10 @@ import org.apache.oltu.oauth2.common.message.types.GrantType;
 import org.springframework.http.MediaType;
 import org.springframework.security.oauth2.client.config.ClientConfiguration;
 import org.springframework.security.oauth2.client.filter.AuthorizationCodeGrantHandler;
-import org.springframework.security.oauth2.core.*;
-import org.springframework.util.StringUtils;
+import org.springframework.security.oauth2.core.AccessTokenType;
+import org.springframework.security.oauth2.core.OAuth2Exception;
+import org.springframework.security.oauth2.core.protocol.AuthorizationCodeGrantAuthorizationResponseAttributes;
+import org.springframework.security.oauth2.core.protocol.TokenResponseAttributes;
 
 import javax.servlet.ServletException;
 import javax.servlet.http.HttpServletRequest;
@@ -43,10 +45,10 @@ import java.util.stream.Collectors;
 public class OltuAuthorizationCodeGrantHandler implements AuthorizationCodeGrantHandler {
 
 	@Override
-	public AccessTokenResponseAttributes handle(HttpServletRequest request,
-												HttpServletResponse response,
-												ClientConfiguration configuration,
-												AuthorizationCodeGrantResponseAttributes authorizationCodeGrantResponse)
+	public TokenResponseAttributes handle(HttpServletRequest request,
+										  HttpServletResponse response,
+										  ClientConfiguration configuration,
+										  AuthorizationCodeGrantAuthorizationResponseAttributes authorizationCodeGrantAttributes)
 			throws IOException, ServletException {
 
 		OAuthJSONAccessTokenResponse tokenResponse;
@@ -58,7 +60,7 @@ public class OltuAuthorizationCodeGrantHandler implements AuthorizationCodeGrant
 					.setClientId(configuration.getClientId())
 					.setClientSecret(configuration.getClientSecret())
 					.setRedirectURI(configuration.getRedirectUri())
-					.setCode(authorizationCodeGrantResponse.getCode())
+					.setCode(authorizationCodeGrantAttributes.getCode())
 					.setScope(configuration.getScope().stream().collect(Collectors.joining(" ")))
 					.buildBodyMessage();
 			tokenRequest.setHeader("Accept", MediaType.APPLICATION_JSON_VALUE);
@@ -75,36 +77,26 @@ public class OltuAuthorizationCodeGrantHandler implements AuthorizationCodeGrant
 			throw new OAuth2Exception(se.getMessage(), se);
 		}
 
-		AccessToken accessToken = getAccessToken(tokenResponse);
-		RefreshToken refreshToken = null;
-		if (!StringUtils.isEmpty(tokenResponse.getRefreshToken())) {
-			refreshToken = new RefreshToken(tokenResponse.getRefreshToken());
-		}
-
-		AccessTokenResponseAttributes result = new DefaultAccessTokenResponseAttributes(accessToken, refreshToken);
-
-		return result;
-	}
-
-	private AccessToken getAccessToken(OAuthJSONAccessTokenResponse tokenResponse) {
-		AccessToken result;
-
-		String tokenValue = tokenResponse.getAccessToken();
-		AccessTokenType tokenType = null;
+		String accessToken = tokenResponse.getAccessToken();
+		AccessTokenType accessTokenType = null;
 		if (AccessTokenType.BEARER.value().equalsIgnoreCase(tokenResponse.getTokenType())) {
-			tokenType = AccessTokenType.BEARER;
+			accessTokenType = AccessTokenType.BEARER;
 		} else if (AccessTokenType.MAC.value().equalsIgnoreCase(tokenResponse.getTokenType())) {
-			tokenType = AccessTokenType.MAC;
+			accessTokenType = AccessTokenType.MAC;
 		}
-		long expiryAt = -1;
-		if (tokenResponse.getExpiresIn() != null) {
-			expiryAt = tokenResponse.getExpiresIn();
-		}
+		long expiresIn = tokenResponse.getExpiresIn();
 		List<String> scope = Collections.emptyList();
 		if (tokenResponse.getScope() != null) {
 			scope = Arrays.asList(tokenResponse.getScope().split(" "));
 		}
-		result = new AccessToken(tokenType, tokenValue, expiryAt, scope);
+		String refreshToken = tokenResponse.getRefreshToken();
+
+		TokenResponseAttributes result = new TokenResponseAttributes(
+				accessToken,
+				accessTokenType,
+				expiresIn,
+				scope,
+				refreshToken);
 
 		return result;
 	}

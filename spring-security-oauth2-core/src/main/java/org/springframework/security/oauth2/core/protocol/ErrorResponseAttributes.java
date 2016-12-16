@@ -13,40 +13,51 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.springframework.security.oauth2.core;
+package org.springframework.security.oauth2.core.protocol;
+
+import org.springframework.util.Assert;
 
 import java.net.URI;
 
 /**
  * @author Joe Grandja
  */
-public class DefaultErrorResponseAttributes implements ErrorResponseAttributes {
+public class ErrorResponseAttributes {
 	private final String errorCode;
 	private final String errorDescription;
 	private final URI errorUri;
+	private final String state;
 
-	public DefaultErrorResponseAttributes(String errorCode) {
+	public ErrorResponseAttributes(String errorCode) {
 		this(errorCode, null, null);
 	}
 
-	public DefaultErrorResponseAttributes(String errorCode, String errorDescription, URI errorUri) {
-		this.errorCode = errorCode;
-		this.errorDescription = errorDescription;
-		this.errorUri = errorUri;
+	public ErrorResponseAttributes(String errorCode, String errorDescription, URI errorUri) {
+		this(errorCode, errorDescription, errorUri, null);
 	}
 
-	@Override
+	public ErrorResponseAttributes(String errorCode, String errorDescription, URI errorUri, String state) {
+		Assert.notNull(errorCode, "errorCode cannot be null");
+		this.errorCode = errorCode;
+
+		this.errorDescription = errorDescription;
+		this.errorUri = errorUri;
+		this.state = state;
+	}
+
 	public final String getErrorCode() {
 		return this.errorCode;
 	}
 
-	@Override
 	public final String getErrorDescription() {
 		return this.errorDescription;
 	}
 
-	@Override
 	public final URI getErrorUri() {
 		return this.errorUri;
+	}
+
+	public final String getState() {
+		return this.state;
 	}
 }

@@ -13,23 +13,30 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.springframework.security.oauth2.core;
+package org.springframework.security.oauth2.core.protocol;
+
+import org.springframework.security.oauth2.core.AccessTokenType;
+
+import java.util.Collections;
+import java.util.List;
 
 /**
  * @author Joe Grandja
  */
-public abstract class AbstractAuthorizationResponseAttributes implements AuthorizationResponseAttributes {
+public class ImplicitGrantTokenResponseAttributes extends TokenResponseAttributes {
 	private final String state;
 
-	protected AbstractAuthorizationResponseAttributes() {
-		this(null);
+	public ImplicitGrantTokenResponseAttributes(String accessToken, AccessTokenType accessTokenType,
+												long expiresIn, String state) {
+		this(accessToken, accessTokenType, expiresIn, Collections.emptyList(), state);
 	}
 
-	protected AbstractAuthorizationResponseAttributes(String state) {
+	public ImplicitGrantTokenResponseAttributes(String accessToken, AccessTokenType accessTokenType, long expiresIn,
+												List<String> scope, String state) {
+		super(accessToken, accessTokenType, expiresIn, scope, null);
 		this.state = state;
 	}
 
-	@Override
 	public final String getState() {
 		return this.state;
 	}

@@ -13,25 +13,25 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.springframework.security.oauth2.core;
+package org.springframework.security.oauth2.core.protocol;
+
+import org.springframework.security.oauth2.core.AuthorizationGrantType;
+
+import java.util.Collections;
+import java.util.List;
 
 /**
  * @author Joe Grandja
  */
-public enum GrantType {
-	AUTHORIZATION_CODE("authorization_code"),
-	IMPLICIT("implicit"),
-	PASSWORD("password"),
-	CLIENT_CREDENTIALS("client_credentials"),
-	REFRESH_TOKEN("refresh_token");
+public class ClientCredentialsGrantTokenRequestAttributes extends AbstractTokenRequestAttributes {
+	private final List<String> scope;
 
-	private final String value;
-
-	GrantType(String value) {
-		this.value = value;
+	public ClientCredentialsGrantTokenRequestAttributes(List<String> scope) {
+		super(AuthorizationGrantType.CLIENT_CREDENTIALS);
+		this.scope = Collections.unmodifiableList((scope != null ? scope : Collections.emptyList()));
 	}
 
-	public String value() {
-		return this.value;
+	public final List<String> getScope() {
+		return this.scope;
 	}
 }

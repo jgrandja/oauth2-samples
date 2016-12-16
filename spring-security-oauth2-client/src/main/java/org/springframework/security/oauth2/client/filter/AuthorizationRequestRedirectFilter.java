@@ -19,10 +19,8 @@ import org.springframework.security.crypto.keygen.StringKeyGenerator;
 import org.springframework.security.oauth2.client.config.ClientConfiguration;
 import org.springframework.security.oauth2.client.config.ClientConfigurationRepository;
 import org.springframework.security.oauth2.client.context.*;
-import org.springframework.security.oauth2.core.AuthorizationRequestAttributes;
-import org.springframework.security.oauth2.core.DefaultAuthorizationRequestAttributes;
 import org.springframework.security.oauth2.core.DefaultStateGenerator;
-import org.springframework.security.oauth2.core.ResponseType;
+import org.springframework.security.oauth2.core.protocol.AuthorizationRequestAttributes;
 import org.springframework.security.web.DefaultRedirectStrategy;
 import org.springframework.security.web.RedirectStrategy;
 import org.springframework.security.web.util.matcher.AntPathRequestMatcher;
@@ -117,8 +115,7 @@ public class AuthorizationRequestRedirectFilter extends GenericFilterBean {
 	protected void obtainAuthorization(HttpServletRequest request, HttpServletResponse response)
 			throws IOException, ServletException {
 
-		AuthorizationRequestAttributes authorizationRequestAttributes =
-				this.buildAuthorizationAttributes(request, response);
+		AuthorizationRequestAttributes authorizationRequestAttributes = this.buildAuthorizationAttributes(request, response);
 
 		URI redirectUri = this.authorizationUriBuilder.build(authorizationRequestAttributes);
 		Assert.notNull(redirectUri, "Authorization redirectUri cannot be null");
@@ -136,13 +133,13 @@ public class AuthorizationRequestRedirectFilter extends GenericFilterBean {
 		ClientConfiguration configuration = clientContext.getConfiguration();
 
 		AuthorizationRequestAttributes authorizationRequestAttributes =
-				new DefaultAuthorizationRequestAttributes(
+				AuthorizationRequestAttributes.authorizationCodeGrant(
 						configuration.getAuthorizeUri(),
-						ResponseType.CODE,		// TODO Need to also handle Implicit Grant flow - ResponseType.TOKEN
 						configuration.getClientId(),
 						configuration.getRedirectUri(),
 						configuration.getScope(),
 						this.stateGenerator.generateKey());
+
 		// Save the request attributes so we can correlate and validate on the authorization response callback
 		this.clientContextRepository.updateContext(clientContext, authorizationRequestAttributes, request, response);
 

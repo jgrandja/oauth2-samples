@@ -15,7 +15,8 @@
  */
 package org.springframework.security.oauth2.client.filter;
 
-import org.springframework.security.oauth2.core.AuthorizationRequestAttributes;
+
+import org.springframework.security.oauth2.core.protocol.AuthorizationRequestAttributes;
 
 import java.net.URI;
 

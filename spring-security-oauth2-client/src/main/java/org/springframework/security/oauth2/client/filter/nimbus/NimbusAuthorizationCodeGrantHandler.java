@@ -24,7 +24,10 @@ import com.nimbusds.oauth2.sdk.id.ClientID;
 import org.springframework.http.MediaType;
 import org.springframework.security.oauth2.client.config.ClientConfiguration;
 import org.springframework.security.oauth2.client.filter.AuthorizationCodeGrantHandler;
-import org.springframework.security.oauth2.core.*;
+import org.springframework.security.oauth2.core.AccessTokenType;
+import org.springframework.security.oauth2.core.OAuth2Exception;
+import org.springframework.security.oauth2.core.protocol.AuthorizationCodeGrantAuthorizationResponseAttributes;
+import org.springframework.security.oauth2.core.protocol.TokenResponseAttributes;
 
 import javax.servlet.ServletException;
 import javax.servlet.http.HttpServletRequest;
@@ -41,15 +44,15 @@ import java.util.List;
 public class NimbusAuthorizationCodeGrantHandler implements AuthorizationCodeGrantHandler {
 
 	@Override
-	public AccessTokenResponseAttributes handle(HttpServletRequest request,
-												HttpServletResponse response,
-												ClientConfiguration configuration,
-												AuthorizationCodeGrantResponseAttributes authorizationCodeGrantResponse)
+	public TokenResponseAttributes handle(HttpServletRequest request,
+										  HttpServletResponse response,
+										  ClientConfiguration configuration,
+										  AuthorizationCodeGrantAuthorizationResponseAttributes authorizationCodeGrantAttributes)
 			throws IOException, ServletException {
 
 
 		// Build the authorization code grant request for the token endpoint
-		AuthorizationCode authorizationCode = new AuthorizationCode(authorizationCodeGrantResponse.getCode());
+		AuthorizationCode authorizationCode = new AuthorizationCode(authorizationCodeGrantAttributes.getCode());
 		URI redirectUri = toURI(configuration.getRedirectUri());
 		AuthorizationGrant authorizationCodeGrant = new AuthorizationCodeGrant(authorizationCode, redirectUri);
 		URI tokenUri = toURI(configuration.getTokenUri());
@@ -82,41 +85,31 @@ public class NimbusAuthorizationCodeGrantHandler implements AuthorizationCodeGra
 
 		AccessTokenResponse accessTokenResponse = (AccessTokenResponse) tokenResponse;
 
-		AccessToken accessToken = this.getAccessToken(accessTokenResponse);
-		RefreshToken refreshToken = this.getRefreshToken(accessTokenResponse);
-
-		AccessTokenResponseAttributes result = new DefaultAccessTokenResponseAttributes(accessToken, refreshToken);
-
-		return result;
-	}
-
-	private AccessToken getAccessToken(AccessTokenResponse accessTokenResponse) {
-		AccessToken result;
-
-		com.nimbusds.oauth2.sdk.token.AccessToken accessToken = accessTokenResponse.getTokens().getAccessToken();
-
-		String tokenValue = accessToken.getValue();
-		AccessTokenType tokenType = null;
-		if (AccessTokenType.BEARER.value().equals(accessToken.getType().getValue())) {
-			tokenType = AccessTokenType.BEARER;
-		} else if (AccessTokenType.MAC.value().equals(accessToken.getType().getValue())) {
-			tokenType = AccessTokenType.MAC;
+		String accessToken = accessTokenResponse.getTokens().getAccessToken().getValue();
+		AccessTokenType accessTokenType = null;
+		if (AccessTokenType.BEARER.value().equals(accessTokenResponse.getTokens().getAccessToken().getType().getValue())) {
+			accessTokenType = AccessTokenType.BEARER;
+		} else if (AccessTokenType.MAC.value().equals(accessTokenResponse.getTokens().getAccessToken().getType().getValue())) {
+			accessTokenType = AccessTokenType.MAC;
 		}
-		long expiryAt = accessToken.getLifetime();
+		long expiresIn = accessTokenResponse.getTokens().getAccessToken().getLifetime();
 		List<String> scope = Collections.emptyList();
-		if (accessToken.getScope() != null) {
-			scope = accessToken.getScope().toStringList();
+		if (accessTokenResponse.getTokens().getAccessToken().getScope() != null) {
+			scope = accessTokenResponse.getTokens().getAccessToken().getScope().toStringList();
 		}
-		result = new AccessToken(tokenType, tokenValue, expiryAt, scope);
+		String refreshToken = null;
+		if (accessTokenResponse.getTokens().getRefreshToken() != null) {
+			refreshToken = accessTokenResponse.getTokens().getRefreshToken().getValue();
+		}
+
+		TokenResponseAttributes result = new TokenResponseAttributes(
+				accessToken,
+				accessTokenType,
+				expiresIn,
+				scope,
+				refreshToken);
 
 		return result;
-	}
-
-	private RefreshToken getRefreshToken(AccessTokenResponse accessTokenResponse) {
-		if (accessTokenResponse.getTokens().getRefreshToken() == null) {
-			return null;
-		}
-		return new RefreshToken(accessTokenResponse.getTokens().getRefreshToken().getValue());
 	}
 
 	private URI toURI(String uriStr) {

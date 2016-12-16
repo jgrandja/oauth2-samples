@@ -17,9 +17,9 @@ package org.springframework.security.oauth2.client.context;
 
 import org.springframework.security.oauth2.client.config.ClientConfiguration;
 import org.springframework.security.oauth2.core.AccessToken;
-import org.springframework.security.oauth2.core.AccessTokenResponseAttributes;
-import org.springframework.security.oauth2.core.AuthorizationRequestAttributes;
 import org.springframework.security.oauth2.core.RefreshToken;
+import org.springframework.security.oauth2.core.protocol.AuthorizationRequestAttributes;
+import org.springframework.security.oauth2.core.protocol.TokenResponseAttributes;
 
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
@@ -70,7 +70,7 @@ public class HttpSessionClientContextRepository implements ClientContextReposito
 	}
 
 	@Override
-	public void updateContext(ClientContext context, AccessTokenResponseAttributes accessTokenResponse,
+	public void updateContext(ClientContext context, TokenResponseAttributes tokenResponse,
 							  HttpServletRequest request, HttpServletResponse response) {
 
 		if (!DefaultClientContext.class.isInstance(context)) {
@@ -78,8 +78,8 @@ public class HttpSessionClientContextRepository implements ClientContextReposito
 		}
 
 		DefaultClientContext defaultClientContext = (DefaultClientContext) context;
-		defaultClientContext.setAccessToken(accessTokenResponse.getAccessToken());
-		defaultClientContext.setRefreshToken(accessTokenResponse.getRefreshToken());
+//		defaultClientContext.setAccessToken(accessTokenResponse.getAccessToken());
+//		defaultClientContext.setRefreshToken(accessTokenResponse.getRefreshToken());
 		saveContext(defaultClientContext, request, response);
 	}
 

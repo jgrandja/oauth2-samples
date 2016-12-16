@@ -22,9 +22,11 @@ import org.springframework.security.core.AuthenticationException;
 import org.springframework.security.oauth2.client.authentication.OAuth2AuthenticationToken;
 import org.springframework.security.oauth2.client.config.ClientConfigurationRepository;
 import org.springframework.security.oauth2.client.context.*;
-import org.springframework.security.oauth2.core.AccessTokenResponseAttributes;
-import org.springframework.security.oauth2.core.AuthorizationCodeGrantResponseAttributes;
-import org.springframework.security.oauth2.core.AuthorizationErrorResponseAttributes;
+import org.springframework.security.oauth2.core.AccessToken;
+import org.springframework.security.oauth2.core.RefreshToken;
+import org.springframework.security.oauth2.core.protocol.AuthorizationCodeGrantAuthorizationResponseAttributes;
+import org.springframework.security.oauth2.core.protocol.ErrorResponseAttributes;
+import org.springframework.security.oauth2.core.protocol.TokenResponseAttributes;
 import org.springframework.security.web.authentication.AbstractAuthenticationProcessingFilter;
 import org.springframework.util.Assert;
 
@@ -55,7 +57,7 @@ public class AuthorizationCodeGrantProcessingFilter extends AbstractAuthenticati
 												  AuthorizationCodeGrantHandler authorizationCodeGrantHandler,
 												  AuthenticationManager authenticationManager) {
 
-		super(AuthorizationUtil::isAuthorizationResponse);
+		super(AuthorizationUtil::isAuthorizationCodeGrantResponse);
 
 		Assert.notNull(clientConfigurationRepository, "clientConfigurationRepository cannot be null");
 		this.clientConfigurationRepository = clientConfigurationRepository;
@@ -77,9 +79,9 @@ public class AuthorizationCodeGrantProcessingFilter extends AbstractAuthenticati
 	public Authentication attemptAuthentication(HttpServletRequest request, HttpServletResponse response)
 			throws AuthenticationException, IOException, ServletException {
 
-		if (isAuthorizationError(request)) {
+		if (isAuthorizationCodeGrantError(request)) {
 			// The authorization request was denied or some error occurred
-			AuthorizationErrorResponseAttributes authorizationErrorAttributes = parseAuthorizationErrorAttributes(request);
+			ErrorResponseAttributes authorizationErrorAttributes = parseErrorAttributes(request);
 
 			// TODO Throw OAuth2-specific exception (extend AuthenticationServiceException)
 			throw new AuthenticationServiceException("Authorization error: " + authorizationErrorAttributes.getErrorCode());
@@ -91,21 +93,25 @@ public class AuthorizationCodeGrantProcessingFilter extends AbstractAuthenticati
 			// TODO Throw OAuth2-specific exception for downstream handling OR ClientContextResolver should throw?
 		}
 
-		AuthorizationCodeGrantResponseAttributes authorizationCodeGrantResponse = parseAuthorizationCodeGrantAttributes(request);
+		AuthorizationCodeGrantAuthorizationResponseAttributes authorizationCodeGrantAttributes = parseAuthorizationCodeGrantAttributes(request);
 
-		AccessTokenResponseAttributes accessTokenResponse;
+		TokenResponseAttributes tokenResponse;
 		try {
-			accessTokenResponse = this.authorizationCodeGrantHandler.handle(
-					request, response, clientContext.getConfiguration(), authorizationCodeGrantResponse);
+			tokenResponse = this.authorizationCodeGrantHandler.handle(
+					request, response, clientContext.getConfiguration(), authorizationCodeGrantAttributes);
 		} catch (Exception ex) {
 			// TODO Throw OAuth2-specific exception (extend AuthenticationServiceException)
 			throw new AuthenticationServiceException("Token response error: " + ex);
 		}
 
-		this.clientContextRepository.updateContext(clientContext, accessTokenResponse, request, response);
+		this.clientContextRepository.updateContext(clientContext, tokenResponse, request, response);
+
+		AccessToken accessToken = new AccessToken(tokenResponse.getAccessTokenType(), tokenResponse.getAccessToken(),
+				tokenResponse.getExpiresIn(), tokenResponse.getScope());
+		RefreshToken refreshToken = new RefreshToken(tokenResponse.getRefreshToken());
 
 		OAuth2AuthenticationToken authRequest = new OAuth2AuthenticationToken(
-				clientContext.getConfiguration(), accessTokenResponse.getAccessToken(), accessTokenResponse.getRefreshToken());
+				clientContext.getConfiguration(), accessToken, refreshToken);
 
 		authRequest.setDetails(this.authenticationDetailsSource.buildDetails(request));
 

@@ -17,8 +17,8 @@ package org.springframework.security.oauth2.client.context;
 
 import org.springframework.security.oauth2.client.config.ClientConfiguration;
 import org.springframework.security.oauth2.core.AccessToken;
-import org.springframework.security.oauth2.core.AuthorizationRequestAttributes;
 import org.springframework.security.oauth2.core.RefreshToken;
+import org.springframework.security.oauth2.core.protocol.AuthorizationRequestAttributes;
 
 import java.io.Serializable;
 
