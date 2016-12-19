@@ -15,6 +15,8 @@
  */
 package org.springframework.security.oauth2.core;
 
+import org.springframework.util.Assert;
+
 import java.io.Serializable;
 
 /**
@@ -24,10 +26,11 @@ public abstract class AbstractToken implements Serializable {
 	private final String value;
 
 	protected AbstractToken(String value) {
+		Assert.hasLength(value, "token value cannot be empty");
 		this.value = value;
 	}
 
 	public final String getValue() {
-		return value;
+		return this.value;
 	}
 }

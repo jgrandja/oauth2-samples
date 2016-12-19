@@ -17,7 +17,7 @@ package org.springframework.security.oauth2.client.config;
 
 import java.util.Collections;
 import java.util.List;
-import java.util.stream.Collectors;
+import java.util.Optional;
 
 /**
  * @author Joe Grandja
@@ -30,16 +30,21 @@ public class InMemoryClientConfigurationRepository implements ClientConfiguratio
 	}
 
 	@Override
+	public ClientConfiguration getConfigurationById(String clientId) {
+		Optional<ClientConfiguration> configuration =
+				this.clientConfigurations.stream()
+				.filter(c -> c.getClientId().equals(clientId))
+				.findFirst();
+		return configuration.isPresent() ? configuration.get() : null;
+	}
+
+	@Override
 	public ClientConfiguration getConfigurationByAlias(String clientAlias) {
-		List<ClientConfiguration> result =
-				this.getConfigurations().stream()
-						.filter(c -> c.getClientAlias().equalsIgnoreCase(clientAlias))
-						.collect(Collectors.toList());
-		if (result.size() > 1) {
-			// TODO Need to handle this scenario...return null for now
-			return null;
-		}
-		return !result.isEmpty() ? result.get(0) : null;
+		Optional<ClientConfiguration> configuration =
+				this.clientConfigurations.stream()
+						.filter(c -> c.getClientAlias().equals(clientAlias))
+						.findFirst();
+		return configuration.isPresent() ? configuration.get() : null;
 	}
 
 	@Override

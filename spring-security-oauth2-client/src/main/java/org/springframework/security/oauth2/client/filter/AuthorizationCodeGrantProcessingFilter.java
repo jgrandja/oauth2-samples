@@ -15,16 +15,20 @@
  */
 package org.springframework.security.oauth2.client.filter;
 
+import org.apache.commons.lang3.StringUtils;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.AuthenticationServiceException;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.AuthenticationException;
 import org.springframework.security.oauth2.client.authentication.OAuth2AuthenticationToken;
+import org.springframework.security.oauth2.client.config.ClientConfiguration;
 import org.springframework.security.oauth2.client.config.ClientConfigurationRepository;
-import org.springframework.security.oauth2.client.context.*;
 import org.springframework.security.oauth2.core.AccessToken;
+import org.springframework.security.oauth2.core.OAuth2Attributes;
+import org.springframework.security.oauth2.core.OAuth2Exception;
 import org.springframework.security.oauth2.core.RefreshToken;
 import org.springframework.security.oauth2.core.protocol.AuthorizationCodeGrantAuthorizationResponseAttributes;
+import org.springframework.security.oauth2.core.protocol.AuthorizationRequestAttributes;
 import org.springframework.security.oauth2.core.protocol.ErrorResponseAttributes;
 import org.springframework.security.oauth2.core.protocol.TokenResponseAttributes;
 import org.springframework.security.web.authentication.AbstractAuthenticationProcessingFilter;
@@ -34,6 +38,7 @@ import javax.servlet.ServletException;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 import java.io.IOException;
+import java.net.URI;
 
 import static org.springframework.security.oauth2.client.filter.AuthorizationUtil.*;
 
@@ -47,11 +52,6 @@ public class AuthorizationCodeGrantProcessingFilter extends AbstractAuthenticati
 	private final ClientConfigurationRepository clientConfigurationRepository;
 
 	private final AuthorizationCodeGrantHandler authorizationCodeGrantHandler;
-
-	private ClientContextRepository clientContextRepository = new HttpSessionClientContextRepository();
-
-	private ClientContextResolver clientContextResolver;
-
 
 	public AuthorizationCodeGrantProcessingFilter(ClientConfigurationRepository clientConfigurationRepository,
 												  AuthorizationCodeGrantHandler authorizationCodeGrantHandler,
@@ -70,12 +70,6 @@ public class AuthorizationCodeGrantProcessingFilter extends AbstractAuthenticati
 	}
 
 	@Override
-	public final void afterPropertiesSet() {
-		this.clientContextResolver = new DefaultClientContextResolver(
-				this.clientContextRepository, this.clientConfigurationRepository);
-	}
-
-	@Override
 	public Authentication attemptAuthentication(HttpServletRequest request, HttpServletResponse response)
 			throws AuthenticationException, IOException, ServletException {
 
@@ -83,35 +77,37 @@ public class AuthorizationCodeGrantProcessingFilter extends AbstractAuthenticati
 			// The authorization request was denied or some error occurred
 			ErrorResponseAttributes authorizationErrorAttributes = parseErrorAttributes(request);
 
-			// TODO Throw OAuth2-specific exception (extend AuthenticationServiceException)
+			// TODO Throw OAuth2-specific exception (it should extend AuthenticationServiceException)
+			// We should also find the matching Authorization Request using the 'state' parameter and
+			// pass this into the exception for more context info when handling
 			throw new AuthenticationServiceException("Authorization error: " + authorizationErrorAttributes.getErrorCode());
 		}
 
-		ClientContext clientContext = this.clientContextResolver.resolveContext(request, response);
-		if (clientContext == null) {
-			// context should not be null as it was saved during the authorization request
-			// TODO Throw OAuth2-specific exception for downstream handling OR ClientContextResolver should throw?
-		}
+		AuthorizationRequestAttributes matchingAuthorizationRequest = this.resolveAuthorizationRequest(request);
 
-		AuthorizationCodeGrantAuthorizationResponseAttributes authorizationCodeGrantAttributes = parseAuthorizationCodeGrantAttributes(request);
+		ClientConfiguration configuration = this.clientConfigurationRepository.getConfigurationById(
+				matchingAuthorizationRequest.getClientId());
+
+		AuthorizationCodeGrantAuthorizationResponseAttributes authorizationCodeGrantAttributes =
+				parseAuthorizationCodeGrantAttributes(request);
 
 		TokenResponseAttributes tokenResponse;
 		try {
 			tokenResponse = this.authorizationCodeGrantHandler.handle(
-					request, response, clientContext.getConfiguration(), authorizationCodeGrantAttributes);
+					request, response, configuration, authorizationCodeGrantAttributes);
 		} catch (Exception ex) {
-			// TODO Throw OAuth2-specific exception (extend AuthenticationServiceException)
-			throw new AuthenticationServiceException("Token response error: " + ex);
+			// TODO Throw OAuth2-specific exception (it should extend AuthenticationServiceException)
+			throw new AuthenticationServiceException("Error occurred on token endpoint: " + ex);
 		}
 
-		this.clientContextRepository.updateContext(clientContext, tokenResponse, request, response);
+		AccessToken accessToken = new AccessToken(tokenResponse.getAccessTokenType(),
+				tokenResponse.getAccessToken(), tokenResponse.getExpiresIn(), tokenResponse.getScope());
+		RefreshToken refreshToken = null;
+		if (!StringUtils.isEmpty(tokenResponse.getRefreshToken())) {
+			refreshToken = new RefreshToken(tokenResponse.getRefreshToken());
+		}
 
-		AccessToken accessToken = new AccessToken(tokenResponse.getAccessTokenType(), tokenResponse.getAccessToken(),
-				tokenResponse.getExpiresIn(), tokenResponse.getScope());
-		RefreshToken refreshToken = new RefreshToken(tokenResponse.getRefreshToken());
-
-		OAuth2AuthenticationToken authRequest = new OAuth2AuthenticationToken(
-				clientContext.getConfiguration(), accessToken, refreshToken);
+		OAuth2AuthenticationToken authRequest = new OAuth2AuthenticationToken(configuration, accessToken, refreshToken);
 
 		authRequest.setDetails(this.authenticationDetailsSource.buildDetails(request));
 
@@ -120,19 +116,35 @@ public class AuthorizationCodeGrantProcessingFilter extends AbstractAuthenticati
 		return authenticated;
 	}
 
+	protected AuthorizationRequestAttributes resolveAuthorizationRequest(HttpServletRequest request) {
+		AuthorizationRequestAttributes authorizationRequest = AuthorizationUtil.getAuthorizationRequest(request);
+		if (authorizationRequest == null) {
+			// TODO Throw OAuth2-specific exception for downstream handling
+			throw new OAuth2Exception("Unable to resolve matching authorization request");
+		}
+		this.assertMatchingAuthorizationRequest(request, authorizationRequest);
+		return authorizationRequest;
+	}
+
+	protected void assertMatchingAuthorizationRequest(HttpServletRequest request, AuthorizationRequestAttributes authorizationRequest) {
+		String state = request.getParameter(OAuth2Attributes.STATE);
+		if (!authorizationRequest.getState().equals(state)) {
+			// TODO Throw OAuth2-specific exception for downstream handling
+			throw new OAuth2Exception("Invalid state parameter");
+		}
+
+		URI redirectUri = URI.create(authorizationRequest.getRedirectUri());
+		if (!request.getRequestURI().equals(redirectUri.getPath())) {
+			// TODO Throw OAuth2-specific exception for downstream handling
+			throw new OAuth2Exception("Invalid redirect_uri parameter");
+		}
+	}
+
 	protected final ClientConfigurationRepository getClientConfigurationRepository() {
 		return this.clientConfigurationRepository;
 	}
 
 	protected final AuthorizationCodeGrantHandler getAuthorizationCodeGrantHandler() {
-		return authorizationCodeGrantHandler;
-	}
-
-	protected final ClientContextRepository getClientContextRepository() {
-		return this.clientContextRepository;
-	}
-
-	protected final ClientContextResolver getClientContextResolver() {
-		return this.clientContextResolver;
+		return this.authorizationCodeGrantHandler;
 	}
 }

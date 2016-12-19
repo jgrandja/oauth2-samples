@@ -22,6 +22,8 @@ import java.util.List;
  */
 public interface ClientConfigurationRepository {
 
+	ClientConfiguration getConfigurationById(String clientId);
+
 	ClientConfiguration getConfigurationByAlias(String clientAlias);
 
 	List<ClientConfiguration> getConfigurations();

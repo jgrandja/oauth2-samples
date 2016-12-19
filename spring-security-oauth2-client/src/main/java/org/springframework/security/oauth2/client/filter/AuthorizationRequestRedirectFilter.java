@@ -18,13 +18,11 @@ package org.springframework.security.oauth2.client.filter;
 import org.springframework.security.crypto.keygen.StringKeyGenerator;
 import org.springframework.security.oauth2.client.config.ClientConfiguration;
 import org.springframework.security.oauth2.client.config.ClientConfigurationRepository;
-import org.springframework.security.oauth2.client.context.*;
 import org.springframework.security.oauth2.core.DefaultStateGenerator;
 import org.springframework.security.oauth2.core.protocol.AuthorizationRequestAttributes;
 import org.springframework.security.web.DefaultRedirectStrategy;
 import org.springframework.security.web.RedirectStrategy;
 import org.springframework.security.web.util.matcher.AntPathRequestMatcher;
-import org.springframework.security.web.util.matcher.OrRequestMatcher;
 import org.springframework.security.web.util.matcher.RequestMatcher;
 import org.springframework.util.Assert;
 import org.springframework.web.filter.GenericFilterBean;
@@ -38,12 +36,13 @@ import javax.servlet.http.HttpServletResponse;
 import java.io.IOException;
 import java.net.URI;
 import java.util.List;
-import java.util.Set;
+import java.util.Map;
+import java.util.Optional;
 import java.util.stream.Collectors;
 
 
 /**
- * Initiates an OAuth 2.0 Authorization Request redirect for the Authorization Code and Implicit Grant flows.
+ * Initiates an OAuth 2.0 Authorization Request redirect for the Authorization Code Grant and Implicit Grant flows.
  *
  * @author Joe Grandja
  */
@@ -60,11 +59,7 @@ public class AuthorizationRequestRedirectFilter extends GenericFilterBean {
 
 	private final StringKeyGenerator stateGenerator = new DefaultStateGenerator();
 
-	private RequestMatcher authorizationRequestMatcher;
-
-	private ClientContextRepository clientContextRepository = new HttpSessionClientContextRepository();
-
-	private ClientContextResolver clientContextResolver;
+	protected AuthorizationRequestMatcher authorizationRequestMatcher;
 
 	public AuthorizationRequestRedirectFilter(ClientConfigurationRepository clientConfigurationRepository,
 											  AuthorizationRequestUriBuilder authorizationUriBuilder) {
@@ -88,19 +83,15 @@ public class AuthorizationRequestRedirectFilter extends GenericFilterBean {
 
 	@Override
 	public final void afterPropertiesSet() {
-		this.clientContextResolver = new DefaultClientContextResolver(
-				this.clientContextRepository, this.clientConfigurationRepository);
-
-		// Build the Authorization Request processing URI fo each client
 		List<ClientConfiguration> configurations = this.clientConfigurationRepository.getConfigurations();
 		Assert.notEmpty(configurations, "clientConfigurations cannot be empty");
-		Set<String> authorizationRequestProcessingUris = configurations.stream()
-				.map(e -> this.filterProcessingBaseUri + "/" + e.getClientAlias()).collect(Collectors.toSet());
-		this.authorizationRequestMatcher = new DefaultAuthorizationRequestMatcher(authorizationRequestProcessingUris);
+		this.authorizationRequestMatcher = new AuthorizationRequestMatcher(this.filterProcessingBaseUri, configurations);
 	}
 
 	@Override
-	public final void doFilter(ServletRequest req, ServletResponse res, FilterChain chain) throws IOException, ServletException {
+	public final void doFilter(ServletRequest req, ServletResponse res, FilterChain chain)
+			throws IOException, ServletException {
+
 		HttpServletRequest request = (HttpServletRequest) req;
 		HttpServletResponse response = (HttpServletResponse) res;
 
@@ -115,7 +106,8 @@ public class AuthorizationRequestRedirectFilter extends GenericFilterBean {
 	protected void obtainAuthorization(HttpServletRequest request, HttpServletResponse response)
 			throws IOException, ServletException {
 
-		AuthorizationRequestAttributes authorizationRequestAttributes = this.buildAuthorizationAttributes(request, response);
+		AuthorizationRequestAttributes authorizationRequestAttributes = this.buildAuthorizationRequest(request);
+		this.saveAuthorizationRequest(request, authorizationRequestAttributes);
 
 		URI redirectUri = this.authorizationUriBuilder.build(authorizationRequestAttributes);
 		Assert.notNull(redirectUri, "Authorization redirectUri cannot be null");
@@ -123,14 +115,8 @@ public class AuthorizationRequestRedirectFilter extends GenericFilterBean {
 		this.authorizationRedirectStrategy.sendRedirect(request, response, redirectUri.toString());
 	}
 
-	protected final AuthorizationRequestAttributes buildAuthorizationAttributes(HttpServletRequest request,
-																				HttpServletResponse response)
-			throws IOException, ServletException {
-
-		// TODO ClientContext is being created in ClientContextResolver. Wondering if that logic belongs in here?
-		ClientContext clientContext = this.clientContextResolver.resolveContext(request, response);
-
-		ClientConfiguration configuration = clientContext.getConfiguration();
+	protected AuthorizationRequestAttributes buildAuthorizationRequest(HttpServletRequest request) {
+		ClientConfiguration configuration = this.authorizationRequestMatcher.matchingClient(request);
 
 		AuthorizationRequestAttributes authorizationRequestAttributes =
 				AuthorizationRequestAttributes.authorizationCodeGrant(
@@ -140,10 +126,20 @@ public class AuthorizationRequestRedirectFilter extends GenericFilterBean {
 						configuration.getScope(),
 						this.stateGenerator.generateKey());
 
-		// Save the request attributes so we can correlate and validate on the authorization response callback
-		this.clientContextRepository.updateContext(clientContext, authorizationRequestAttributes, request, response);
-
 		return authorizationRequestAttributes;
+	}
+
+	protected void saveAuthorizationRequest(HttpServletRequest request, AuthorizationRequestAttributes authorizationRequest) {
+		AuthorizationUtil.saveAuthorizationRequest(request, authorizationRequest);
+	}
+
+	private String cleanupUri(String uri) {
+		// Check for and remove trailing '/'
+		if (uri.endsWith("/")) {
+			uri = uri.replaceAll("/$", "");
+			uri = cleanupUri(uri);		// There may be more
+		}
+		return uri;
 	}
 
 	protected final ClientConfigurationRepository getClientConfigurationRepository() {
@@ -158,27 +154,28 @@ public class AuthorizationRequestRedirectFilter extends GenericFilterBean {
 		return this.authorizationRedirectStrategy;
 	}
 
-	private String cleanupUri(String uri) {
-		// Check for and remove trailing '/'
-		if (uri.endsWith("/")) {
-			uri = uri.replaceAll("/$", "");
-			uri = cleanupUri(uri);		// There may be more
-		}
-		return uri;
-	}
+	private class AuthorizationRequestMatcher implements RequestMatcher {
+		private Map<AntPathRequestMatcher, ClientConfiguration> clientRequestMatchers;
 
-	private class DefaultAuthorizationRequestMatcher implements RequestMatcher {
-		private RequestMatcher delegate;
-
-		private DefaultAuthorizationRequestMatcher(Set<String> authorizationRequestProcessingUris) {
-			List<RequestMatcher> requestMatchers = authorizationRequestProcessingUris.stream()
-					.map(AntPathRequestMatcher::new).collect(Collectors.toList());
-			this.delegate = new OrRequestMatcher(requestMatchers);
+		private AuthorizationRequestMatcher(String authorizationBaseUri, List<ClientConfiguration> configurations) {
+			this.clientRequestMatchers = configurations.stream().collect(
+					Collectors.toMap(
+							c -> new AntPathRequestMatcher(authorizationBaseUri + "/" + c.getClientAlias()),
+							c -> c));
 		}
 
 		@Override
 		public boolean matches(HttpServletRequest request) {
-			return this.delegate.matches(request);
+			return this.clientRequestMatchers.keySet().stream().anyMatch(e -> e.matches(request));
+		}
+
+		protected ClientConfiguration matchingClient(HttpServletRequest request) {
+			Optional<AntPathRequestMatcher> clientRequestMatcher = this.clientRequestMatchers.keySet().stream()
+					.filter(e -> e.matches(request)).findFirst();
+			if (clientRequestMatcher.isPresent()) {
+				return this.clientRequestMatchers.get(clientRequestMatcher.get());
+			}
+			return null;
 		}
 	}
 }
