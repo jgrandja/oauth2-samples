@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.springframework.security.oauth2.client.filter.oltu;
+package org.springframework.security.oauth2.client.authentication.oltu;
 
 import org.apache.oltu.oauth2.client.OAuthClient;
 import org.apache.oltu.oauth2.client.URLConnectionClient;
@@ -23,17 +23,10 @@ import org.apache.oltu.oauth2.common.exception.OAuthProblemException;
 import org.apache.oltu.oauth2.common.exception.OAuthSystemException;
 import org.apache.oltu.oauth2.common.message.types.GrantType;
 import org.springframework.http.MediaType;
+import org.springframework.security.oauth2.client.authentication.AuthorizationCodeGrantAuthenticationToken;
 import org.springframework.security.oauth2.client.config.ClientConfiguration;
-import org.springframework.security.oauth2.client.filter.AuthorizationCodeGrantHandler;
-import org.springframework.security.oauth2.core.AccessTokenType;
-import org.springframework.security.oauth2.core.OAuth2Exception;
-import org.springframework.security.oauth2.core.protocol.AuthorizationCodeGrantAuthorizationResponseAttributes;
-import org.springframework.security.oauth2.core.protocol.TokenResponseAttributes;
+import org.springframework.security.oauth2.core.*;
 
-import javax.servlet.ServletException;
-import javax.servlet.http.HttpServletRequest;
-import javax.servlet.http.HttpServletResponse;
-import java.io.IOException;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
@@ -42,14 +35,11 @@ import java.util.stream.Collectors;
 /**
  * @author Joe Grandja
  */
-public class OltuAuthorizationCodeGrantHandler implements AuthorizationCodeGrantHandler {
+public class OltuAuthorizationCodeGrantTokenExchanger implements AuthorizationGrantTokenExchanger<AuthorizationCodeGrantAuthenticationToken> {
 
 	@Override
-	public TokenResponseAttributes handle(HttpServletRequest request,
-										  HttpServletResponse response,
-										  ClientConfiguration configuration,
-										  AuthorizationCodeGrantAuthorizationResponseAttributes authorizationCodeGrantAttributes)
-			throws IOException, ServletException {
+	public Tokens exchange(AuthorizationCodeGrantAuthenticationToken authorizationGrant) {
+		ClientConfiguration configuration = authorizationGrant.getConfiguration();
 
 		OAuthJSONAccessTokenResponse tokenResponse;
 		try {
@@ -60,7 +50,7 @@ public class OltuAuthorizationCodeGrantHandler implements AuthorizationCodeGrant
 					.setClientId(configuration.getClientId())
 					.setClientSecret(configuration.getClientSecret())
 					.setRedirectURI(configuration.getRedirectUri())
-					.setCode(authorizationCodeGrantAttributes.getCode())
+					.setCode(authorizationGrant.getAuthorizationCode())
 					.setScope(configuration.getScope().stream().collect(Collectors.joining(" ")))
 					.buildBodyMessage();
 			tokenRequest.setHeader("Accept", MediaType.APPLICATION_JSON_VALUE);
@@ -77,27 +67,28 @@ public class OltuAuthorizationCodeGrantHandler implements AuthorizationCodeGrant
 			throw new OAuth2Exception(se.getMessage(), se);
 		}
 
-		String accessToken = tokenResponse.getAccessToken();
+		String accessTokenValue = tokenResponse.getAccessToken();
 		AccessTokenType accessTokenType = null;
 		if (AccessTokenType.BEARER.value().equalsIgnoreCase(tokenResponse.getTokenType())) {
 			accessTokenType = AccessTokenType.BEARER;
 		} else if (AccessTokenType.MAC.value().equalsIgnoreCase(tokenResponse.getTokenType())) {
 			accessTokenType = AccessTokenType.MAC;
 		}
-		long expiresIn = tokenResponse.getExpiresIn();
+		long expiresIn = 0;
+		if (tokenResponse.getExpiresIn() != null) {
+			expiresIn = tokenResponse.getExpiresIn();
+		}
 		List<String> scope = Collections.emptyList();
 		if (tokenResponse.getScope() != null) {
 			scope = Arrays.asList(tokenResponse.getScope().split(" "));
 		}
-		String refreshToken = tokenResponse.getRefreshToken();
+		AccessToken accessToken = new AccessToken(accessTokenType, accessTokenValue, expiresIn, scope);
 
-		TokenResponseAttributes result = new TokenResponseAttributes(
-				accessToken,
-				accessTokenType,
-				expiresIn,
-				scope,
-				refreshToken);
+		RefreshToken refreshToken = null;
+		if (tokenResponse.getRefreshToken() != null) {
+			refreshToken = new RefreshToken(tokenResponse.getRefreshToken());
+		}
 
-		return result;
+		return new Tokens(accessToken, refreshToken);
 	}
 }

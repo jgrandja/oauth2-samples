@@ -23,6 +23,7 @@ import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.security.oauth2.client.config.ClientConfiguration;
 import org.springframework.security.oauth2.core.AccessToken;
 import org.springframework.security.oauth2.core.RefreshToken;
+import org.springframework.util.Assert;
 
 import java.util.Collection;
 
@@ -31,12 +32,10 @@ import java.util.Collection;
  */
 public class OAuth2AuthenticationToken extends AbstractAuthenticationToken {
 	private static final long serialVersionUID = SpringSecurityCoreVersion.SERIAL_VERSION_UID;
-
 	private final UserDetails principal;
 	private final ClientConfiguration configuration;
 	private final AccessToken accessToken;
 	private final RefreshToken refreshToken;
-
 
 	public OAuth2AuthenticationToken(ClientConfiguration configuration,
 									 AccessToken accessToken,
@@ -52,13 +51,19 @@ public class OAuth2AuthenticationToken extends AbstractAuthenticationToken {
 									 RefreshToken refreshToken) {
 
 		super(authorities);
-		this.principal = principal;			// TODO Assert type OAuth2UserDetails?
-		this.configuration = configuration;
-		this.accessToken = accessToken;
-		this.refreshToken = refreshToken;
-		setAuthenticated(principal != null);
-	}
 
+		this.principal = principal;
+
+		Assert.notNull(configuration, "configuration cannot be null");
+		this.configuration = configuration;
+
+		Assert.notNull(accessToken, "accessToken cannot be null");
+		this.accessToken = accessToken;
+
+		this.refreshToken = refreshToken;
+
+		this.setAuthenticated(principal != null);
+	}
 
 	@Override
 	public final Object getPrincipal() {
@@ -67,8 +72,7 @@ public class OAuth2AuthenticationToken extends AbstractAuthenticationToken {
 
 	@Override
 	public final Object getCredentials() {
-		// TODO This should return null
-		return this.principal.getPassword();
+		return (this.principal != null ? this.principal.getPassword() : null);
 	}
 
 	public final ClientConfiguration getConfiguration() {

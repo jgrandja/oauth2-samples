@@ -13,7 +13,8 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.springframework.security.oauth2.client.filter.nimbus;
+package org.springframework.security.oauth2.client.authentication.nimbus;
+
 
 import com.nimbusds.oauth2.sdk.*;
 import com.nimbusds.oauth2.sdk.auth.ClientAuthentication;
@@ -22,16 +23,11 @@ import com.nimbusds.oauth2.sdk.auth.Secret;
 import com.nimbusds.oauth2.sdk.http.HTTPRequest;
 import com.nimbusds.oauth2.sdk.id.ClientID;
 import org.springframework.http.MediaType;
+import org.springframework.security.oauth2.client.authentication.AuthorizationCodeGrantAuthenticationToken;
 import org.springframework.security.oauth2.client.config.ClientConfiguration;
-import org.springframework.security.oauth2.client.filter.AuthorizationCodeGrantHandler;
-import org.springframework.security.oauth2.core.AccessTokenType;
-import org.springframework.security.oauth2.core.OAuth2Exception;
-import org.springframework.security.oauth2.core.protocol.AuthorizationCodeGrantAuthorizationResponseAttributes;
-import org.springframework.security.oauth2.core.protocol.TokenResponseAttributes;
+import org.springframework.security.oauth2.core.*;
+import org.springframework.util.CollectionUtils;
 
-import javax.servlet.ServletException;
-import javax.servlet.http.HttpServletRequest;
-import javax.servlet.http.HttpServletResponse;
 import java.io.IOException;
 import java.net.URI;
 import java.net.URISyntaxException;
@@ -41,18 +37,15 @@ import java.util.List;
 /**
  * @author Joe Grandja
  */
-public class NimbusAuthorizationCodeGrantHandler implements AuthorizationCodeGrantHandler {
+public class NimbusAuthorizationCodeGrantTokenExchanger implements AuthorizationGrantTokenExchanger<AuthorizationCodeGrantAuthenticationToken> {
 
 	@Override
-	public TokenResponseAttributes handle(HttpServletRequest request,
-										  HttpServletResponse response,
-										  ClientConfiguration configuration,
-										  AuthorizationCodeGrantAuthorizationResponseAttributes authorizationCodeGrantAttributes)
-			throws IOException, ServletException {
+	public Tokens exchange(AuthorizationCodeGrantAuthenticationToken authorizationGrant) {
 
+		ClientConfiguration configuration = authorizationGrant.getConfiguration();
 
 		// Build the authorization code grant request for the token endpoint
-		AuthorizationCode authorizationCode = new AuthorizationCode(authorizationCodeGrantAttributes.getCode());
+		AuthorizationCode authorizationCode = new AuthorizationCode(authorizationGrant.getAuthorizationCode());
 		URI redirectUri = toURI(configuration.getRedirectUri());
 		AuthorizationGrant authorizationCodeGrant = new AuthorizationCodeGrant(authorizationCode, redirectUri);
 		URI tokenUri = toURI(configuration.getTokenUri());
@@ -85,7 +78,7 @@ public class NimbusAuthorizationCodeGrantHandler implements AuthorizationCodeGra
 
 		AccessTokenResponse accessTokenResponse = (AccessTokenResponse) tokenResponse;
 
-		String accessToken = accessTokenResponse.getTokens().getAccessToken().getValue();
+		String accessTokenValue = accessTokenResponse.getTokens().getAccessToken().getValue();
 		AccessTokenType accessTokenType = null;
 		if (AccessTokenType.BEARER.value().equals(accessTokenResponse.getTokens().getAccessToken().getType().getValue())) {
 			accessTokenType = AccessTokenType.BEARER;
@@ -94,22 +87,17 @@ public class NimbusAuthorizationCodeGrantHandler implements AuthorizationCodeGra
 		}
 		long expiresIn = accessTokenResponse.getTokens().getAccessToken().getLifetime();
 		List<String> scope = Collections.emptyList();
-		if (accessTokenResponse.getTokens().getAccessToken().getScope() != null) {
+		if (!CollectionUtils.isEmpty(accessTokenResponse.getTokens().getAccessToken().getScope())) {
 			scope = accessTokenResponse.getTokens().getAccessToken().getScope().toStringList();
 		}
-		String refreshToken = null;
+		AccessToken accessToken = new AccessToken(accessTokenType, accessTokenValue, expiresIn, scope);
+
+		RefreshToken refreshToken = null;
 		if (accessTokenResponse.getTokens().getRefreshToken() != null) {
-			refreshToken = accessTokenResponse.getTokens().getRefreshToken().getValue();
+			refreshToken = new RefreshToken(accessTokenResponse.getTokens().getRefreshToken().getValue());
 		}
 
-		TokenResponseAttributes result = new TokenResponseAttributes(
-				accessToken,
-				accessTokenType,
-				expiresIn,
-				scope,
-				refreshToken);
-
-		return result;
+		return new Tokens(accessToken, refreshToken);
 	}
 
 	private URI toURI(String uriStr) {
