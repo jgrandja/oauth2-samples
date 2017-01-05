@@ -20,18 +20,17 @@ import org.springframework.mock.web.MockHttpServletRequest;
 import org.springframework.mock.web.MockHttpServletResponse;
 import org.springframework.security.oauth2.client.config.ClientConfiguration;
 import org.springframework.security.oauth2.client.config.ClientConfigurationRepository;
-import org.springframework.security.oauth2.client.config.InMemoryClientConfigurationRepository;
 import org.springframework.security.oauth2.core.protocol.AuthorizationRequestAttributes;
 
 import javax.servlet.FilterChain;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 import java.net.URI;
-import java.util.Arrays;
 import java.util.Collections;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.Mockito.*;
+import static org.springframework.security.oauth2.client.filter.ClientConfigurationTestUtil.*;
 
 /**
  * Tests {@link AuthorizationRequestRedirectFilter}.
@@ -71,7 +70,7 @@ public class AuthorizationRequestRedirectFilterTests {
 		AuthorizationRequestRedirectFilter filter =
 				setupFilter(authorizationUri, clientConfiguration);
 
-		String requestURI = "/request";
+		String requestURI = "/path";
 		MockHttpServletRequest request = new MockHttpServletRequest("GET", requestURI);
 		request.setServletPath(requestURI);
 		MockHttpServletResponse response = new MockHttpServletResponse();
@@ -98,7 +97,7 @@ public class AuthorizationRequestRedirectFilterTests {
 
 		filter.doFilter(request, response, filterChain);
 
-		verifyZeroInteractions(filterChain);		// Request should not proceed up the chain
+		verifyZeroInteractions(filterChain);        // Request should not proceed up the chain
 
 		assertThat(response.getRedirectedUrl()).isEqualTo(authorizationUri);
 	}
@@ -119,11 +118,11 @@ public class AuthorizationRequestRedirectFilterTests {
 
 		filter.doFilter(request, response, filterChain);
 
-		verifyZeroInteractions(filterChain);		// Request should not proceed up the chain
+		verifyZeroInteractions(filterChain);        // Request should not proceed up the chain
 
 		// The authorization request attributes are saved in the session before the redirect happens
 		AuthorizationRequestAttributes authorizationRequestAttributes =
-				(AuthorizationRequestAttributes)request.getSession().getAttribute(AuthorizationUtil.SAVED_AUTHORIZATION_REQUEST);
+				(AuthorizationRequestAttributes) request.getSession().getAttribute(AuthorizationUtil.SAVED_AUTHORIZATION_REQUEST);
 		assertThat(authorizationRequestAttributes).isNotNull();
 
 		assertThat(authorizationRequestAttributes.getAuthorizeUri()).isNotNull();
@@ -164,7 +163,7 @@ public class AuthorizationRequestRedirectFilterTests {
 		ClientConfiguration clientConfiguration = githubClientConfiguration();
 
 		AuthorizationRequestUriBuilder authorizationUriBuilder = mock(AuthorizationRequestUriBuilder.class);
-		when(authorizationUriBuilder.build(any())).thenReturn(null);
+		when(authorizationUriBuilder.build(any(AuthorizationRequestAttributes.class))).thenReturn(null);
 
 		AuthorizationRequestRedirectFilter filter = setupFilter(authorizationUriBuilder, clientConfiguration);
 
@@ -193,7 +192,7 @@ public class AuthorizationRequestRedirectFilterTests {
 
 		filter.doFilter(request, response, filterChain);
 
-		verifyZeroInteractions(filterChain);		// Request should not proceed up the chain if matched
+		verifyZeroInteractions(filterChain);        // Request should not proceed up the chain if matched
 	}
 
 	private AuthorizationRequestRedirectFilter setupFilter(
@@ -208,7 +207,7 @@ public class AuthorizationRequestRedirectFilterTests {
 
 		AuthorizationRequestUriBuilder authorizationUriBuilder = mock(AuthorizationRequestUriBuilder.class);
 		URI authorizationURI = new URI(authorizationUri);
-		when(authorizationUriBuilder.build(any())).thenReturn(authorizationURI);
+		when(authorizationUriBuilder.build(any(AuthorizationRequestAttributes.class))).thenReturn(authorizationURI);
 
 		return setupFilter(filterProcessingBaseUri, authorizationUriBuilder, configurations);
 	}
@@ -231,39 +230,5 @@ public class AuthorizationRequestRedirectFilterTests {
 		filter.afterPropertiesSet();
 
 		return filter;
-	}
-
-	private ClientConfigurationRepository clientConfigurationRepository(ClientConfiguration... configurations) {
-		return new InMemoryClientConfigurationRepository(Arrays.asList(configurations));
-	}
-
-	private ClientConfiguration googleClientConfiguration() {
-		ClientConfiguration configuration = new ClientConfiguration();
-		configuration.setClientId("google-client-id");
-		configuration.setClientSecret("secret");
-		configuration.setClientType(ClientConfiguration.ClientType.OPENID_CONNECT);
-		configuration.setClientName("Google Client");
-		configuration.setClientAlias("google");
-		configuration.setAuthorizeUri("https://accounts.google.com/o/oauth2/auth");
-		configuration.setTokenUri("https://accounts.google.com/o/oauth2/token");
-		configuration.setUserInfoUri("https://www.googleapis.com/oauth2/v3/userinfo");
-		configuration.setRedirectUri("http://localhost:8080/oauth2/client/google");
-		configuration.setScope(Arrays.asList("openid", "email"));
-		return configuration;
-	}
-
-	private ClientConfiguration githubClientConfiguration() {
-		ClientConfiguration configuration = new ClientConfiguration();
-		configuration.setClientId("github-client-id");
-		configuration.setClientSecret("secret");
-		configuration.setClientType(ClientConfiguration.ClientType.OAUTH2);
-		configuration.setClientName("GitHub Client");
-		configuration.setClientAlias("github");
-		configuration.setAuthorizeUri("https://github.com/login/oauth/authorize");
-		configuration.setTokenUri("https://github.com/login/oauth/access_token");
-		configuration.setUserInfoUri("https://api.github.com/user");
-		configuration.setRedirectUri("http://localhost:8080/oauth2/client/github");
-		configuration.setScope(Arrays.asList("openid", " user:email"));
-		return configuration;
 	}
 }
