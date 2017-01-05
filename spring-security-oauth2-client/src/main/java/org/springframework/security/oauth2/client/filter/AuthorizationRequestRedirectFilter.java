@@ -47,7 +47,7 @@ import java.util.stream.Collectors;
  * @author Joe Grandja
  */
 public class AuthorizationRequestRedirectFilter extends GenericFilterBean {
-	private static final String DEFAULT_FILTER_PROCESSING_BASE_URI = "/login/oauth2";
+	public static final String DEFAULT_FILTER_PROCESSING_BASE_URI = "/login/oauth2";
 
 	private final String filterProcessingBaseUri;
 
@@ -160,7 +160,7 @@ public class AuthorizationRequestRedirectFilter extends GenericFilterBean {
 		private AuthorizationRequestMatcher(String authorizationBaseUri, List<ClientConfiguration> configurations) {
 			this.clientRequestMatchers = configurations.stream().collect(
 					Collectors.toMap(
-							c -> new AntPathRequestMatcher(authorizationBaseUri + "/" + c.getClientAlias()),
+							c -> new AntPathRequestMatcher(authorizationBaseUri + "/" + c.getClientAlias(), "GET"),
 							c -> c));
 		}
 

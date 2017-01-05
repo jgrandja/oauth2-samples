@@ -31,7 +31,7 @@ import java.net.URISyntaxException;
  * @author Joe Grandja
  */
 class AuthorizationUtil {
-	private static final String SAVED_AUTHORIZATION_REQUEST = "SPRING_SECURITY_OAUTH2_SAVED_AUTHORIZATION_REQUEST";
+	static final String SAVED_AUTHORIZATION_REQUEST = "SPRING_SECURITY_OAUTH2_SAVED_AUTHORIZATION_REQUEST";
 
 	static void saveAuthorizationRequest(HttpServletRequest request, AuthorizationRequestAttributes authorizationRequest) {
 		HttpSession session = request.getSession();
