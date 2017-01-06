@@ -25,12 +25,10 @@ import org.springframework.security.web.RedirectStrategy;
 import org.springframework.security.web.util.matcher.AntPathRequestMatcher;
 import org.springframework.security.web.util.matcher.RequestMatcher;
 import org.springframework.util.Assert;
-import org.springframework.web.filter.GenericFilterBean;
+import org.springframework.web.filter.OncePerRequestFilter;
 
 import javax.servlet.FilterChain;
 import javax.servlet.ServletException;
-import javax.servlet.ServletRequest;
-import javax.servlet.ServletResponse;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 import java.io.IOException;
@@ -46,7 +44,7 @@ import java.util.stream.Collectors;
  *
  * @author Joe Grandja
  */
-public class AuthorizationRequestRedirectFilter extends GenericFilterBean {
+public class AuthorizationRequestRedirectFilter extends OncePerRequestFilter {
 	public static final String DEFAULT_FILTER_PROCESSING_BASE_URI = "/login/oauth2";
 
 	private final String filterProcessingBaseUri;
@@ -89,18 +87,15 @@ public class AuthorizationRequestRedirectFilter extends GenericFilterBean {
 	}
 
 	@Override
-	public final void doFilter(ServletRequest req, ServletResponse res, FilterChain chain)
-			throws IOException, ServletException {
-
-		HttpServletRequest request = (HttpServletRequest) req;
-		HttpServletResponse response = (HttpServletResponse) res;
+	protected void doFilterInternal(HttpServletRequest request, HttpServletResponse response, FilterChain filterChain)
+			throws ServletException, IOException {
 
 		if (this.authorizationRequestMatcher.matches(request)) {
 			this.obtainAuthorization(request, response);
 			return;
 		}
 
-		chain.doFilter(req, res);
+		filterChain.doFilter(request, response);
 	}
 
 	protected void obtainAuthorization(HttpServletRequest request, HttpServletResponse response)
