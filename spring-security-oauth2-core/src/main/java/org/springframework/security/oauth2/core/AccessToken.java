@@ -26,7 +26,7 @@ import java.util.List;
 public class AccessToken extends AbstractToken {
 	private final AccessTokenType accessTokenType;
 	private final long expiredAt;
-	private final List<String> scope;
+	private final List<String> scopes;
 
 	public AccessToken(AccessTokenType accessTokenType, String value) {
 		this(accessTokenType, value, 0);
@@ -36,7 +36,7 @@ public class AccessToken extends AbstractToken {
 		this(accessTokenType, value, expiredAt, Collections.emptyList());
 	}
 
-	public AccessToken(AccessTokenType accessTokenType, String value, long expiredAt, List<String> scope) {
+	public AccessToken(AccessTokenType accessTokenType, String value, long expiredAt, List<String> scopes) {
 		super(value);
 
 		Assert.notNull(accessTokenType, "accessTokenType cannot be null");
@@ -45,7 +45,7 @@ public class AccessToken extends AbstractToken {
 		Assert.isTrue(expiredAt >= 0, "expiredAt must be a positive number");
 		this.expiredAt = expiredAt;
 
-		this.scope = Collections.unmodifiableList((scope != null ? scope : Collections.emptyList()));
+		this.scopes = Collections.unmodifiableList((scopes != null ? scopes : Collections.emptyList()));
 	}
 
 	public final AccessTokenType getAccessTokenType() {
@@ -56,7 +56,7 @@ public class AccessToken extends AbstractToken {
 		return this.expiredAt;
 	}
 
-	public final List<String> getScope() {
-		return this.scope;
+	public final List<String> getScopes() {
+		return this.scopes;
 	}
 }
