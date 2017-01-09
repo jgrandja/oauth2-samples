@@ -15,11 +15,9 @@
  */
 package samples.oauth2.oltu.client.config;
 
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.context.properties.ConfigurationProperties;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
-import org.springframework.security.config.annotation.ObjectPostProcessor;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
 import org.springframework.security.config.annotation.web.configuration.WebSecurityConfigurerAdapter;
@@ -28,37 +26,24 @@ import org.springframework.security.oauth2.client.authentication.oltu.OltuAuthor
 import org.springframework.security.oauth2.client.config.ClientConfiguration;
 import org.springframework.security.oauth2.client.config.ClientConfigurationRepository;
 import org.springframework.security.oauth2.client.config.InMemoryClientConfigurationRepository;
-import org.springframework.security.oauth2.client.filter.AuthorizationRequestRedirectFilter;
 import org.springframework.security.oauth2.client.filter.AuthorizationRequestUriBuilder;
 import org.springframework.security.oauth2.client.filter.oltu.OltuAuthorizationRequestUriBuilder;
 import org.springframework.security.oauth2.client.userdetails.UserInfoUserDetailsService;
 import org.springframework.security.oauth2.client.userdetails.oltu.OltuUserInfoUserDetailsService;
 import org.springframework.security.oauth2.core.AuthorizationGrantTokenExchanger;
-import org.springframework.security.web.authentication.preauth.AbstractPreAuthenticatedProcessingFilter;
 
-import javax.servlet.Filter;
 import java.util.List;
 
 import static org.springframework.security.oauth2.client.config.annotation.web.configurers.AuthorizationCodeGrantFilterConfigurer.authorizationCodeGrant;
+import static org.springframework.security.oauth2.client.config.annotation.web.configurers.AuthorizationRequestRedirectFilterConfigurer.authorizationRedirector;
 
 /**
- * TODO
- * NOTE:
- * 		Most of the configuration in this class will eventually go into a SecurityConfigurer,
- * 		for example, OAuth2ClientSecurityConfigurer and then applied to HttpSecurity.
  *
  * @author Joe Grandja
  */
 @Configuration
 @EnableWebSecurity
 public class SecurityConfig extends WebSecurityConfigurerAdapter {
-	private static final String LOGIN_URL = "/login/oauth2";
-
-	@Autowired
-	protected ClientConfigurationRepository clientConfigurationRepository;
-
-	@Autowired
-	protected ObjectPostProcessor objectPostProcessor;
 
 	// @formatter:off
 	@Override
@@ -67,10 +52,13 @@ public class SecurityConfig extends WebSecurityConfigurerAdapter {
 				.authorizeRequests()
 					.anyRequest().fullyAuthenticated()
 					.and()
-				.addFilterAfter(authorizationRequestRedirectFilter(), AbstractPreAuthenticatedProcessingFilter.class)
+				.apply(authorizationRedirector()
+						.authorizationUriBuilder(authorizationRequestUriBuilder()))
+					.and()
 				.apply(authorizationCodeGrant()
 						.authorizationCodeGrantTokenExchanger(authorizationCodeGrantTokenExchanger())
 						.userInfoUserDetailsService(userInfoUserDetailsService()));
+
 	}
 	// @formatter:on
 
@@ -91,10 +79,6 @@ public class SecurityConfig extends WebSecurityConfigurerAdapter {
 		return new InMemoryClientConfigurationRepository(clientConfigurations);
 	}
 
-
-	// ******************************************* //
-	// *****  Oltu-specific implementations  ***** //
-	// ******************************************* //
 	private AuthorizationRequestUriBuilder authorizationRequestUriBuilder() {
 		return new OltuAuthorizationRequestUriBuilder();
 	}
@@ -105,22 +89,5 @@ public class SecurityConfig extends WebSecurityConfigurerAdapter {
 
 	private UserInfoUserDetailsService userInfoUserDetailsService() {
 		return new OltuUserInfoUserDetailsService();
-	}
-	// ******************************************* //
-	// *****  Oltu-specific implementations  ***** //
-	// ******************************************* //
-
-
-	private Filter authorizationRequestRedirectFilter() throws Exception {
-		AuthorizationRequestRedirectFilter authorizationRequestRedirectFilter =
-				new AuthorizationRequestRedirectFilter(
-						LOGIN_URL,
-						this.clientConfigurationRepository,
-						this.authorizationRequestUriBuilder());
-
-		// TODO This is temporary until we have a SecurityConfigurer
-		this.objectPostProcessor.postProcess(authorizationRequestRedirectFilter);
-
-		return authorizationRequestRedirectFilter;
 	}
 }

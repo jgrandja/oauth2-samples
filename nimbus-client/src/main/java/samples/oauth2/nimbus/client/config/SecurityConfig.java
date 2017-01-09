@@ -15,45 +15,28 @@
  */
 package samples.oauth2.nimbus.client.config;
 
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.context.properties.ConfigurationProperties;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
-import org.springframework.security.config.annotation.ObjectPostProcessor;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
 import org.springframework.security.config.annotation.web.configuration.WebSecurityConfigurerAdapter;
 import org.springframework.security.oauth2.client.config.ClientConfiguration;
 import org.springframework.security.oauth2.client.config.ClientConfigurationRepository;
 import org.springframework.security.oauth2.client.config.InMemoryClientConfigurationRepository;
-import org.springframework.security.oauth2.client.filter.AuthorizationRequestRedirectFilter;
-import org.springframework.security.oauth2.client.filter.AuthorizationRequestUriBuilder;
-import org.springframework.security.oauth2.client.filter.nimbus.NimbusAuthorizationRequestUriBuilder;
-import org.springframework.security.web.authentication.preauth.AbstractPreAuthenticatedProcessingFilter;
 
-import javax.servlet.Filter;
 import java.util.List;
 
 import static org.springframework.security.oauth2.client.config.annotation.web.configurers.AuthorizationCodeGrantFilterConfigurer.authorizationCodeGrant;
+import static org.springframework.security.oauth2.client.config.annotation.web.configurers.AuthorizationRequestRedirectFilterConfigurer.authorizationRedirector;
 
 /**
- * TODO
- * NOTE:
- * 		Most of the configuration in this class will eventually go into a SecurityConfigurer,
- * 		for example, OAuth2ClientSecurityConfigurer and then applied to HttpSecurity.
  *
  * @author Joe Grandja
  */
 @Configuration
 @EnableWebSecurity
 public class SecurityConfig extends WebSecurityConfigurerAdapter {
-	private static final String LOGIN_URL = "/login/oauth2";
-
-	@Autowired
-	protected ClientConfigurationRepository clientConfigurationRepository;
-
-	@Autowired
-	protected ObjectPostProcessor objectPostProcessor;
 
 	// @formatter:off
 	@Override
@@ -62,7 +45,8 @@ public class SecurityConfig extends WebSecurityConfigurerAdapter {
 				.authorizeRequests()
 					.anyRequest().fullyAuthenticated()
 					.and()
-				.addFilterAfter(authorizationRequestRedirectFilter(), AbstractPreAuthenticatedProcessingFilter.class)
+				.apply(authorizationRedirector())
+					.and()
 				.apply(authorizationCodeGrant());
 	}
 	// @formatter:on
@@ -82,32 +66,5 @@ public class SecurityConfig extends WebSecurityConfigurerAdapter {
 	@Bean
 	public ClientConfigurationRepository clientConfigurationRepository(List<ClientConfiguration> clientConfigurations) {
 		return new InMemoryClientConfigurationRepository(clientConfigurations);
-	}
-
-
-	// ********************************************* //
-	// *****  Nimbus-specific implementations  ***** //
-	// ********************************************* //
-
-	private AuthorizationRequestUriBuilder authorizationRequestUriBuilder() {
-		return new NimbusAuthorizationRequestUriBuilder();
-	}
-
-	// ********************************************* //
-	// *****  Nimbus-specific implementations  ***** //
-	// ********************************************* //
-
-
-	private Filter authorizationRequestRedirectFilter() throws Exception {
-		AuthorizationRequestRedirectFilter authorizationRequestRedirectFilter =
-				new AuthorizationRequestRedirectFilter(
-						LOGIN_URL,
-						this.clientConfigurationRepository,
-						this.authorizationRequestUriBuilder());
-
-		// TODO This is temporary until we have a SecurityConfigurer
-		this.objectPostProcessor.postProcess(authorizationRequestRedirectFilter);
-
-		return authorizationRequestRedirectFilter;
 	}
 }

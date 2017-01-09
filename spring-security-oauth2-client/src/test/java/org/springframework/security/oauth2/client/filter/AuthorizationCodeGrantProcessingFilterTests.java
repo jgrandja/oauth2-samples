@@ -49,13 +49,17 @@ import static org.springframework.security.oauth2.client.filter.ClientConfigurat
 public class AuthorizationCodeGrantProcessingFilterTests {
 
 	@Test(expected = IllegalArgumentException.class)
-	public void constructorWhenClientConfigurationRepositoryIsNullThenThrowIllegalArgumentException() {
-		new AuthorizationCodeGrantProcessingFilter(null, mock(AuthenticationManager.class));
+	public void afterPropertiesSetWhenClientConfigurationRepositoryIsNullThenThrowIllegalArgumentException() {
+		AuthorizationCodeGrantProcessingFilter filter = new AuthorizationCodeGrantProcessingFilter();
+		filter.setAuthenticationManager(mock(AuthenticationManager.class));
+		filter.afterPropertiesSet();
 	}
 
 	@Test(expected = IllegalArgumentException.class)
-	public void constructorWhenAuthenticationManagerIsNullThenThrowIllegalArgumentException() {
-		new AuthorizationCodeGrantProcessingFilter(mock(ClientConfigurationRepository.class), null);
+	public void afterPropertiesSetWhenAuthenticationManagerIsNullThenThrowIllegalArgumentException() {
+		AuthorizationCodeGrantProcessingFilter filter = new AuthorizationCodeGrantProcessingFilter();
+		filter.setClientConfigurationRepository(mock(ClientConfigurationRepository.class));
+		filter.afterPropertiesSet();
 	}
 
 	@Test
@@ -210,8 +214,9 @@ public class AuthorizationCodeGrantProcessingFilterTests {
 
 		ClientConfigurationRepository clientConfigurationRepository = clientConfigurationRepository(configurations);
 
-		AuthorizationCodeGrantProcessingFilter filter = new AuthorizationCodeGrantProcessingFilter(
-				clientConfigurationRepository, authenticationManager);
+		AuthorizationCodeGrantProcessingFilter filter = new AuthorizationCodeGrantProcessingFilter();
+		filter.setClientConfigurationRepository(clientConfigurationRepository);
+		filter.setAuthenticationManager(authenticationManager);
 		filter.afterPropertiesSet();
 
 		return filter;

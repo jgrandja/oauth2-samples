@@ -8,7 +8,10 @@ dependencies {
     compile project(":spring-security-oauth2-client"),
             "org.springframework.boot:spring-boot-starter-web",
             "org.springframework.boot:spring-boot-starter-security",
-            "org.springframework.boot:spring-boot-starter-thymeleaf"
+            "org.springframework.boot:spring-boot-starter-thymeleaf",
+            "org.springframework.security:spring-security-core:$springSecurityVersion",
+            "org.springframework.security:spring-security-config:$springSecurityVersion",
+            "org.springframework.security:spring-security-web:$springSecurityVersion"
 
     testCompile "org.springframework.boot:spring-boot-starter-test"
 

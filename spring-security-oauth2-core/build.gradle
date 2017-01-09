@@ -1,6 +1,7 @@
 
 dependencies {
     compile "org.springframework:spring-web:$springVersion",
+            "org.springframework.security:spring-security-core:$springSecurityVersion",
             "org.springframework.security:spring-security-config:$springSecurityVersion",
             "org.springframework.security:spring-security-web:$springSecurityVersion",
             "org.slf4j:slf4j-api:$slf4jApiVersion",
