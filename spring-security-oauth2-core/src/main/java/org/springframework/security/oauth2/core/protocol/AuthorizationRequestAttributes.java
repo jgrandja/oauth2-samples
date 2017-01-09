@@ -27,6 +27,7 @@ import java.util.List;
  * @author Joe Grandja
  */
 public class AuthorizationRequestAttributes implements Serializable {
+	private final String authorizeUri;
 	private final AuthorizationGrantType authorizationGrantType;
 	private final ResponseType responseType;
 	private final String clientId;
@@ -34,12 +35,12 @@ public class AuthorizationRequestAttributes implements Serializable {
 	private final List<String> scope;
 	private final String state;
 
-	// TODO Remove after re-factor AuthorizationRequestUriBuilder to include authorizeUri as parameter
-	private String authorizeUri;
+	public AuthorizationRequestAttributes(String authorizeUri, AuthorizationGrantType authorizationGrantType,
+										  ResponseType responseType, String clientId, String redirectUri,
+										  List<String> scope, String state) {
 
-
-	public AuthorizationRequestAttributes(AuthorizationGrantType authorizationGrantType, ResponseType responseType,
-											 String clientId, String redirectUri, List<String> scope, String state) {
+		Assert.hasText(authorizeUri, "authorizeUri cannot be empty");
+		this.authorizeUri = authorizeUri;
 
 		Assert.notNull(authorizationGrantType, "authorizationGrantType cannot be null");
 		Assert.isTrue(AuthorizationGrantType.AUTHORIZATION_CODE.equals(authorizationGrantType) ||
@@ -62,19 +63,20 @@ public class AuthorizationRequestAttributes implements Serializable {
 		this.state = state;
 	}
 
-	// TODO Remove after re-factor AuthorizationRequestUriBuilder to include authorizeUri as parameter
-	public static AuthorizationRequestAttributes authorizationCodeGrant(String authorizeUri, String clientId, String redirectUri, List<String> scope, String state) {
-		AuthorizationRequestAttributes authorizationRequest = new AuthorizationRequestAttributes(AuthorizationGrantType.AUTHORIZATION_CODE, ResponseType.CODE, clientId, redirectUri, scope, state);
-		authorizationRequest.authorizeUri = authorizeUri;
-		return authorizationRequest;
+	public static AuthorizationRequestAttributes authorizationCodeGrant(String authorizeUri, String clientId,
+																		String redirectUri, List<String> scope, String state) {
+		return new AuthorizationRequestAttributes(authorizeUri, AuthorizationGrantType.AUTHORIZATION_CODE,
+				ResponseType.CODE, clientId, redirectUri, scope, state);
 	}
 
-	public static AuthorizationRequestAttributes authorizationCodeGrant(String clientId, String redirectUri, List<String> scope, String state) {
-		return new AuthorizationRequestAttributes(AuthorizationGrantType.AUTHORIZATION_CODE, ResponseType.CODE, clientId, redirectUri, scope, state);
+	public static AuthorizationRequestAttributes implicitGrant(String authorizeUri, String clientId,
+															   String redirectUri, List<String> scope, String state) {
+		return new AuthorizationRequestAttributes(authorizeUri, AuthorizationGrantType.IMPLICIT,
+				ResponseType.TOKEN, clientId, redirectUri, scope, state);
 	}
 
-	public static AuthorizationRequestAttributes implicitGrant(String clientId, String redirectUri, List<String> scope, String state) {
-		return new AuthorizationRequestAttributes(AuthorizationGrantType.IMPLICIT, ResponseType.TOKEN, clientId, redirectUri, scope, state);
+	public final String getAuthorizeUri() {
+		return this.authorizeUri;
 	}
 
 	public final AuthorizationGrantType getGrantType() {
@@ -99,11 +101,6 @@ public class AuthorizationRequestAttributes implements Serializable {
 
 	public final String getState() {
 		return this.state;
-	}
-
-	// TODO Remove after re-factor AuthorizationRequestUriBuilder to include authorizeUri as parameter
-	public String getAuthorizeUri() {
-		return authorizeUri;
 	}
 
 	public final boolean isAuthorizationCodeGrantType() {
