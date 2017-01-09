@@ -19,29 +19,22 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.context.properties.ConfigurationProperties;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
-import org.springframework.security.authentication.AuthenticationProvider;
 import org.springframework.security.config.annotation.ObjectPostProcessor;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
 import org.springframework.security.config.annotation.web.configuration.WebSecurityConfigurerAdapter;
-import org.springframework.security.oauth2.client.authentication.AuthorizationCodeGrantAuthenticationProvider;
-import org.springframework.security.oauth2.client.authentication.AuthorizationCodeGrantAuthenticationToken;
-import org.springframework.security.oauth2.client.authentication.nimbus.NimbusAuthorizationCodeGrantTokenExchanger;
 import org.springframework.security.oauth2.client.config.ClientConfiguration;
 import org.springframework.security.oauth2.client.config.ClientConfigurationRepository;
 import org.springframework.security.oauth2.client.config.InMemoryClientConfigurationRepository;
-import org.springframework.security.oauth2.client.filter.AuthorizationCodeGrantProcessingFilter;
 import org.springframework.security.oauth2.client.filter.AuthorizationRequestRedirectFilter;
 import org.springframework.security.oauth2.client.filter.AuthorizationRequestUriBuilder;
 import org.springframework.security.oauth2.client.filter.nimbus.NimbusAuthorizationRequestUriBuilder;
-import org.springframework.security.oauth2.client.userdetails.UserInfoUserDetailsService;
-import org.springframework.security.oauth2.client.userdetails.nimbus.NimbusUserInfoUserDetailsService;
-import org.springframework.security.oauth2.core.AuthorizationGrantTokenExchanger;
-import org.springframework.security.web.authentication.LoginUrlAuthenticationEntryPoint;
 import org.springframework.security.web.authentication.preauth.AbstractPreAuthenticatedProcessingFilter;
 
 import javax.servlet.Filter;
 import java.util.List;
+
+import static org.springframework.security.oauth2.client.config.annotation.web.configurers.AuthorizationCodeGrantFilterConfigurer.authorizationCodeGrant;
 
 /**
  * TODO
@@ -60,9 +53,6 @@ public class SecurityConfig extends WebSecurityConfigurerAdapter {
 	protected ClientConfigurationRepository clientConfigurationRepository;
 
 	@Autowired
-	protected AuthorizationRequestUriBuilder authorizationRequestUriBuilder;
-
-	@Autowired
 	protected ObjectPostProcessor objectPostProcessor;
 
 	// @formatter:off
@@ -70,14 +60,10 @@ public class SecurityConfig extends WebSecurityConfigurerAdapter {
 	protected void configure(HttpSecurity http) throws Exception {
 		http
 				.authorizeRequests()
-					.antMatchers(LOGIN_URL).permitAll()
 					.anyRequest().fullyAuthenticated()
 					.and()
-				.exceptionHandling()
-					.authenticationEntryPoint(new LoginUrlAuthenticationEntryPoint(LOGIN_URL))
-					.and()
 				.addFilterAfter(authorizationRequestRedirectFilter(), AbstractPreAuthenticatedProcessingFilter.class)
-				.addFilterAfter(authorizationCodeGrantProcessingFilter(), AuthorizationRequestRedirectFilter.class);
+				.apply(authorizationCodeGrant());
 	}
 	// @formatter:on
 
@@ -98,34 +84,18 @@ public class SecurityConfig extends WebSecurityConfigurerAdapter {
 		return new InMemoryClientConfigurationRepository(clientConfigurations);
 	}
 
-	@Bean
-	public AuthenticationProvider authorizationCodeGrantAuthenticationProvider() {
-		return new AuthorizationCodeGrantAuthenticationProvider(authorizationCodeGrantTokenExchanger(), userInfoUserDetailsService());
-	}
-
-
 
 	// ********************************************* //
 	// *****  Nimbus-specific implementations  ***** //
 	// ********************************************* //
-	@Bean
-	public AuthorizationRequestUriBuilder authorizationRequestUriBuilder() {
+
+	private AuthorizationRequestUriBuilder authorizationRequestUriBuilder() {
 		return new NimbusAuthorizationRequestUriBuilder();
 	}
 
-	@Bean
-	public AuthorizationGrantTokenExchanger<AuthorizationCodeGrantAuthenticationToken> authorizationCodeGrantTokenExchanger() {
-		return new NimbusAuthorizationCodeGrantTokenExchanger();
-	}
-
-	@Bean
-	public UserInfoUserDetailsService userInfoUserDetailsService() {
-		return new NimbusUserInfoUserDetailsService();
-	}
 	// ********************************************* //
 	// *****  Nimbus-specific implementations  ***** //
 	// ********************************************* //
-
 
 
 	private Filter authorizationRequestRedirectFilter() throws Exception {
@@ -133,23 +103,11 @@ public class SecurityConfig extends WebSecurityConfigurerAdapter {
 				new AuthorizationRequestRedirectFilter(
 						LOGIN_URL,
 						this.clientConfigurationRepository,
-						this.authorizationRequestUriBuilder);
+						this.authorizationRequestUriBuilder());
 
 		// TODO This is temporary until we have a SecurityConfigurer
 		this.objectPostProcessor.postProcess(authorizationRequestRedirectFilter);
 
 		return authorizationRequestRedirectFilter;
-	}
-
-	private Filter authorizationCodeGrantProcessingFilter() throws Exception {
-		AuthorizationCodeGrantProcessingFilter authorizationCodeGrantProcessingFilter =
-				new AuthorizationCodeGrantProcessingFilter(
-						this.clientConfigurationRepository,
-						this.authenticationManager());
-
-		// TODO This is temporary until we have a SecurityConfigurer
-		this.objectPostProcessor.postProcess(authorizationCodeGrantProcessingFilter);
-
-		return authorizationCodeGrantProcessingFilter;
 	}
 }

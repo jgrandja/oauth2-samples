@@ -15,7 +15,6 @@
  */
 package org.springframework.security.oauth2.client.filter;
 
-import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.AuthenticationServiceException;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.AuthenticationException;
@@ -45,18 +44,16 @@ import static org.springframework.security.oauth2.client.filter.AuthorizationUti
  * @author Joe Grandja
  */
 public class AuthorizationCodeGrantProcessingFilter extends AbstractAuthenticationProcessingFilter {
-	private final ClientConfigurationRepository clientConfigurationRepository;
+	private ClientConfigurationRepository clientConfigurationRepository;
 
-	public AuthorizationCodeGrantProcessingFilter(ClientConfigurationRepository clientConfigurationRepository,
-												  AuthenticationManager authenticationManager) {
-
+	public AuthorizationCodeGrantProcessingFilter() {
 		super(AuthorizationUtil::isAuthorizationCodeGrantResponse);
+	}
 
-		Assert.notNull(clientConfigurationRepository, "clientConfigurationRepository cannot be null");
-		this.clientConfigurationRepository = clientConfigurationRepository;
-
-		Assert.notNull(authenticationManager, "authenticationManager cannot be null");
-		this.setAuthenticationManager(authenticationManager);
+	@Override
+	public void afterPropertiesSet() {
+		super.afterPropertiesSet();
+		Assert.notNull(this.clientConfigurationRepository, "clientConfigurationRepository must be specified");
 	}
 
 	@Override
@@ -115,7 +112,8 @@ public class AuthorizationCodeGrantProcessingFilter extends AbstractAuthenticati
 		}
 	}
 
-	protected final ClientConfigurationRepository getClientConfigurationRepository() {
-		return this.clientConfigurationRepository;
+	public final void setClientConfigurationRepository(ClientConfigurationRepository clientConfigurationRepository) {
+		Assert.notNull(clientConfigurationRepository, "clientConfigurationRepository cannot be null");
+		this.clientConfigurationRepository = clientConfigurationRepository;
 	}
 }

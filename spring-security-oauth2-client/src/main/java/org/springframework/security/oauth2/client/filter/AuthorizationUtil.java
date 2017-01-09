@@ -30,7 +30,7 @@ import java.net.URISyntaxException;
 /**
  * @author Joe Grandja
  */
-class AuthorizationUtil {
+public class AuthorizationUtil {
 	static final String SAVED_AUTHORIZATION_REQUEST = "SPRING_SECURITY_OAUTH2_SAVED_AUTHORIZATION_REQUEST";
 
 	static void saveAuthorizationRequest(HttpServletRequest request, AuthorizationRequestAttributes authorizationRequest) {
@@ -96,7 +96,7 @@ class AuthorizationUtil {
 		return result;
 	}
 
-	static boolean isAuthorizationCodeGrantResponse(HttpServletRequest request) {
+	public static boolean isAuthorizationCodeGrantResponse(HttpServletRequest request) {
 		return isAuthorizationCodeGrantSuccess(request) || isAuthorizationCodeGrantError(request);
 	}
 }
