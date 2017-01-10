@@ -19,11 +19,11 @@ import org.springframework.security.crypto.keygen.StringKeyGenerator;
 import org.springframework.security.oauth2.client.config.ClientConfiguration;
 import org.springframework.security.oauth2.client.config.ClientConfigurationRepository;
 import org.springframework.security.oauth2.core.DefaultStateGenerator;
+import org.springframework.security.oauth2.core.OAuth2Exception;
 import org.springframework.security.oauth2.core.protocol.AuthorizationRequestAttributes;
 import org.springframework.security.web.DefaultRedirectStrategy;
 import org.springframework.security.web.RedirectStrategy;
 import org.springframework.security.web.util.matcher.AntPathRequestMatcher;
-import org.springframework.security.web.util.matcher.RequestMatcher;
 import org.springframework.util.Assert;
 import org.springframework.web.filter.OncePerRequestFilter;
 
@@ -34,9 +34,6 @@ import javax.servlet.http.HttpServletResponse;
 import java.io.IOException;
 import java.net.URI;
 import java.util.List;
-import java.util.Map;
-import java.util.Optional;
-import java.util.stream.Collectors;
 
 
 /**
@@ -47,7 +44,7 @@ import java.util.stream.Collectors;
 public class AuthorizationRequestRedirectFilter extends OncePerRequestFilter {
 	public static final String DEFAULT_FILTER_PROCESSING_BASE_URI = "/login/oauth2";
 
-	private final String filterProcessingBaseUri;
+	private static final String CLIENT_ALIAS_VARIABLE_NAME = "clientAlias";
 
 	private final ClientConfigurationRepository clientConfigurationRepository;
 
@@ -57,7 +54,8 @@ public class AuthorizationRequestRedirectFilter extends OncePerRequestFilter {
 
 	private final StringKeyGenerator stateGenerator = new DefaultStateGenerator();
 
-	protected AuthorizationRequestMatcher authorizationRequestMatcher;
+	protected AntPathRequestMatcher authorizationRequestMatcher;
+
 
 	public AuthorizationRequestRedirectFilter(ClientConfigurationRepository clientConfigurationRepository,
 											  AuthorizationRequestUriBuilder authorizationUriBuilder) {
@@ -70,7 +68,8 @@ public class AuthorizationRequestRedirectFilter extends OncePerRequestFilter {
 											  AuthorizationRequestUriBuilder authorizationUriBuilder) {
 
 		Assert.notNull(filterProcessingBaseUri, "filterProcessingBaseUri cannot be null");
-		this.filterProcessingBaseUri = cleanupUri(filterProcessingBaseUri);
+		this.authorizationRequestMatcher = new AntPathRequestMatcher(
+				normalizeUri(filterProcessingBaseUri) + "/{" + CLIENT_ALIAS_VARIABLE_NAME + "}");
 
 		Assert.notNull(clientConfigurationRepository, "clientConfigurationRepository cannot be null");
 		this.clientConfigurationRepository = clientConfigurationRepository;
@@ -83,7 +82,6 @@ public class AuthorizationRequestRedirectFilter extends OncePerRequestFilter {
 	public final void afterPropertiesSet() {
 		List<ClientConfiguration> configurations = this.clientConfigurationRepository.getConfigurations();
 		Assert.notEmpty(configurations, "clientConfigurations cannot be empty");
-		this.authorizationRequestMatcher = new AuthorizationRequestMatcher(this.filterProcessingBaseUri, configurations);
 	}
 
 	@Override
@@ -101,7 +99,16 @@ public class AuthorizationRequestRedirectFilter extends OncePerRequestFilter {
 	protected void obtainAuthorization(HttpServletRequest request, HttpServletResponse response)
 			throws IOException, ServletException {
 
-		AuthorizationRequestAttributes authorizationRequestAttributes = this.buildAuthorizationRequest(request);
+		String clientAlias = this.authorizationRequestMatcher
+				.extractUriTemplateVariables(request).get(CLIENT_ALIAS_VARIABLE_NAME);
+		ClientConfiguration configuration = this.clientConfigurationRepository.getConfigurationByAlias(clientAlias);
+		if (configuration == null) {
+			// TODO Throw OAuth2-specific exception (Bad Request) for downstream handling
+			throw new OAuth2Exception("Invalid client alias: " + clientAlias);
+		}
+
+		AuthorizationRequestAttributes authorizationRequestAttributes =
+				this.buildAuthorizationRequest(request, configuration);
 		this.saveAuthorizationRequest(request, authorizationRequestAttributes);
 
 		URI redirectUri = this.authorizationUriBuilder.build(authorizationRequestAttributes);
@@ -110,8 +117,8 @@ public class AuthorizationRequestRedirectFilter extends OncePerRequestFilter {
 		this.authorizationRedirectStrategy.sendRedirect(request, response, redirectUri.toString());
 	}
 
-	protected AuthorizationRequestAttributes buildAuthorizationRequest(HttpServletRequest request) {
-		ClientConfiguration configuration = this.authorizationRequestMatcher.matchingClient(request);
+	protected AuthorizationRequestAttributes buildAuthorizationRequest(
+			HttpServletRequest request, ClientConfiguration configuration) {
 
 		AuthorizationRequestAttributes authorizationRequestAttributes =
 				AuthorizationRequestAttributes.authorizationCodeGrant(
@@ -128,11 +135,14 @@ public class AuthorizationRequestRedirectFilter extends OncePerRequestFilter {
 		AuthorizationUtil.saveAuthorizationRequest(request, authorizationRequest);
 	}
 
-	private String cleanupUri(String uri) {
+	private String normalizeUri(String uri) {
+		if (!uri.startsWith("/")) {
+			uri = "/" + uri;
+		}
 		// Check for and remove trailing '/'
 		if (uri.endsWith("/")) {
 			uri = uri.replaceAll("/$", "");
-			uri = cleanupUri(uri);		// There may be more
+			uri = normalizeUri(uri);		// There may be more
 		}
 		return uri;
 	}
@@ -147,30 +157,5 @@ public class AuthorizationRequestRedirectFilter extends OncePerRequestFilter {
 
 	protected final RedirectStrategy getAuthorizationRedirectStrategy() {
 		return this.authorizationRedirectStrategy;
-	}
-
-	private class AuthorizationRequestMatcher implements RequestMatcher {
-		private Map<AntPathRequestMatcher, ClientConfiguration> clientRequestMatchers;
-
-		private AuthorizationRequestMatcher(String authorizationBaseUri, List<ClientConfiguration> configurations) {
-			this.clientRequestMatchers = configurations.stream().collect(
-					Collectors.toMap(
-							c -> new AntPathRequestMatcher(authorizationBaseUri + "/" + c.getClientAlias(), "GET"),
-							c -> c));
-		}
-
-		@Override
-		public boolean matches(HttpServletRequest request) {
-			return this.clientRequestMatchers.keySet().stream().anyMatch(e -> e.matches(request));
-		}
-
-		protected ClientConfiguration matchingClient(HttpServletRequest request) {
-			Optional<AntPathRequestMatcher> clientRequestMatcher = this.clientRequestMatchers.keySet().stream()
-					.filter(e -> e.matches(request)).findFirst();
-			if (clientRequestMatcher.isPresent()) {
-				return this.clientRequestMatchers.get(clientRequestMatcher.get());
-			}
-			return null;
-		}
 	}
 }
