@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.springframework.security.oauth2.client.config;
+package org.springframework.security.oauth2.client.registration;
 
 import java.io.Serializable;
 import java.util.List;
@@ -22,7 +22,7 @@ import java.util.List;
 /**
  * @author Joe Grandja
  */
-public class ClientConfiguration implements Serializable {
+public class ClientRegistration implements Serializable {
 	private String clientId;
 	private String clientSecret;
 	private ClientType clientType = ClientType.OAUTH2;

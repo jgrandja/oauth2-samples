@@ -41,7 +41,7 @@ public class OltuUserInfoUserDetailsService implements UserInfoUserDetailsServic
 
 		try {
 			OAuthClientRequest userInfoRequest = OltuUserInfoRequest
-					.userInfoLocation(authenticationRequest.getConfiguration().getUserInfoUri())
+					.userInfoLocation(authenticationRequest.getClientRegistration().getUserInfoUri())
 					.accessToken(authenticationRequest.getAccessToken().getValue())
 					.buildHeaderMessage();
 			userInfoRequest.setHeader("Accept", MediaType.APPLICATION_JSON_VALUE);
@@ -51,7 +51,7 @@ public class OltuUserInfoUserDetailsService implements UserInfoUserDetailsServic
 			OltuUserInfoResponse userInfoResponse = oauthClient.resource(
 					userInfoRequest, "GET", OltuUserInfoResponse.class);
 
-			if (authenticationRequest.getConfiguration().isClientOpenIDConnect()) {
+			if (authenticationRequest.getClientRegistration().isClientOpenIDConnect()) {
 				oauth2User = new OpenIDConnectUserBuilder()
 						.userAttributes(userInfoResponse.getAttributes())
 						.build();

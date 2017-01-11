@@ -19,8 +19,8 @@ import org.springframework.security.authentication.AuthenticationServiceExceptio
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.AuthenticationException;
 import org.springframework.security.oauth2.client.authentication.AuthorizationCodeGrantAuthenticationToken;
-import org.springframework.security.oauth2.client.config.ClientConfiguration;
-import org.springframework.security.oauth2.client.config.ClientConfigurationRepository;
+import org.springframework.security.oauth2.client.registration.ClientRegistration;
+import org.springframework.security.oauth2.client.registration.ClientRegistrationRepository;
 import org.springframework.security.oauth2.core.OAuth2Attributes;
 import org.springframework.security.oauth2.core.OAuth2Exception;
 import org.springframework.security.oauth2.core.protocol.AuthorizationCodeGrantAuthorizationResponseAttributes;
@@ -44,7 +44,7 @@ import static org.springframework.security.oauth2.client.filter.AuthorizationUti
  * @author Joe Grandja
  */
 public class AuthorizationCodeGrantProcessingFilter extends AbstractAuthenticationProcessingFilter {
-	private ClientConfigurationRepository clientConfigurationRepository;
+	private ClientRegistrationRepository clientRegistrationRepository;
 
 	public AuthorizationCodeGrantProcessingFilter() {
 		super(AuthorizationUtil::isAuthorizationCodeGrantResponse);
@@ -53,7 +53,7 @@ public class AuthorizationCodeGrantProcessingFilter extends AbstractAuthenticati
 	@Override
 	public void afterPropertiesSet() {
 		super.afterPropertiesSet();
-		Assert.notNull(this.clientConfigurationRepository, "clientConfigurationRepository must be specified");
+		Assert.notNull(this.clientRegistrationRepository, "clientRegistrationRepository must be specified");
 	}
 
 	@Override
@@ -72,14 +72,14 @@ public class AuthorizationCodeGrantProcessingFilter extends AbstractAuthenticati
 
 		AuthorizationRequestAttributes matchingAuthorizationRequest = this.resolveAuthorizationRequest(request);
 
-		ClientConfiguration configuration = this.clientConfigurationRepository.getConfigurationById(
+		ClientRegistration clientRegistration = this.clientRegistrationRepository.getRegistrationByClientId(
 				matchingAuthorizationRequest.getClientId());
 
 		AuthorizationCodeGrantAuthorizationResponseAttributes authorizationCodeGrantAttributes =
 				parseAuthorizationCodeGrantAttributes(request);
 
 		AuthorizationCodeGrantAuthenticationToken authRequest = new AuthorizationCodeGrantAuthenticationToken(
-				authorizationCodeGrantAttributes.getCode(), configuration);
+				authorizationCodeGrantAttributes.getCode(), clientRegistration);
 
 		authRequest.setDetails(this.authenticationDetailsSource.buildDetails(request));
 
@@ -112,8 +112,8 @@ public class AuthorizationCodeGrantProcessingFilter extends AbstractAuthenticati
 		}
 	}
 
-	public final void setClientConfigurationRepository(ClientConfigurationRepository clientConfigurationRepository) {
-		Assert.notNull(clientConfigurationRepository, "clientConfigurationRepository cannot be null");
-		this.clientConfigurationRepository = clientConfigurationRepository;
+	public final void setClientRegistrationRepository(ClientRegistrationRepository clientRegistrationRepository) {
+		Assert.notNull(clientRegistrationRepository, "clientRegistrationRepository cannot be null");
+		this.clientRegistrationRepository = clientRegistrationRepository;
 	}
 }

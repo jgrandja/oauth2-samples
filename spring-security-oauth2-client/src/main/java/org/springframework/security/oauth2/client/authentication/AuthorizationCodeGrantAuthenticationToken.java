@@ -18,7 +18,7 @@ package org.springframework.security.oauth2.client.authentication;
 import org.springframework.security.authentication.AbstractAuthenticationToken;
 import org.springframework.security.core.SpringSecurityCoreVersion;
 import org.springframework.security.core.authority.AuthorityUtils;
-import org.springframework.security.oauth2.client.config.ClientConfiguration;
+import org.springframework.security.oauth2.client.registration.ClientRegistration;
 import org.springframework.util.Assert;
 
 /**
@@ -27,16 +27,16 @@ import org.springframework.util.Assert;
 public class AuthorizationCodeGrantAuthenticationToken extends AbstractAuthenticationToken {
 	private static final long serialVersionUID = SpringSecurityCoreVersion.SERIAL_VERSION_UID;
 	private final String authorizationCode;
-	private final ClientConfiguration configuration;
+	private final ClientRegistration clientRegistration;
 
-	public AuthorizationCodeGrantAuthenticationToken(String authorizationCode, ClientConfiguration configuration) {
+	public AuthorizationCodeGrantAuthenticationToken(String authorizationCode, ClientRegistration clientRegistration) {
 		super(AuthorityUtils.NO_AUTHORITIES);
 
 		Assert.hasText(authorizationCode, "authorizationCode cannot be empty");
 		this.authorizationCode = authorizationCode;
 
-		Assert.notNull(configuration, "configuration cannot be null");
-		this.configuration = configuration;
+		Assert.notNull(clientRegistration, "clientRegistration cannot be null");
+		this.clientRegistration = clientRegistration;
 
 		this.setAuthenticated(false);
 	}
@@ -55,7 +55,7 @@ public class AuthorizationCodeGrantAuthenticationToken extends AbstractAuthentic
 		return this.authorizationCode;
 	}
 
-	public final ClientConfiguration getConfiguration() {
-		return this.configuration;
+	public final ClientRegistration getClientRegistration() {
+		return this.clientRegistration;
 	}
 }

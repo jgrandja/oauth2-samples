@@ -23,9 +23,9 @@ import org.springframework.security.config.annotation.web.configuration.EnableWe
 import org.springframework.security.config.annotation.web.configuration.WebSecurityConfigurerAdapter;
 import org.springframework.security.oauth2.client.authentication.AuthorizationCodeGrantAuthenticationToken;
 import org.springframework.security.oauth2.client.authentication.oltu.OltuAuthorizationCodeGrantTokenExchanger;
-import org.springframework.security.oauth2.client.config.ClientConfiguration;
-import org.springframework.security.oauth2.client.config.ClientConfigurationRepository;
-import org.springframework.security.oauth2.client.config.InMemoryClientConfigurationRepository;
+import org.springframework.security.oauth2.client.registration.ClientRegistration;
+import org.springframework.security.oauth2.client.registration.ClientRegistrationRepository;
+import org.springframework.security.oauth2.client.registration.InMemoryClientRegistrationRepository;
 import org.springframework.security.oauth2.client.filter.AuthorizationRequestUriBuilder;
 import org.springframework.security.oauth2.client.filter.oltu.OltuAuthorizationRequestUriBuilder;
 import org.springframework.security.oauth2.client.userdetails.UserInfoUserDetailsService;
@@ -64,19 +64,19 @@ public class SecurityConfig extends WebSecurityConfigurerAdapter {
 
 	@ConfigurationProperties(prefix = "security.oauth2.client.google")
 	@Bean
-	public ClientConfiguration googleClientConfiguration() {
-		return new ClientConfiguration();
+	public ClientRegistration googleClientRegistration() {
+		return new ClientRegistration();
 	}
 
 	@ConfigurationProperties(prefix = "security.oauth2.client.github")
 	@Bean
-	public ClientConfiguration githubClientConfiguration() {
-		return new ClientConfiguration();
+	public ClientRegistration githubClientRegistration() {
+		return new ClientRegistration();
 	}
 
 	@Bean
-	public ClientConfigurationRepository clientConfigurationRepository(List<ClientConfiguration> clientConfigurations) {
-		return new InMemoryClientConfigurationRepository(clientConfigurations);
+	public ClientRegistrationRepository clientRegistrationRepository(List<ClientRegistration> clientRegistrations) {
+		return new InMemoryClientRegistrationRepository(clientRegistrations);
 	}
 
 	private AuthorizationRequestUriBuilder authorizationRequestUriBuilder() {

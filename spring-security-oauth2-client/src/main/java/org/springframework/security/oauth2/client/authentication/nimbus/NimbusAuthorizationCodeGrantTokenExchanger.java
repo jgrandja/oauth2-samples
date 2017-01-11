@@ -24,7 +24,7 @@ import com.nimbusds.oauth2.sdk.http.HTTPRequest;
 import com.nimbusds.oauth2.sdk.id.ClientID;
 import org.springframework.http.MediaType;
 import org.springframework.security.oauth2.client.authentication.AuthorizationCodeGrantAuthenticationToken;
-import org.springframework.security.oauth2.client.config.ClientConfiguration;
+import org.springframework.security.oauth2.client.registration.ClientRegistration;
 import org.springframework.security.oauth2.core.*;
 import org.springframework.util.CollectionUtils;
 
@@ -42,17 +42,17 @@ public class NimbusAuthorizationCodeGrantTokenExchanger implements Authorization
 	@Override
 	public Tokens exchange(AuthorizationCodeGrantAuthenticationToken authorizationGrant) {
 
-		ClientConfiguration configuration = authorizationGrant.getConfiguration();
+		ClientRegistration clientRegistration = authorizationGrant.getClientRegistration();
 
 		// Build the authorization code grant request for the token endpoint
 		AuthorizationCode authorizationCode = new AuthorizationCode(authorizationGrant.getAuthorizationCode());
-		URI redirectUri = toURI(configuration.getRedirectUri());
+		URI redirectUri = toURI(clientRegistration.getRedirectUri());
 		AuthorizationGrant authorizationCodeGrant = new AuthorizationCodeGrant(authorizationCode, redirectUri);
-		URI tokenUri = toURI(configuration.getTokenUri());
+		URI tokenUri = toURI(clientRegistration.getTokenUri());
 
 		// Set the credentials to authenticate the client at the token endpoint
-		ClientID clientId = new ClientID(configuration.getClientId());
-		Secret clientSecret = new Secret(configuration.getClientSecret());
+		ClientID clientId = new ClientID(clientRegistration.getClientId());
+		Secret clientSecret = new Secret(clientRegistration.getClientSecret());
 		ClientAuthentication clientAuthentication = new ClientSecretBasic(clientId, clientSecret);
 
 		TokenResponse tokenResponse;

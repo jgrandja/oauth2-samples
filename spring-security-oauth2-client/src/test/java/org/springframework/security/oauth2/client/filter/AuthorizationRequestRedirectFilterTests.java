@@ -18,8 +18,8 @@ package org.springframework.security.oauth2.client.filter;
 import org.junit.Test;
 import org.springframework.mock.web.MockHttpServletRequest;
 import org.springframework.mock.web.MockHttpServletResponse;
-import org.springframework.security.oauth2.client.config.ClientConfiguration;
-import org.springframework.security.oauth2.client.config.ClientConfigurationRepository;
+import org.springframework.security.oauth2.client.registration.ClientRegistration;
+import org.springframework.security.oauth2.client.registration.ClientRegistrationRepository;
 import org.springframework.security.oauth2.core.protocol.AuthorizationRequestAttributes;
 
 import javax.servlet.FilterChain;
@@ -30,7 +30,7 @@ import java.util.Collections;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.Mockito.*;
-import static org.springframework.security.oauth2.client.filter.ClientConfigurationTestUtil.*;
+import static org.springframework.security.oauth2.client.filter.ClientRegistrationTestUtil.*;
 
 /**
  * Tests {@link AuthorizationRequestRedirectFilter}.
@@ -41,34 +41,34 @@ public class AuthorizationRequestRedirectFilterTests {
 
 	@Test(expected = IllegalArgumentException.class)
 	public void constructorWhenFilterProcessingBaseUriIsNullThenThrowIllegalArgumentException() {
-		new AuthorizationRequestRedirectFilter(null, mock(ClientConfigurationRepository.class), mock(AuthorizationRequestUriBuilder.class));
+		new AuthorizationRequestRedirectFilter(null, mock(ClientRegistrationRepository.class), mock(AuthorizationRequestUriBuilder.class));
 	}
 
 	@Test(expected = IllegalArgumentException.class)
-	public void constructorWhenClientConfigurationRepositoryIsNullThenThrowIllegalArgumentException() {
+	public void constructorWhenClientRegistrationRepositoryIsNullThenThrowIllegalArgumentException() {
 		new AuthorizationRequestRedirectFilter(null, mock(AuthorizationRequestUriBuilder.class));
 	}
 
 	@Test(expected = IllegalArgumentException.class)
 	public void constructorWhenAuthorizationRequestUriBuilderIsNullThenThrowIllegalArgumentException() {
-		new AuthorizationRequestRedirectFilter(mock(ClientConfigurationRepository.class), null);
+		new AuthorizationRequestRedirectFilter(mock(ClientRegistrationRepository.class), null);
 	}
 
 	@Test(expected = IllegalArgumentException.class)
-	public void afterPropertiesSetWhenClientConfigurationsIsEmptyThenThrowIllegalArgumentException() {
-		ClientConfigurationRepository clientConfigurationRepository = mock(ClientConfigurationRepository.class);
-		when(clientConfigurationRepository.getConfigurations()).thenReturn(Collections.emptyList());
+	public void afterPropertiesSetWhenClientRegistrationsIsEmptyThenThrowIllegalArgumentException() {
+		ClientRegistrationRepository clientRegistrationRepository = mock(ClientRegistrationRepository.class);
+		when(clientRegistrationRepository.getRegistrations()).thenReturn(Collections.emptyList());
 		AuthorizationRequestRedirectFilter filter = new AuthorizationRequestRedirectFilter(
-				clientConfigurationRepository, mock(AuthorizationRequestUriBuilder.class));
+				clientRegistrationRepository, mock(AuthorizationRequestUriBuilder.class));
 		filter.afterPropertiesSet();
 	}
 
 	@Test
 	public void doFilterWhenRequestDoesNotMatchClientThenContinueChain() throws Exception {
-		ClientConfiguration clientConfiguration = googleClientConfiguration();
-		String authorizationUri = clientConfiguration.getAuthorizeUri();
+		ClientRegistration clientRegistration = googleClientRegistration();
+		String authorizationUri = clientRegistration.getAuthorizeUri();
 		AuthorizationRequestRedirectFilter filter =
-				setupFilter(authorizationUri, clientConfiguration);
+				setupFilter(authorizationUri, clientRegistration);
 
 		String requestURI = "/path";
 		MockHttpServletRequest request = new MockHttpServletRequest("GET", requestURI);
@@ -83,13 +83,13 @@ public class AuthorizationRequestRedirectFilterTests {
 
 	@Test
 	public void doFilterWhenRequestMatchesClientThenRedirectForAuthorization() throws Exception {
-		ClientConfiguration clientConfiguration = googleClientConfiguration();
-		String authorizationUri = clientConfiguration.getAuthorizeUri();
+		ClientRegistration clientRegistration = googleClientRegistration();
+		String authorizationUri = clientRegistration.getAuthorizeUri();
 		AuthorizationRequestRedirectFilter filter =
-				setupFilter(authorizationUri, clientConfiguration);
+				setupFilter(authorizationUri, clientRegistration);
 
 		String requestUri = AuthorizationRequestRedirectFilter.DEFAULT_FILTER_PROCESSING_BASE_URI +
-				"/" + clientConfiguration.getClientAlias();
+				"/" + clientRegistration.getClientAlias();
 		MockHttpServletRequest request = new MockHttpServletRequest("GET", requestUri);
 		request.setServletPath(requestUri);
 		MockHttpServletResponse response = new MockHttpServletResponse();
@@ -104,13 +104,13 @@ public class AuthorizationRequestRedirectFilterTests {
 
 	@Test
 	public void doFilterWhenRequestMatchesClientThenAuthorizationRequestSavedInSession() throws Exception {
-		ClientConfiguration clientConfiguration = githubClientConfiguration();
-		String authorizationUri = clientConfiguration.getAuthorizeUri();
+		ClientRegistration clientRegistration = githubClientRegistration();
+		String authorizationUri = clientRegistration.getAuthorizeUri();
 		AuthorizationRequestRedirectFilter filter =
-				setupFilter(authorizationUri, clientConfiguration);
+				setupFilter(authorizationUri, clientRegistration);
 
 		String requestUri = AuthorizationRequestRedirectFilter.DEFAULT_FILTER_PROCESSING_BASE_URI +
-				"/" + clientConfiguration.getClientAlias();
+				"/" + clientRegistration.getClientAlias();
 		MockHttpServletRequest request = new MockHttpServletRequest("GET", requestUri);
 		request.setServletPath(requestUri);
 		MockHttpServletResponse response = new MockHttpServletResponse();
@@ -137,38 +137,38 @@ public class AuthorizationRequestRedirectFilterTests {
 	@Test
 	public void doFilterWhenCustomFilterProcessingBaseUriThenRequestStillMatchesClient() throws Exception {
 		String filterProcessingBaseUri = "/oauth2-login";
-		ClientConfiguration clientConfiguration = githubClientConfiguration();
+		ClientRegistration clientRegistration = githubClientRegistration();
 
-		verifyRequestMatchesClientWithCustomFilterProcessingBaseUri(filterProcessingBaseUri, clientConfiguration);
+		verifyRequestMatchesClientWithCustomFilterProcessingBaseUri(filterProcessingBaseUri, clientRegistration);
 	}
 
 	@Test
 	public void doFilterWhenCustomFilterProcessingBaseUriWithTrailingSlashThenRequestStillMatchesClient() throws Exception {
 		String filterProcessingBaseUri = "/oauth2-login/";
-		ClientConfiguration clientConfiguration = googleClientConfiguration();
+		ClientRegistration clientRegistration = googleClientRegistration();
 
-		verifyRequestMatchesClientWithCustomFilterProcessingBaseUri(filterProcessingBaseUri, clientConfiguration);
+		verifyRequestMatchesClientWithCustomFilterProcessingBaseUri(filterProcessingBaseUri, clientRegistration);
 	}
 
 	@Test
 	public void doFilterWhenCustomFilterProcessingBaseUriWithoutLeadingSlashThenRequestStillMatchesClient() throws Exception {
 		String filterProcessingBaseUri = "oauth2-login";
-		ClientConfiguration clientConfiguration = githubClientConfiguration();
+		ClientRegistration clientRegistration = githubClientRegistration();
 
-		verifyRequestMatchesClientWithCustomFilterProcessingBaseUri(filterProcessingBaseUri, clientConfiguration);
+		verifyRequestMatchesClientWithCustomFilterProcessingBaseUri(filterProcessingBaseUri, clientRegistration);
 	}
 
 	@Test(expected = IllegalArgumentException.class)
 	public void doFilterWhenAuthorizationRequestUriBuilderReturnsNullThenThrowIllegalArgumentException() throws Exception {
-		ClientConfiguration clientConfiguration = githubClientConfiguration();
+		ClientRegistration clientRegistration = githubClientRegistration();
 
 		AuthorizationRequestUriBuilder authorizationUriBuilder = mock(AuthorizationRequestUriBuilder.class);
 		when(authorizationUriBuilder.build(any(AuthorizationRequestAttributes.class))).thenReturn(null);
 
-		AuthorizationRequestRedirectFilter filter = setupFilter(authorizationUriBuilder, clientConfiguration);
+		AuthorizationRequestRedirectFilter filter = setupFilter(authorizationUriBuilder, clientRegistration);
 
 		String requestUri = AuthorizationRequestRedirectFilter.DEFAULT_FILTER_PROCESSING_BASE_URI +
-				"/" + clientConfiguration.getClientAlias();
+				"/" + clientRegistration.getClientAlias();
 		MockHttpServletRequest request = new MockHttpServletRequest("GET", requestUri);
 		request.setServletPath(requestUri);
 		MockHttpServletResponse response = new MockHttpServletResponse();
@@ -178,13 +178,13 @@ public class AuthorizationRequestRedirectFilterTests {
 	}
 
 	private void verifyRequestMatchesClientWithCustomFilterProcessingBaseUri(
-			String filterProcessingBaseUri, ClientConfiguration clientConfiguration) throws Exception {
+			String filterProcessingBaseUri, ClientRegistration clientRegistration) throws Exception {
 
-		String authorizationUri = clientConfiguration.getAuthorizeUri();
+		String authorizationUri = clientRegistration.getAuthorizeUri();
 		AuthorizationRequestRedirectFilter filter =
-				setupFilter(filterProcessingBaseUri, authorizationUri, clientConfiguration);
+				setupFilter(filterProcessingBaseUri, authorizationUri, clientRegistration);
 
-		String requestUri = filterProcessingBaseUri + "/" + clientConfiguration.getClientAlias();
+		String requestUri = filterProcessingBaseUri + "/" + clientRegistration.getClientAlias();
 		if (!requestUri.startsWith("/")) {
 			requestUri = "/" + requestUri;
 		}
@@ -199,37 +199,37 @@ public class AuthorizationRequestRedirectFilterTests {
 	}
 
 	private AuthorizationRequestRedirectFilter setupFilter(
-			String authorizationUri, ClientConfiguration... configurations) throws Exception {
+			String authorizationUri, ClientRegistration... clientRegistrations) throws Exception {
 
 		return setupFilter(AuthorizationRequestRedirectFilter.DEFAULT_FILTER_PROCESSING_BASE_URI,
-				authorizationUri, configurations);
+				authorizationUri, clientRegistrations);
 	}
 
 	private AuthorizationRequestRedirectFilter setupFilter(String filterProcessingBaseUri, String authorizationUri,
-														   ClientConfiguration... configurations) throws Exception {
+														   ClientRegistration... clientRegistrations) throws Exception {
 
 		AuthorizationRequestUriBuilder authorizationUriBuilder = mock(AuthorizationRequestUriBuilder.class);
 		URI authorizationURI = new URI(authorizationUri);
 		when(authorizationUriBuilder.build(any(AuthorizationRequestAttributes.class))).thenReturn(authorizationURI);
 
-		return setupFilter(filterProcessingBaseUri, authorizationUriBuilder, configurations);
+		return setupFilter(filterProcessingBaseUri, authorizationUriBuilder, clientRegistrations);
 	}
 
 	private AuthorizationRequestRedirectFilter setupFilter(AuthorizationRequestUriBuilder authorizationUriBuilder,
-														   ClientConfiguration... configurations) throws Exception {
+														   ClientRegistration... clientRegistrations) throws Exception {
 
 		return setupFilter(AuthorizationRequestRedirectFilter.DEFAULT_FILTER_PROCESSING_BASE_URI,
-				authorizationUriBuilder, configurations);
+				authorizationUriBuilder, clientRegistrations);
 	}
 
 	private AuthorizationRequestRedirectFilter setupFilter(String filterProcessingBaseUri,
 														   AuthorizationRequestUriBuilder authorizationUriBuilder,
-														   ClientConfiguration... configurations) throws Exception {
+														   ClientRegistration... clientRegistrations) throws Exception {
 
-		ClientConfigurationRepository clientConfigurationRepository = clientConfigurationRepository(configurations);
+		ClientRegistrationRepository clientRegistrationRepository = clientRegistrationRepository(clientRegistrations);
 
 		AuthorizationRequestRedirectFilter filter = new AuthorizationRequestRedirectFilter(
-				filterProcessingBaseUri, clientConfigurationRepository, authorizationUriBuilder);
+				filterProcessingBaseUri, clientRegistrationRepository, authorizationUriBuilder);
 		filter.afterPropertiesSet();
 
 		return filter;

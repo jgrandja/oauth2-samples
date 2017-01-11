@@ -23,9 +23,9 @@ import org.springframework.security.config.annotation.web.configurers.AbstractAu
 import org.springframework.security.oauth2.client.authentication.AuthorizationCodeGrantAuthenticationProvider;
 import org.springframework.security.oauth2.client.authentication.AuthorizationCodeGrantAuthenticationToken;
 import org.springframework.security.oauth2.client.authentication.nimbus.NimbusAuthorizationCodeGrantTokenExchanger;
-import org.springframework.security.oauth2.client.config.ClientConfiguration;
-import org.springframework.security.oauth2.client.config.ClientConfigurationRepository;
-import org.springframework.security.oauth2.client.config.InMemoryClientConfigurationRepository;
+import org.springframework.security.oauth2.client.registration.ClientRegistration;
+import org.springframework.security.oauth2.client.registration.ClientRegistrationRepository;
+import org.springframework.security.oauth2.client.registration.InMemoryClientRegistrationRepository;
 import org.springframework.security.oauth2.client.filter.AuthorizationCodeGrantProcessingFilter;
 import org.springframework.security.oauth2.client.filter.AuthorizationUtil;
 import org.springframework.security.oauth2.client.userdetails.UserInfoUserDetailsService;
@@ -61,8 +61,8 @@ public final class AuthorizationCodeGrantFilterConfigurer<H extends HttpSecurity
 		super(new AuthorizationCodeGrantProcessingFilter(), null);
 	}
 
-	public AuthorizationCodeGrantFilterConfigurer<H> clientConfigurationRepository(ClientConfigurationRepository clientConfigurationRepository) {
-		this.getBuilder().setSharedObject(ClientConfigurationRepository.class, clientConfigurationRepository);
+	public AuthorizationCodeGrantFilterConfigurer<H> clientRegistrationRepository(ClientRegistrationRepository clientRegistrationRepository) {
+		this.getBuilder().setSharedObject(ClientRegistrationRepository.class, clientRegistrationRepository);
 		return this;
 	}
 
@@ -96,7 +96,7 @@ public final class AuthorizationCodeGrantFilterConfigurer<H extends HttpSecurity
 	@Override
 	public void configure(H http) throws Exception {
 		AuthorizationCodeGrantProcessingFilter authFilter = this.getAuthenticationFilter();
-		authFilter.setClientConfigurationRepository(this.getClientConfigurationRepository());
+		authFilter.setClientRegistrationRepository(this.getClientRegistrationRepository());
 
 		// TODO Temporary workaround
 		// 		Remove this after we add an order in FilterComparator for AuthorizationCodeGrantProcessingFilter
@@ -117,18 +117,18 @@ public final class AuthorizationCodeGrantFilterConfigurer<H extends HttpSecurity
 		return AuthorizationUtil::isAuthorizationCodeGrantResponse;
 	}
 
-	private ClientConfigurationRepository getClientConfigurationRepository() {
-		ClientConfigurationRepository clientConfigurationRepository = this.getBuilder().getSharedObject(ClientConfigurationRepository.class);
-		if (clientConfigurationRepository == null) {
+	private ClientRegistrationRepository getClientRegistrationRepository() {
+		ClientRegistrationRepository clientRegistrationRepository = this.getBuilder().getSharedObject(ClientRegistrationRepository.class);
+		if (clientRegistrationRepository == null) {
 			ApplicationContext context = this.getBuilder().getSharedObject(ApplicationContext.class);
-			Map<String, ClientConfiguration> clientConfigurations = context.getBeansOfType(ClientConfiguration.class);
-			Assert.state(!CollectionUtils.isEmpty(clientConfigurations),
-					"There must be at least 1 bean configured of type " + ClientConfiguration.class.getName());
-			clientConfigurationRepository = new InMemoryClientConfigurationRepository(
-					clientConfigurations.values().stream().collect(Collectors.toList()));
-			this.getBuilder().setSharedObject(ClientConfigurationRepository.class, clientConfigurationRepository);
+			Map<String, ClientRegistration> clientRegistrations = context.getBeansOfType(ClientRegistration.class);
+			Assert.state(!CollectionUtils.isEmpty(clientRegistrations),
+					"There must be at least 1 bean configured of type " + ClientRegistration.class.getName());
+			clientRegistrationRepository = new InMemoryClientRegistrationRepository(
+					clientRegistrations.values().stream().collect(Collectors.toList()));
+			this.getBuilder().setSharedObject(ClientRegistrationRepository.class, clientRegistrationRepository);
 		}
-		return clientConfigurationRepository;
+		return clientRegistrationRepository;
 	}
 
 	private AuthorizationGrantTokenExchanger<AuthorizationCodeGrantAuthenticationToken> getAuthorizationCodeGrantTokenExchanger() {

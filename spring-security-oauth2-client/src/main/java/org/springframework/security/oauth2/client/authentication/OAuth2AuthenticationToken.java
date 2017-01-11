@@ -20,7 +20,7 @@ import org.springframework.security.core.GrantedAuthority;
 import org.springframework.security.core.SpringSecurityCoreVersion;
 import org.springframework.security.core.authority.AuthorityUtils;
 import org.springframework.security.core.userdetails.UserDetails;
-import org.springframework.security.oauth2.client.config.ClientConfiguration;
+import org.springframework.security.oauth2.client.registration.ClientRegistration;
 import org.springframework.security.oauth2.core.AccessToken;
 import org.springframework.security.oauth2.core.RefreshToken;
 import org.springframework.util.Assert;
@@ -33,20 +33,20 @@ import java.util.Collection;
 public class OAuth2AuthenticationToken extends AbstractAuthenticationToken {
 	private static final long serialVersionUID = SpringSecurityCoreVersion.SERIAL_VERSION_UID;
 	private final UserDetails principal;
-	private final ClientConfiguration configuration;
+	private final ClientRegistration clientRegistration;
 	private final AccessToken accessToken;
 	private final RefreshToken refreshToken;
 
-	public OAuth2AuthenticationToken(ClientConfiguration configuration,
+	public OAuth2AuthenticationToken(ClientRegistration clientRegistration,
 									 AccessToken accessToken,
 									 RefreshToken refreshToken) {
 
-		this(null, AuthorityUtils.NO_AUTHORITIES, configuration, accessToken, refreshToken);
+		this(null, AuthorityUtils.NO_AUTHORITIES, clientRegistration, accessToken, refreshToken);
 	}
 
 	public OAuth2AuthenticationToken(UserDetails principal,
 									 Collection<? extends GrantedAuthority> authorities,
-									 ClientConfiguration configuration,
+									 ClientRegistration clientRegistration,
 									 AccessToken accessToken,
 									 RefreshToken refreshToken) {
 
@@ -54,8 +54,8 @@ public class OAuth2AuthenticationToken extends AbstractAuthenticationToken {
 
 		this.principal = principal;
 
-		Assert.notNull(configuration, "configuration cannot be null");
-		this.configuration = configuration;
+		Assert.notNull(clientRegistration, "clientRegistration cannot be null");
+		this.clientRegistration = clientRegistration;
 
 		Assert.notNull(accessToken, "accessToken cannot be null");
 		this.accessToken = accessToken;
@@ -75,8 +75,8 @@ public class OAuth2AuthenticationToken extends AbstractAuthenticationToken {
 		return (this.principal != null ? this.principal.getPassword() : null);
 	}
 
-	public final ClientConfiguration getConfiguration() {
-		return this.configuration;
+	public final ClientRegistration getClientRegistration() {
+		return this.clientRegistration;
 	}
 
 	public final AccessToken getAccessToken() {

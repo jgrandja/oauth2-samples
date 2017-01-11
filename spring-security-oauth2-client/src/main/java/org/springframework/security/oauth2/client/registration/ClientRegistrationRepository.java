@@ -13,19 +13,19 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.springframework.security.oauth2.client.config;
+package org.springframework.security.oauth2.client.registration;
 
 import java.util.List;
 
 /**
  * @author Joe Grandja
  */
-public interface ClientConfigurationRepository {
+public interface ClientRegistrationRepository {
 
-	ClientConfiguration getConfigurationById(String clientId);
+	ClientRegistration getRegistrationByClientId(String clientId);
 
-	ClientConfiguration getConfigurationByAlias(String clientAlias);
+	ClientRegistration getRegistrationByClientAlias(String clientAlias);
 
-	List<ClientConfiguration> getConfigurations();
+	List<ClientRegistration> getRegistrations();
 
 }

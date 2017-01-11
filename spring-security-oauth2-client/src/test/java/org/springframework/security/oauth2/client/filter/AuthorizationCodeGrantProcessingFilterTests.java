@@ -24,8 +24,8 @@ import org.springframework.security.authentication.AuthenticationServiceExceptio
 import org.springframework.security.authentication.TestingAuthenticationToken;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.AuthenticationException;
-import org.springframework.security.oauth2.client.config.ClientConfiguration;
-import org.springframework.security.oauth2.client.config.ClientConfigurationRepository;
+import org.springframework.security.oauth2.client.registration.ClientRegistration;
+import org.springframework.security.oauth2.client.registration.ClientRegistrationRepository;
 import org.springframework.security.oauth2.core.OAuth2Attributes;
 import org.springframework.security.oauth2.core.OAuth2Exception;
 import org.springframework.security.oauth2.core.protocol.AuthorizationRequestAttributes;
@@ -39,7 +39,7 @@ import javax.servlet.http.HttpServletResponse;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.Matchers.any;
 import static org.mockito.Mockito.*;
-import static org.springframework.security.oauth2.client.filter.ClientConfigurationTestUtil.*;
+import static org.springframework.security.oauth2.client.filter.ClientRegistrationTestUtil.*;
 
 /**
  * Tests {@link AuthorizationCodeGrantProcessingFilter}.
@@ -49,7 +49,7 @@ import static org.springframework.security.oauth2.client.filter.ClientConfigurat
 public class AuthorizationCodeGrantProcessingFilterTests {
 
 	@Test(expected = IllegalArgumentException.class)
-	public void afterPropertiesSetWhenClientConfigurationRepositoryIsNullThenThrowIllegalArgumentException() {
+	public void afterPropertiesSetWhenClientRegistrationRepositoryIsNullThenThrowIllegalArgumentException() {
 		AuthorizationCodeGrantProcessingFilter filter = new AuthorizationCodeGrantProcessingFilter();
 		filter.setAuthenticationManager(mock(AuthenticationManager.class));
 		filter.afterPropertiesSet();
@@ -58,15 +58,15 @@ public class AuthorizationCodeGrantProcessingFilterTests {
 	@Test(expected = IllegalArgumentException.class)
 	public void afterPropertiesSetWhenAuthenticationManagerIsNullThenThrowIllegalArgumentException() {
 		AuthorizationCodeGrantProcessingFilter filter = new AuthorizationCodeGrantProcessingFilter();
-		filter.setClientConfigurationRepository(mock(ClientConfigurationRepository.class));
+		filter.setClientRegistrationRepository(mock(ClientRegistrationRepository.class));
 		filter.afterPropertiesSet();
 	}
 
 	@Test
 	public void doFilterWhenNotAuthorizationCodeGrantResponseThenContinueChain() throws Exception {
-		ClientConfiguration clientConfiguration = googleClientConfiguration();
+		ClientRegistration clientRegistration = googleClientRegistration();
 
-		AuthorizationCodeGrantProcessingFilter filter = spy(setupFilter(clientConfiguration));
+		AuthorizationCodeGrantProcessingFilter filter = spy(setupFilter(clientRegistration));
 
 		String requestURI = "/path";
 		MockHttpServletRequest request = new MockHttpServletRequest("GET", requestURI);
@@ -82,9 +82,9 @@ public class AuthorizationCodeGrantProcessingFilterTests {
 
 	@Test
 	public void doFilterWhenAuthorizationCodeGrantErrorResponseThenAuthenticationFailureHandlerIsCalled() throws Exception {
-		ClientConfiguration clientConfiguration = githubClientConfiguration();
+		ClientRegistration clientRegistration = githubClientRegistration();
 
-		AuthorizationCodeGrantProcessingFilter filter = spy(setupFilter(clientConfiguration));
+		AuthorizationCodeGrantProcessingFilter filter = spy(setupFilter(clientRegistration));
 		AuthenticationFailureHandler failureHandler = mock(AuthenticationFailureHandler.class);
 		filter.setAuthenticationFailureHandler(failureHandler);
 
@@ -111,25 +111,25 @@ public class AuthorizationCodeGrantProcessingFilterTests {
 
 	@Test
 	public void doFilterWhenAuthorizationCodeGrantSuccessResponseThenAuthenticationSuccessHandlerIsCalled() throws Exception {
-		ClientConfiguration clientConfiguration = githubClientConfiguration();
+		ClientRegistration clientRegistration = githubClientRegistration();
 
 		TestingAuthenticationToken authentication = new TestingAuthenticationToken("joe", "password", "user", "admin");
 		AuthenticationManager authenticationManager = mock(AuthenticationManager.class);
 		when(authenticationManager.authenticate(any(Authentication.class))).thenReturn(authentication);
 
-		AuthorizationCodeGrantProcessingFilter filter = spy(setupFilter(authenticationManager, clientConfiguration));
+		AuthorizationCodeGrantProcessingFilter filter = spy(setupFilter(authenticationManager, clientRegistration));
 		AuthenticationSuccessHandler successHandler = mock(AuthenticationSuccessHandler.class);
 		filter.setAuthenticationSuccessHandler(successHandler);
 
 		String requestURI = "/path";
-		clientConfiguration.setRedirectUri(requestURI);		// requestUri must be same as client redirectUri to pass validation
+		clientRegistration.setRedirectUri(requestURI);		// requestUri must be same as client redirectUri to pass validation
 		MockHttpServletRequest request = new MockHttpServletRequest("GET", requestURI);
 		request.setServletPath(requestURI);
 		String authCode = "some code";
 		String state = "some state";
 		request.addParameter(OAuth2Attributes.CODE, authCode);
 		request.addParameter(OAuth2Attributes.STATE, state);
-		setupAuthorizationRequest(request, clientConfiguration, state);
+		setupAuthorizationRequest(request, clientRegistration, state);
 		MockHttpServletResponse response = new MockHttpServletResponse();
 		FilterChain filterChain = mock(FilterChain.class);
 
@@ -145,9 +145,9 @@ public class AuthorizationCodeGrantProcessingFilterTests {
 
 	@Test(expected = OAuth2Exception.class)
 	public void doFilterWhenAuthorizationCodeGrantSuccessResponseAndNoMatchingAuthorizationRequestThenThrowOAuth2Exception() throws Exception {
-		ClientConfiguration clientConfiguration = githubClientConfiguration();
+		ClientRegistration clientRegistration = githubClientRegistration();
 
-		AuthorizationCodeGrantProcessingFilter filter = spy(setupFilter(clientConfiguration));
+		AuthorizationCodeGrantProcessingFilter filter = spy(setupFilter(clientRegistration));
 
 		String requestURI = "/path";
 		MockHttpServletRequest request = new MockHttpServletRequest("GET", requestURI);
@@ -164,9 +164,9 @@ public class AuthorizationCodeGrantProcessingFilterTests {
 
 	@Test(expected = OAuth2Exception.class)
 	public void doFilterWhenAuthorizationCodeGrantSuccessResponseWithInvalidStateParamThenThrowOAuth2Exception() throws Exception {
-		ClientConfiguration clientConfiguration = githubClientConfiguration();
+		ClientRegistration clientRegistration = githubClientRegistration();
 
-		AuthorizationCodeGrantProcessingFilter filter = spy(setupFilter(clientConfiguration));
+		AuthorizationCodeGrantProcessingFilter filter = spy(setupFilter(clientRegistration));
 
 		String requestURI = "/path";
 		MockHttpServletRequest request = new MockHttpServletRequest("GET", requestURI);
@@ -175,7 +175,7 @@ public class AuthorizationCodeGrantProcessingFilterTests {
 		String state = "some other state";
 		request.addParameter(OAuth2Attributes.CODE, authCode);
 		request.addParameter(OAuth2Attributes.STATE, state);
-		setupAuthorizationRequest(request, clientConfiguration, "some state");
+		setupAuthorizationRequest(request, clientRegistration, "some state");
 		MockHttpServletResponse response = new MockHttpServletResponse();
 		FilterChain filterChain = mock(FilterChain.class);
 
@@ -184,51 +184,51 @@ public class AuthorizationCodeGrantProcessingFilterTests {
 
 	@Test(expected = OAuth2Exception.class)
 	public void doFilterWhenAuthorizationCodeGrantSuccessResponseWithInvalidRedirectUriParamThenThrowOAuth2Exception() throws Exception {
-		ClientConfiguration clientConfiguration = githubClientConfiguration();
+		ClientRegistration clientRegistration = githubClientRegistration();
 
-		AuthorizationCodeGrantProcessingFilter filter = spy(setupFilter(clientConfiguration));
+		AuthorizationCodeGrantProcessingFilter filter = spy(setupFilter(clientRegistration));
 
 		String requestURI = "/path2";
-		clientConfiguration.setRedirectUri("/path");
+		clientRegistration.setRedirectUri("/path");
 		MockHttpServletRequest request = new MockHttpServletRequest("GET", requestURI);
 		request.setServletPath(requestURI);
 		String authCode = "some code";
 		String state = "some state";
 		request.addParameter(OAuth2Attributes.CODE, authCode);
 		request.addParameter(OAuth2Attributes.STATE, state);
-		setupAuthorizationRequest(request, clientConfiguration, state);
+		setupAuthorizationRequest(request, clientRegistration, state);
 		MockHttpServletResponse response = new MockHttpServletResponse();
 		FilterChain filterChain = mock(FilterChain.class);
 
 		filter.doFilter(request, response, filterChain);
 	}
 
-	private AuthorizationCodeGrantProcessingFilter setupFilter(ClientConfiguration... configurations) throws Exception {
+	private AuthorizationCodeGrantProcessingFilter setupFilter(ClientRegistration... clientRegistrations) throws Exception {
 		AuthenticationManager authenticationManager = mock(AuthenticationManager.class);
 
-		return setupFilter(authenticationManager, configurations);
+		return setupFilter(authenticationManager, clientRegistrations);
 	}
 
 	private AuthorizationCodeGrantProcessingFilter setupFilter(
-			AuthenticationManager authenticationManager, ClientConfiguration... configurations) throws Exception {
+			AuthenticationManager authenticationManager, ClientRegistration... clientRegistrations) throws Exception {
 
-		ClientConfigurationRepository clientConfigurationRepository = clientConfigurationRepository(configurations);
+		ClientRegistrationRepository clientRegistrationRepository = clientRegistrationRepository(clientRegistrations);
 
 		AuthorizationCodeGrantProcessingFilter filter = new AuthorizationCodeGrantProcessingFilter();
-		filter.setClientConfigurationRepository(clientConfigurationRepository);
+		filter.setClientRegistrationRepository(clientRegistrationRepository);
 		filter.setAuthenticationManager(authenticationManager);
 		filter.afterPropertiesSet();
 
 		return filter;
 	}
 
-	private void setupAuthorizationRequest(HttpServletRequest request, ClientConfiguration configuration, String state) {
+	private void setupAuthorizationRequest(HttpServletRequest request, ClientRegistration clientRegistration, String state) {
 		AuthorizationRequestAttributes authorizationRequestAttributes =
 				AuthorizationRequestAttributes.authorizationCodeGrant(
-						configuration.getAuthorizeUri(),
-						configuration.getClientId(),
-						configuration.getRedirectUri(),
-						configuration.getScope(),
+						clientRegistration.getAuthorizeUri(),
+						clientRegistration.getClientId(),
+						clientRegistration.getRedirectUri(),
+						clientRegistration.getScope(),
 						state);
 
 		request.getSession().setAttribute(AuthorizationUtil.SAVED_AUTHORIZATION_REQUEST, authorizationRequestAttributes);

@@ -20,9 +20,9 @@ import org.springframework.security.config.annotation.ObjectPostProcessor;
 import org.springframework.security.config.annotation.web.HttpSecurityBuilder;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.configurers.AbstractHttpConfigurer;
-import org.springframework.security.oauth2.client.config.ClientConfiguration;
-import org.springframework.security.oauth2.client.config.ClientConfigurationRepository;
-import org.springframework.security.oauth2.client.config.InMemoryClientConfigurationRepository;
+import org.springframework.security.oauth2.client.registration.ClientRegistration;
+import org.springframework.security.oauth2.client.registration.ClientRegistrationRepository;
+import org.springframework.security.oauth2.client.registration.InMemoryClientRegistrationRepository;
 import org.springframework.security.oauth2.client.filter.AuthorizationRequestRedirectFilter;
 import org.springframework.security.oauth2.client.filter.AuthorizationRequestUriBuilder;
 import org.springframework.security.oauth2.client.filter.nimbus.NimbusAuthorizationRequestUriBuilder;
@@ -54,8 +54,8 @@ public final class AuthorizationRequestRedirectFilterConfigurer<B extends HttpSe
 		return this;
 	}
 
-	public AuthorizationRequestRedirectFilterConfigurer<B> clientConfigurationRepository(ClientConfigurationRepository clientConfigurationRepository) {
-		this.getBuilder().setSharedObject(ClientConfigurationRepository.class, clientConfigurationRepository);
+	public AuthorizationRequestRedirectFilterConfigurer<B> clientRegistrationRepository(ClientRegistrationRepository clientRegistrationRepository) {
+		this.getBuilder().setSharedObject(ClientRegistrationRepository.class, clientRegistrationRepository);
 		return this;
 	}
 
@@ -68,7 +68,7 @@ public final class AuthorizationRequestRedirectFilterConfigurer<B extends HttpSe
 	public void configure(B http) throws Exception {
 		AuthorizationRequestRedirectFilter filter = new AuthorizationRequestRedirectFilter(
 				this.getAuthorizationProcessingBaseUri(),
-				this.getClientConfigurationRepository(),
+				this.getClientRegistrationRepository(),
 				this.getAuthorizationUriBuilder());
 
 		// TODO Temporary workaround
@@ -83,18 +83,18 @@ public final class AuthorizationRequestRedirectFilterConfigurer<B extends HttpSe
 				this.authorizationProcessingBaseUri : AuthorizationRequestRedirectFilter.DEFAULT_FILTER_PROCESSING_BASE_URI);
 	}
 
-	private ClientConfigurationRepository getClientConfigurationRepository() {
-		ClientConfigurationRepository clientConfigurationRepository = this.getBuilder().getSharedObject(ClientConfigurationRepository.class);
-		if (clientConfigurationRepository == null) {
+	private ClientRegistrationRepository getClientRegistrationRepository() {
+		ClientRegistrationRepository clientRegistrationRepository = this.getBuilder().getSharedObject(ClientRegistrationRepository.class);
+		if (clientRegistrationRepository == null) {
 			ApplicationContext context = this.getBuilder().getSharedObject(ApplicationContext.class);
-			Map<String, ClientConfiguration> clientConfigurations = context.getBeansOfType(ClientConfiguration.class);
-			Assert.state(!CollectionUtils.isEmpty(clientConfigurations),
-					"There must be at least 1 bean configured of type " + ClientConfiguration.class.getName());
-			clientConfigurationRepository = new InMemoryClientConfigurationRepository(
-					clientConfigurations.values().stream().collect(Collectors.toList()));
-			this.getBuilder().setSharedObject(ClientConfigurationRepository.class, clientConfigurationRepository);
+			Map<String, ClientRegistration> clientRegistrations = context.getBeansOfType(ClientRegistration.class);
+			Assert.state(!CollectionUtils.isEmpty(clientRegistrations),
+					"There must be at least 1 bean configured of type " + ClientRegistration.class.getName());
+			clientRegistrationRepository = new InMemoryClientRegistrationRepository(
+					clientRegistrations.values().stream().collect(Collectors.toList()));
+			this.getBuilder().setSharedObject(ClientRegistrationRepository.class, clientRegistrationRepository);
 		}
-		return clientConfigurationRepository;
+		return clientRegistrationRepository;
 	}
 
 	private AuthorizationRequestUriBuilder getAuthorizationUriBuilder() {

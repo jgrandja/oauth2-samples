@@ -61,7 +61,7 @@ public class AuthorizationCodeGrantAuthenticationProvider implements Authenticat
 		}
 
 		OAuth2AuthenticationToken accessTokenAuthentication = new OAuth2AuthenticationToken(
-				authorizationCodeGrantAuthentication.getConfiguration(), tokens.getAccessToken(), tokens.getRefreshToken());
+				authorizationCodeGrantAuthentication.getClientRegistration(), tokens.getAccessToken(), tokens.getRefreshToken());
 		accessTokenAuthentication.setDetails(authorizationCodeGrantAuthentication.getDetails());
 
 		UserDetails userDetails;
@@ -76,7 +76,7 @@ public class AuthorizationCodeGrantAuthenticationProvider implements Authenticat
 				this.authoritiesMapper.mapAuthorities(userDetails.getAuthorities());
 
 		OAuth2AuthenticationToken authenticationResult = new OAuth2AuthenticationToken(userDetails, authorities,
-				accessTokenAuthentication.getConfiguration(), accessTokenAuthentication.getAccessToken(),
+				accessTokenAuthentication.getClientRegistration(), accessTokenAuthentication.getAccessToken(),
 				accessTokenAuthentication.getRefreshToken());
 		authenticationResult.setDetails(accessTokenAuthentication.getDetails());
 

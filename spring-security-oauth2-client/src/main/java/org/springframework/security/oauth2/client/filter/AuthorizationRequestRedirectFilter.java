@@ -16,8 +16,8 @@
 package org.springframework.security.oauth2.client.filter;
 
 import org.springframework.security.crypto.keygen.StringKeyGenerator;
-import org.springframework.security.oauth2.client.config.ClientConfiguration;
-import org.springframework.security.oauth2.client.config.ClientConfigurationRepository;
+import org.springframework.security.oauth2.client.registration.ClientRegistration;
+import org.springframework.security.oauth2.client.registration.ClientRegistrationRepository;
 import org.springframework.security.oauth2.core.DefaultStateGenerator;
 import org.springframework.security.oauth2.core.OAuth2Exception;
 import org.springframework.security.oauth2.core.protocol.AuthorizationRequestAttributes;
@@ -48,7 +48,7 @@ public class AuthorizationRequestRedirectFilter extends OncePerRequestFilter {
 
 	private final AntPathRequestMatcher authorizationRequestMatcher;
 
-	private final ClientConfigurationRepository clientConfigurationRepository;
+	private final ClientRegistrationRepository clientRegistrationRepository;
 
 	private final AuthorizationRequestUriBuilder authorizationUriBuilder;
 
@@ -57,22 +57,22 @@ public class AuthorizationRequestRedirectFilter extends OncePerRequestFilter {
 	private final StringKeyGenerator stateGenerator = new DefaultStateGenerator();
 
 
-	public AuthorizationRequestRedirectFilter(ClientConfigurationRepository clientConfigurationRepository,
+	public AuthorizationRequestRedirectFilter(ClientRegistrationRepository clientRegistrationRepository,
 											  AuthorizationRequestUriBuilder authorizationUriBuilder) {
 
-		this(DEFAULT_FILTER_PROCESSING_BASE_URI, clientConfigurationRepository, authorizationUriBuilder);
+		this(DEFAULT_FILTER_PROCESSING_BASE_URI, clientRegistrationRepository, authorizationUriBuilder);
 	}
 
 	public AuthorizationRequestRedirectFilter(String filterProcessingBaseUri,
-											  ClientConfigurationRepository clientConfigurationRepository,
+											  ClientRegistrationRepository clientRegistrationRepository,
 											  AuthorizationRequestUriBuilder authorizationUriBuilder) {
 
 		Assert.notNull(filterProcessingBaseUri, "filterProcessingBaseUri cannot be null");
 		this.authorizationRequestMatcher = new AntPathRequestMatcher(
 				normalizeUri(filterProcessingBaseUri) + "/{" + CLIENT_ALIAS_VARIABLE_NAME + "}");
 
-		Assert.notNull(clientConfigurationRepository, "clientConfigurationRepository cannot be null");
-		this.clientConfigurationRepository = clientConfigurationRepository;
+		Assert.notNull(clientRegistrationRepository, "clientRegistrationRepository cannot be null");
+		this.clientRegistrationRepository = clientRegistrationRepository;
 
 		Assert.notNull(authorizationUriBuilder, "authorizationUriBuilder cannot be null");
 		this.authorizationUriBuilder = authorizationUriBuilder;
@@ -80,8 +80,8 @@ public class AuthorizationRequestRedirectFilter extends OncePerRequestFilter {
 
 	@Override
 	public final void afterPropertiesSet() {
-		List<ClientConfiguration> configurations = this.clientConfigurationRepository.getConfigurations();
-		Assert.notEmpty(configurations, "clientConfigurations cannot be empty");
+		List<ClientRegistration> clientRegistrations = this.clientRegistrationRepository.getRegistrations();
+		Assert.notEmpty(clientRegistrations, "clientRegistrations cannot be empty");
 	}
 
 	@Override
@@ -101,18 +101,18 @@ public class AuthorizationRequestRedirectFilter extends OncePerRequestFilter {
 
 		String clientAlias = this.authorizationRequestMatcher
 				.extractUriTemplateVariables(request).get(CLIENT_ALIAS_VARIABLE_NAME);
-		ClientConfiguration configuration = this.clientConfigurationRepository.getConfigurationByAlias(clientAlias);
-		if (configuration == null) {
+		ClientRegistration clientRegistration = this.clientRegistrationRepository.getRegistrationByClientAlias(clientAlias);
+		if (clientRegistration == null) {
 			// TODO Throw OAuth2-specific exception (Bad Request) for downstream handling
 			throw new OAuth2Exception("Invalid client alias: " + clientAlias);
 		}
 
 		AuthorizationRequestAttributes authorizationRequestAttributes =
 				AuthorizationRequestAttributes.authorizationCodeGrant(
-						configuration.getAuthorizeUri(),
-						configuration.getClientId(),
-						configuration.getRedirectUri(),
-						configuration.getScope(),
+						clientRegistration.getAuthorizeUri(),
+						clientRegistration.getClientId(),
+						clientRegistration.getRedirectUri(),
+						clientRegistration.getScope(),
 						this.stateGenerator.generateKey());
 		AuthorizationUtil.saveAuthorizationRequest(request, authorizationRequestAttributes);
 

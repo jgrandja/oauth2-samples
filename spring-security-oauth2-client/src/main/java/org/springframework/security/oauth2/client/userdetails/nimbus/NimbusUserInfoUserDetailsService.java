@@ -46,7 +46,7 @@ public class NimbusUserInfoUserDetailsService implements UserInfoUserDetailsServ
 		OAuth2User oauth2User;
 
 		try {
-			URI userInfoUri = toURI(authenticationRequest.getConfiguration().getUserInfoUri());
+			URI userInfoUri = toURI(authenticationRequest.getClientRegistration().getUserInfoUri());
 			BearerAccessToken accessToken = new BearerAccessToken(authenticationRequest.getAccessToken().getValue());
 
 			// Request the User Info
@@ -61,7 +61,7 @@ public class NimbusUserInfoUserDetailsService implements UserInfoUserDetailsServ
 				throw new OAuth2Exception(userInfoErrorResponse.getErrorObject().getDescription());
 			}
 
-			if (authenticationRequest.getConfiguration().isClientOpenIDConnect()) {
+			if (authenticationRequest.getClientRegistration().isClientOpenIDConnect()) {
 				UserInfoSuccessResponse userInfoResponse = UserInfoSuccessResponse.parse(httpResponse);
 				oauth2User = new OpenIDConnectUserBuilder()
 						.userAttributes(userInfoResponse.getUserInfo().toJSONObject())

@@ -21,9 +21,9 @@ import org.springframework.context.annotation.Configuration;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
 import org.springframework.security.config.annotation.web.configuration.WebSecurityConfigurerAdapter;
-import org.springframework.security.oauth2.client.config.ClientConfiguration;
-import org.springframework.security.oauth2.client.config.ClientConfigurationRepository;
-import org.springframework.security.oauth2.client.config.InMemoryClientConfigurationRepository;
+import org.springframework.security.oauth2.client.registration.ClientRegistration;
+import org.springframework.security.oauth2.client.registration.ClientRegistrationRepository;
+import org.springframework.security.oauth2.client.registration.InMemoryClientRegistrationRepository;
 
 import java.util.List;
 
@@ -53,18 +53,18 @@ public class SecurityConfig extends WebSecurityConfigurerAdapter {
 
 	@ConfigurationProperties(prefix = "security.oauth2.client.google")
 	@Bean
-	public ClientConfiguration googleClientConfiguration() {
-		return new ClientConfiguration();
+	public ClientRegistration googleClientRegistration() {
+		return new ClientRegistration();
 	}
 
 	@ConfigurationProperties(prefix = "security.oauth2.client.github")
 	@Bean
-	public ClientConfiguration githubClientConfiguration() {
-		return new ClientConfiguration();
+	public ClientRegistration githubClientRegistration() {
+		return new ClientRegistration();
 	}
 
 	@Bean
-	public ClientConfigurationRepository clientConfigurationRepository(List<ClientConfiguration> clientConfigurations) {
-		return new InMemoryClientConfigurationRepository(clientConfigurations);
+	public ClientRegistrationRepository clientRegistrationRepository(List<ClientRegistration> clientRegistrations) {
+		return new InMemoryClientRegistrationRepository(clientRegistrations);
 	}
 }

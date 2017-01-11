@@ -24,7 +24,7 @@ import org.apache.oltu.oauth2.common.exception.OAuthSystemException;
 import org.apache.oltu.oauth2.common.message.types.GrantType;
 import org.springframework.http.MediaType;
 import org.springframework.security.oauth2.client.authentication.AuthorizationCodeGrantAuthenticationToken;
-import org.springframework.security.oauth2.client.config.ClientConfiguration;
+import org.springframework.security.oauth2.client.registration.ClientRegistration;
 import org.springframework.security.oauth2.core.*;
 
 import java.util.Arrays;
@@ -39,19 +39,19 @@ public class OltuAuthorizationCodeGrantTokenExchanger implements AuthorizationGr
 
 	@Override
 	public Tokens exchange(AuthorizationCodeGrantAuthenticationToken authorizationGrant) {
-		ClientConfiguration configuration = authorizationGrant.getConfiguration();
+		ClientRegistration clientRegistration = authorizationGrant.getClientRegistration();
 
 		OAuthJSONAccessTokenResponse tokenResponse;
 		try {
 			// Build the authorization code grant request for the token endpoint
 			OAuthClientRequest tokenRequest = OAuthClientRequest
-					.tokenLocation(configuration.getTokenUri())
+					.tokenLocation(clientRegistration.getTokenUri())
 					.setGrantType(GrantType.AUTHORIZATION_CODE)
-					.setClientId(configuration.getClientId())
-					.setClientSecret(configuration.getClientSecret())
-					.setRedirectURI(configuration.getRedirectUri())
+					.setClientId(clientRegistration.getClientId())
+					.setClientSecret(clientRegistration.getClientSecret())
+					.setRedirectURI(clientRegistration.getRedirectUri())
 					.setCode(authorizationGrant.getAuthorizationCode())
-					.setScope(configuration.getScope().stream().collect(Collectors.joining(" ")))
+					.setScope(clientRegistration.getScope().stream().collect(Collectors.joining(" ")))
 					.buildBodyMessage();
 			tokenRequest.setHeader("Accept", MediaType.APPLICATION_JSON_VALUE);
 
