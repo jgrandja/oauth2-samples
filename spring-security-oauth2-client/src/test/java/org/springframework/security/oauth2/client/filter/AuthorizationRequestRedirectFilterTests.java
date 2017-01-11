@@ -185,6 +185,9 @@ public class AuthorizationRequestRedirectFilterTests {
 				setupFilter(filterProcessingBaseUri, authorizationUri, clientConfiguration);
 
 		String requestUri = filterProcessingBaseUri + "/" + clientConfiguration.getClientAlias();
+		if (!requestUri.startsWith("/")) {
+			requestUri = "/" + requestUri;
+		}
 		MockHttpServletRequest request = new MockHttpServletRequest("GET", requestUri);
 		request.setServletPath(requestUri);
 		MockHttpServletResponse response = new MockHttpServletResponse();

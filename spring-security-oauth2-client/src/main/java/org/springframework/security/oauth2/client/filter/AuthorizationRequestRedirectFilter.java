@@ -46,6 +46,8 @@ public class AuthorizationRequestRedirectFilter extends OncePerRequestFilter {
 
 	private static final String CLIENT_ALIAS_VARIABLE_NAME = "clientAlias";
 
+	private final AntPathRequestMatcher authorizationRequestMatcher;
+
 	private final ClientConfigurationRepository clientConfigurationRepository;
 
 	private final AuthorizationRequestUriBuilder authorizationUriBuilder;
@@ -53,8 +55,6 @@ public class AuthorizationRequestRedirectFilter extends OncePerRequestFilter {
 	private final RedirectStrategy authorizationRedirectStrategy = new DefaultRedirectStrategy();
 
 	private final StringKeyGenerator stateGenerator = new DefaultStateGenerator();
-
-	protected AntPathRequestMatcher authorizationRequestMatcher;
 
 
 	public AuthorizationRequestRedirectFilter(ClientConfigurationRepository clientConfigurationRepository,
@@ -85,7 +85,7 @@ public class AuthorizationRequestRedirectFilter extends OncePerRequestFilter {
 	}
 
 	@Override
-	protected void doFilterInternal(HttpServletRequest request, HttpServletResponse response, FilterChain filterChain)
+	protected final void doFilterInternal(HttpServletRequest request, HttpServletResponse response, FilterChain filterChain)
 			throws ServletException, IOException {
 
 		if (this.authorizationRequestMatcher.matches(request)) {
@@ -96,7 +96,7 @@ public class AuthorizationRequestRedirectFilter extends OncePerRequestFilter {
 		filterChain.doFilter(request, response);
 	}
 
-	protected void obtainAuthorization(HttpServletRequest request, HttpServletResponse response)
+	private void obtainAuthorization(HttpServletRequest request, HttpServletResponse response)
 			throws IOException, ServletException {
 
 		String clientAlias = this.authorizationRequestMatcher
@@ -108,31 +108,18 @@ public class AuthorizationRequestRedirectFilter extends OncePerRequestFilter {
 		}
 
 		AuthorizationRequestAttributes authorizationRequestAttributes =
-				this.buildAuthorizationRequest(request, configuration);
-		this.saveAuthorizationRequest(request, authorizationRequestAttributes);
-
-		URI redirectUri = this.authorizationUriBuilder.build(authorizationRequestAttributes);
-		Assert.notNull(redirectUri, "Authorization redirectUri cannot be null");
-
-		this.authorizationRedirectStrategy.sendRedirect(request, response, redirectUri.toString());
-	}
-
-	protected AuthorizationRequestAttributes buildAuthorizationRequest(
-			HttpServletRequest request, ClientConfiguration configuration) {
-
-		AuthorizationRequestAttributes authorizationRequestAttributes =
 				AuthorizationRequestAttributes.authorizationCodeGrant(
 						configuration.getAuthorizeUri(),
 						configuration.getClientId(),
 						configuration.getRedirectUri(),
 						configuration.getScope(),
 						this.stateGenerator.generateKey());
+		AuthorizationUtil.saveAuthorizationRequest(request, authorizationRequestAttributes);
 
-		return authorizationRequestAttributes;
-	}
+		URI redirectUri = this.authorizationUriBuilder.build(authorizationRequestAttributes);
+		Assert.notNull(redirectUri, "Authorization redirectUri cannot be null");
 
-	protected void saveAuthorizationRequest(HttpServletRequest request, AuthorizationRequestAttributes authorizationRequest) {
-		AuthorizationUtil.saveAuthorizationRequest(request, authorizationRequest);
+		this.authorizationRedirectStrategy.sendRedirect(request, response, redirectUri.toString());
 	}
 
 	private String normalizeUri(String uri) {
@@ -145,17 +132,5 @@ public class AuthorizationRequestRedirectFilter extends OncePerRequestFilter {
 			uri = normalizeUri(uri);		// There may be more
 		}
 		return uri;
-	}
-
-	protected final ClientConfigurationRepository getClientConfigurationRepository() {
-		return this.clientConfigurationRepository;
-	}
-
-	protected final AuthorizationRequestUriBuilder getAuthorizationUriBuilder() {
-		return this.authorizationUriBuilder;
-	}
-
-	protected final RedirectStrategy getAuthorizationRedirectStrategy() {
-		return this.authorizationRedirectStrategy;
 	}
 }
