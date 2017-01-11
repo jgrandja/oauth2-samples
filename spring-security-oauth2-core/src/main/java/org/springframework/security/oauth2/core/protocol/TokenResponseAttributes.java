@@ -20,6 +20,7 @@ import org.springframework.util.Assert;
 
 import java.util.Collections;
 import java.util.List;
+import java.util.Map;
 
 /**
  * @author Joe Grandja
@@ -30,6 +31,7 @@ public class TokenResponseAttributes {
 	private final long expiresIn;
 	private final List<String> scope;
 	private final String refreshToken;
+	private final Map<String,String> additionalParameters;
 
 	public TokenResponseAttributes(String accessToken, AccessTokenType accessTokenType, long expiresIn) {
 		this(accessToken, accessTokenType, expiresIn, Collections.emptyList());
@@ -42,6 +44,12 @@ public class TokenResponseAttributes {
 	public TokenResponseAttributes(String accessToken, AccessTokenType accessTokenType, long expiresIn,
 								   List<String> scope, String refreshToken) {
 
+		this(accessToken, accessTokenType, expiresIn, scope, refreshToken, Collections.emptyMap());
+	}
+
+	public TokenResponseAttributes(String accessToken, AccessTokenType accessTokenType, long expiresIn,
+								   List<String> scope, String refreshToken, Map<String,String> additionalParameters) {
+
 		Assert.notNull(accessToken, "accessToken cannot be null");
 		this.accessToken = accessToken;
 
@@ -51,8 +59,10 @@ public class TokenResponseAttributes {
 		Assert.isTrue(expiresIn >= 0, "expiresIn must be a positive number");
 		this.expiresIn = expiresIn;
 
-		this.scope = Collections.unmodifiableList((scope != null ? scope : Collections.emptyList()));
+		this.scope = Collections.unmodifiableList(scope != null ? scope : Collections.emptyList());
 		this.refreshToken = refreshToken;
+		this.additionalParameters = Collections.unmodifiableMap(additionalParameters != null ?
+				additionalParameters : Collections.emptyMap());
 	}
 
 	public final String getAccessToken() {
@@ -73,5 +83,9 @@ public class TokenResponseAttributes {
 
 	public final String getRefreshToken() {
 		return this.refreshToken;
+	}
+
+	public final Map<String, String> getAdditionalParameters() {
+		return this.additionalParameters;
 	}
 }

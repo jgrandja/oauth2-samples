@@ -24,8 +24,9 @@ import org.springframework.security.core.authority.mapping.GrantedAuthoritiesMap
 import org.springframework.security.core.authority.mapping.NullAuthoritiesMapper;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.security.oauth2.client.userdetails.UserInfoUserDetailsService;
-import org.springframework.security.oauth2.core.AuthorizationGrantTokenExchanger;
-import org.springframework.security.oauth2.core.Tokens;
+import org.springframework.security.oauth2.core.AccessToken;
+import org.springframework.security.oauth2.core.RefreshToken;
+import org.springframework.security.oauth2.core.protocol.TokenResponseAttributes;
 import org.springframework.util.Assert;
 
 import java.util.Collection;
@@ -38,8 +39,9 @@ public class AuthorizationCodeGrantAuthenticationProvider implements Authenticat
 	private final UserInfoUserDetailsService userInfoUserDetailsService;
 	private GrantedAuthoritiesMapper authoritiesMapper = new NullAuthoritiesMapper();
 
-	public AuthorizationCodeGrantAuthenticationProvider(AuthorizationGrantTokenExchanger<AuthorizationCodeGrantAuthenticationToken> authorizationCodeGrantTokenExchanger,
-														UserInfoUserDetailsService userInfoUserDetailsService) {
+	public AuthorizationCodeGrantAuthenticationProvider(
+			AuthorizationGrantTokenExchanger<AuthorizationCodeGrantAuthenticationToken> authorizationCodeGrantTokenExchanger,
+			UserInfoUserDetailsService userInfoUserDetailsService) {
 
 		Assert.notNull(authorizationCodeGrantTokenExchanger, "authorizationCodeGrantTokenExchanger cannot be null");
 		this.authorizationCodeGrantTokenExchanger = authorizationCodeGrantTokenExchanger;
@@ -50,18 +52,25 @@ public class AuthorizationCodeGrantAuthenticationProvider implements Authenticat
 
 	@Override
 	public Authentication authenticate(Authentication authentication) throws AuthenticationException {
-		AuthorizationCodeGrantAuthenticationToken authorizationCodeGrantAuthentication = (AuthorizationCodeGrantAuthenticationToken) authentication;
+		AuthorizationCodeGrantAuthenticationToken authorizationCodeGrantAuthentication =
+				(AuthorizationCodeGrantAuthenticationToken) authentication;
 
-		Tokens tokens;
+		TokenResponseAttributes tokenResponse;
 		try {
-			tokens = this.authorizationCodeGrantTokenExchanger.exchange(authorizationCodeGrantAuthentication);
+			tokenResponse = this.authorizationCodeGrantTokenExchanger.exchange(authorizationCodeGrantAuthentication);
 		} catch (Exception ex) {
 			// TODO If the authorization code is invalid/expired then we should throw BadCredentialsException?
 			throw new AuthenticationServiceException(ex.getMessage(), ex);
 		}
 
+		AccessToken accessToken = new AccessToken(tokenResponse.getAccessTokenType(),
+				tokenResponse.getAccessToken(), tokenResponse.getExpiresIn(), tokenResponse.getScope());
+		RefreshToken refreshToken = null;
+		if (tokenResponse.getRefreshToken() != null) {
+			refreshToken = new RefreshToken(tokenResponse.getRefreshToken());
+		}
 		OAuth2AuthenticationToken accessTokenAuthentication = new OAuth2AuthenticationToken(
-				authorizationCodeGrantAuthentication.getClientRegistration(), tokens.getAccessToken(), tokens.getRefreshToken());
+				authorizationCodeGrantAuthentication.getClientRegistration(), accessToken, refreshToken);
 		accessTokenAuthentication.setDetails(authorizationCodeGrantAuthentication.getDetails());
 
 		UserDetails userDetails;

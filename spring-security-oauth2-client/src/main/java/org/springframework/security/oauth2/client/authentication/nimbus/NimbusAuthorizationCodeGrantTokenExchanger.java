@@ -24,8 +24,11 @@ import com.nimbusds.oauth2.sdk.http.HTTPRequest;
 import com.nimbusds.oauth2.sdk.id.ClientID;
 import org.springframework.http.MediaType;
 import org.springframework.security.oauth2.client.authentication.AuthorizationCodeGrantAuthenticationToken;
+import org.springframework.security.oauth2.client.authentication.AuthorizationGrantTokenExchanger;
 import org.springframework.security.oauth2.client.registration.ClientRegistration;
-import org.springframework.security.oauth2.core.*;
+import org.springframework.security.oauth2.core.AccessTokenType;
+import org.springframework.security.oauth2.core.OAuth2Exception;
+import org.springframework.security.oauth2.core.protocol.TokenResponseAttributes;
 import org.springframework.util.CollectionUtils;
 
 import java.io.IOException;
@@ -33,6 +36,8 @@ import java.net.URI;
 import java.net.URISyntaxException;
 import java.util.Collections;
 import java.util.List;
+import java.util.Map;
+import java.util.stream.Collectors;
 
 /**
  * @author Joe Grandja
@@ -40,12 +45,11 @@ import java.util.List;
 public class NimbusAuthorizationCodeGrantTokenExchanger implements AuthorizationGrantTokenExchanger<AuthorizationCodeGrantAuthenticationToken> {
 
 	@Override
-	public Tokens exchange(AuthorizationCodeGrantAuthenticationToken authorizationGrant) {
-
-		ClientRegistration clientRegistration = authorizationGrant.getClientRegistration();
+	public TokenResponseAttributes exchange(AuthorizationCodeGrantAuthenticationToken authorizationGrantAuthentication) {
+		ClientRegistration clientRegistration = authorizationGrantAuthentication.getClientRegistration();
 
 		// Build the authorization code grant request for the token endpoint
-		AuthorizationCode authorizationCode = new AuthorizationCode(authorizationGrant.getAuthorizationCode());
+		AuthorizationCode authorizationCode = new AuthorizationCode(authorizationGrantAuthentication.getAuthorizationCode());
 		URI redirectUri = toURI(clientRegistration.getRedirectUri());
 		AuthorizationGrant authorizationCodeGrant = new AuthorizationCodeGrant(authorizationCode, redirectUri);
 		URI tokenUri = toURI(clientRegistration.getTokenUri());
@@ -78,7 +82,7 @@ public class NimbusAuthorizationCodeGrantTokenExchanger implements Authorization
 
 		AccessTokenResponse accessTokenResponse = (AccessTokenResponse) tokenResponse;
 
-		String accessTokenValue = accessTokenResponse.getTokens().getAccessToken().getValue();
+		String accessToken = accessTokenResponse.getTokens().getAccessToken().getValue();
 		AccessTokenType accessTokenType = null;
 		if (AccessTokenType.BEARER.value().equals(accessTokenResponse.getTokens().getAccessToken().getType().getValue())) {
 			accessTokenType = AccessTokenType.BEARER;
@@ -90,14 +94,15 @@ public class NimbusAuthorizationCodeGrantTokenExchanger implements Authorization
 		if (!CollectionUtils.isEmpty(accessTokenResponse.getTokens().getAccessToken().getScope())) {
 			scope = accessTokenResponse.getTokens().getAccessToken().getScope().toStringList();
 		}
-		AccessToken accessToken = new AccessToken(accessTokenType, accessTokenValue, expiresIn, scope);
-
-		RefreshToken refreshToken = null;
+		String refreshToken = null;
 		if (accessTokenResponse.getTokens().getRefreshToken() != null) {
-			refreshToken = new RefreshToken(accessTokenResponse.getTokens().getRefreshToken().getValue());
+			refreshToken = accessTokenResponse.getTokens().getRefreshToken().getValue();
 		}
+		Map<String, String> additionalParameters = accessTokenResponse.getCustomParameters().entrySet().stream()
+				.collect(Collectors.toMap(Map.Entry::getKey, e -> e.getValue().toString()));
 
-		return new Tokens(accessToken, refreshToken);
+		return new TokenResponseAttributes(accessToken, accessTokenType, expiresIn,
+				scope, refreshToken, additionalParameters);
 	}
 
 	private URI toURI(String uriStr) {

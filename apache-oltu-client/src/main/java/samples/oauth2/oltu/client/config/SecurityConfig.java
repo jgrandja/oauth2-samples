@@ -30,7 +30,7 @@ import org.springframework.security.oauth2.client.filter.AuthorizationRequestUri
 import org.springframework.security.oauth2.client.filter.oltu.OltuAuthorizationRequestUriBuilder;
 import org.springframework.security.oauth2.client.userdetails.UserInfoUserDetailsService;
 import org.springframework.security.oauth2.client.userdetails.oltu.OltuUserInfoUserDetailsService;
-import org.springframework.security.oauth2.core.AuthorizationGrantTokenExchanger;
+import org.springframework.security.oauth2.client.authentication.AuthorizationGrantTokenExchanger;
 
 import java.util.List;
 

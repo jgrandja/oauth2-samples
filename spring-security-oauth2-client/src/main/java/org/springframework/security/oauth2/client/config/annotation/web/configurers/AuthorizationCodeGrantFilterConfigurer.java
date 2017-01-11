@@ -30,7 +30,7 @@ import org.springframework.security.oauth2.client.filter.AuthorizationCodeGrantP
 import org.springframework.security.oauth2.client.filter.AuthorizationUtil;
 import org.springframework.security.oauth2.client.userdetails.UserInfoUserDetailsService;
 import org.springframework.security.oauth2.client.userdetails.nimbus.NimbusUserInfoUserDetailsService;
-import org.springframework.security.oauth2.core.AuthorizationGrantTokenExchanger;
+import org.springframework.security.oauth2.client.authentication.AuthorizationGrantTokenExchanger;
 import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
 import org.springframework.security.web.util.matcher.RequestMatcher;
 import org.springframework.util.Assert;

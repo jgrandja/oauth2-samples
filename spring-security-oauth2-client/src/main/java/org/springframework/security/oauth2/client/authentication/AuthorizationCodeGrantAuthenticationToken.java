@@ -15,22 +15,20 @@
  */
 package org.springframework.security.oauth2.client.authentication;
 
-import org.springframework.security.authentication.AbstractAuthenticationToken;
-import org.springframework.security.core.SpringSecurityCoreVersion;
 import org.springframework.security.core.authority.AuthorityUtils;
 import org.springframework.security.oauth2.client.registration.ClientRegistration;
+import org.springframework.security.oauth2.core.AuthorizationGrantType;
 import org.springframework.util.Assert;
 
 /**
  * @author Joe Grandja
  */
-public class AuthorizationCodeGrantAuthenticationToken extends AbstractAuthenticationToken {
-	private static final long serialVersionUID = SpringSecurityCoreVersion.SERIAL_VERSION_UID;
+public class AuthorizationCodeGrantAuthenticationToken extends AuthorizationGrantAuthenticationToken {
 	private final String authorizationCode;
 	private final ClientRegistration clientRegistration;
 
 	public AuthorizationCodeGrantAuthenticationToken(String authorizationCode, ClientRegistration clientRegistration) {
-		super(AuthorityUtils.NO_AUTHORITIES);
+		super(AuthorizationGrantType.AUTHORIZATION_CODE, AuthorityUtils.NO_AUTHORITIES);
 
 		Assert.hasText(authorizationCode, "authorizationCode cannot be empty");
 		this.authorizationCode = authorizationCode;

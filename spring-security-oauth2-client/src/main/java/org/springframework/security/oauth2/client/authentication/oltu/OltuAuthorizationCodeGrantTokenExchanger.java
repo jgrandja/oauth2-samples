@@ -24,8 +24,11 @@ import org.apache.oltu.oauth2.common.exception.OAuthSystemException;
 import org.apache.oltu.oauth2.common.message.types.GrantType;
 import org.springframework.http.MediaType;
 import org.springframework.security.oauth2.client.authentication.AuthorizationCodeGrantAuthenticationToken;
+import org.springframework.security.oauth2.client.authentication.AuthorizationGrantTokenExchanger;
 import org.springframework.security.oauth2.client.registration.ClientRegistration;
-import org.springframework.security.oauth2.core.*;
+import org.springframework.security.oauth2.core.AccessTokenType;
+import org.springframework.security.oauth2.core.OAuth2Exception;
+import org.springframework.security.oauth2.core.protocol.TokenResponseAttributes;
 
 import java.util.Arrays;
 import java.util.Collections;
@@ -38,8 +41,8 @@ import java.util.stream.Collectors;
 public class OltuAuthorizationCodeGrantTokenExchanger implements AuthorizationGrantTokenExchanger<AuthorizationCodeGrantAuthenticationToken> {
 
 	@Override
-	public Tokens exchange(AuthorizationCodeGrantAuthenticationToken authorizationGrant) {
-		ClientRegistration clientRegistration = authorizationGrant.getClientRegistration();
+	public TokenResponseAttributes exchange(AuthorizationCodeGrantAuthenticationToken authorizationGrantAuthentication) {
+		ClientRegistration clientRegistration = authorizationGrantAuthentication.getClientRegistration();
 
 		OAuthJSONAccessTokenResponse tokenResponse;
 		try {
@@ -50,7 +53,7 @@ public class OltuAuthorizationCodeGrantTokenExchanger implements AuthorizationGr
 					.setClientId(clientRegistration.getClientId())
 					.setClientSecret(clientRegistration.getClientSecret())
 					.setRedirectURI(clientRegistration.getRedirectUri())
-					.setCode(authorizationGrant.getAuthorizationCode())
+					.setCode(authorizationGrantAuthentication.getAuthorizationCode())
 					.setScope(clientRegistration.getScope().stream().collect(Collectors.joining(" ")))
 					.buildBodyMessage();
 			tokenRequest.setHeader("Accept", MediaType.APPLICATION_JSON_VALUE);
@@ -67,28 +70,18 @@ public class OltuAuthorizationCodeGrantTokenExchanger implements AuthorizationGr
 			throw new OAuth2Exception(se.getMessage(), se);
 		}
 
-		String accessTokenValue = tokenResponse.getAccessToken();
+		String accessToken = tokenResponse.getAccessToken();
 		AccessTokenType accessTokenType = null;
 		if (AccessTokenType.BEARER.value().equalsIgnoreCase(tokenResponse.getTokenType())) {
 			accessTokenType = AccessTokenType.BEARER;
 		} else if (AccessTokenType.MAC.value().equalsIgnoreCase(tokenResponse.getTokenType())) {
 			accessTokenType = AccessTokenType.MAC;
 		}
-		long expiresIn = 0;
-		if (tokenResponse.getExpiresIn() != null) {
-			expiresIn = tokenResponse.getExpiresIn();
-		}
-		List<String> scope = Collections.emptyList();
-		if (tokenResponse.getScope() != null) {
-			scope = Arrays.asList(tokenResponse.getScope().split(" "));
-		}
-		AccessToken accessToken = new AccessToken(accessTokenType, accessTokenValue, expiresIn, scope);
+		long expiresIn = (tokenResponse.getExpiresIn() != null ? tokenResponse.getExpiresIn() : 0);
+		List<String> scope = (tokenResponse.getScope() != null ?
+				Arrays.asList(tokenResponse.getScope().split(" ")) : Collections.emptyList());
+		String refreshToken = (tokenResponse.getRefreshToken() != null ? tokenResponse.getRefreshToken() : null);
 
-		RefreshToken refreshToken = null;
-		if (tokenResponse.getRefreshToken() != null) {
-			refreshToken = new RefreshToken(tokenResponse.getRefreshToken());
-		}
-
-		return new Tokens(accessToken, refreshToken);
+		return new TokenResponseAttributes(accessToken, accessTokenType, expiresIn, scope, refreshToken);
 	}
 }

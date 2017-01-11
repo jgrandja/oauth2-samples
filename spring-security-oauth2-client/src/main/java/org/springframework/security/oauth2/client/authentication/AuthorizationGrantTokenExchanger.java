@@ -13,14 +13,16 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.springframework.security.oauth2.core;
+package org.springframework.security.oauth2.client.authentication;
 
+
+import org.springframework.security.oauth2.core.protocol.TokenResponseAttributes;
 
 /**
  * @author Joe Grandja
  */
-public interface AuthorizationGrantTokenExchanger<T>  {
+public interface AuthorizationGrantTokenExchanger<T extends AuthorizationGrantAuthenticationToken>  {
 
-	Tokens exchange(T authorizationGrant);
+	TokenResponseAttributes exchange(T authorizationGrantAuthentication);
 
 }
