@@ -34,7 +34,6 @@ import javax.servlet.http.HttpServletResponse;
 import java.io.IOException;
 import java.net.URI;
 import java.net.URISyntaxException;
-import java.util.List;
 
 
 /**
@@ -43,7 +42,7 @@ import java.util.List;
  * @author Joe Grandja
  */
 public class AuthorizationRequestRedirectFilter extends OncePerRequestFilter {
-	public static final String DEFAULT_FILTER_PROCESSING_BASE_URI = "/login/oauth2";
+	public static final String DEFAULT_FILTER_PROCESSING_URI = "/oauth2/authorize";
 
 	private static final String CLIENT_ALIAS_VARIABLE_NAME = "clientAlias";
 
@@ -61,16 +60,16 @@ public class AuthorizationRequestRedirectFilter extends OncePerRequestFilter {
 	public AuthorizationRequestRedirectFilter(ClientRegistrationRepository clientRegistrationRepository,
 											  AuthorizationRequestUriBuilder authorizationUriBuilder) {
 
-		this(DEFAULT_FILTER_PROCESSING_BASE_URI, clientRegistrationRepository, authorizationUriBuilder);
+		this(DEFAULT_FILTER_PROCESSING_URI, clientRegistrationRepository, authorizationUriBuilder);
 	}
 
-	public AuthorizationRequestRedirectFilter(String filterProcessingBaseUri,
+	public AuthorizationRequestRedirectFilter(String filterProcessingUri,
 											  ClientRegistrationRepository clientRegistrationRepository,
 											  AuthorizationRequestUriBuilder authorizationUriBuilder) {
 
-		Assert.notNull(filterProcessingBaseUri, "filterProcessingBaseUri cannot be null");
+		Assert.notNull(filterProcessingUri, "filterProcessingUri cannot be null");
 		this.authorizationRequestMatcher = new AntPathRequestMatcher(
-				normalizeUri(filterProcessingBaseUri) + "/{" + CLIENT_ALIAS_VARIABLE_NAME + "}");
+				normalizeUri(filterProcessingUri) + "/{" + CLIENT_ALIAS_VARIABLE_NAME + "}");
 
 		Assert.notNull(clientRegistrationRepository, "clientRegistrationRepository cannot be null");
 		this.clientRegistrationRepository = clientRegistrationRepository;
@@ -81,8 +80,7 @@ public class AuthorizationRequestRedirectFilter extends OncePerRequestFilter {
 
 	@Override
 	public final void afterPropertiesSet() {
-		List<ClientRegistration> clientRegistrations = this.clientRegistrationRepository.getRegistrations();
-		Assert.notEmpty(clientRegistrations, "clientRegistrations cannot be empty");
+		Assert.notEmpty(this.clientRegistrationRepository.getRegistrations(), "clientRegistrationRepository cannot be empty");
 	}
 
 	@Override

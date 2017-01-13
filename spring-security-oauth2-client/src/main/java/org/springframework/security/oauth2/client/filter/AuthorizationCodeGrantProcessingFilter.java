@@ -53,7 +53,8 @@ public class AuthorizationCodeGrantProcessingFilter extends AbstractAuthenticati
 	@Override
 	public void afterPropertiesSet() {
 		super.afterPropertiesSet();
-		Assert.notNull(this.clientRegistrationRepository, "clientRegistrationRepository must be specified");
+		Assert.notNull(this.clientRegistrationRepository, "clientRegistrationRepository cannot be null");
+		Assert.notEmpty(this.clientRegistrationRepository.getRegistrations(), "clientRegistrationRepository cannot be empty");
 	}
 
 	@Override

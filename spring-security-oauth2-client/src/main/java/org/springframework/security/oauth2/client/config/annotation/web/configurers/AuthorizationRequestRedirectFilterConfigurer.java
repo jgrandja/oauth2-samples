@@ -20,15 +20,12 @@ import org.springframework.security.config.annotation.ObjectPostProcessor;
 import org.springframework.security.config.annotation.web.HttpSecurityBuilder;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.configurers.AbstractHttpConfigurer;
-import org.springframework.security.oauth2.client.registration.ClientRegistration;
-import org.springframework.security.oauth2.client.registration.ClientRegistrationRepository;
-import org.springframework.security.oauth2.client.registration.InMemoryClientRegistrationRepository;
 import org.springframework.security.oauth2.client.filter.AuthorizationRequestRedirectFilter;
 import org.springframework.security.oauth2.client.filter.AuthorizationRequestUriBuilder;
 import org.springframework.security.oauth2.client.filter.nimbus.NimbusAuthorizationRequestUriBuilder;
+import org.springframework.security.oauth2.client.registration.ClientRegistrationRepository;
 import org.springframework.security.web.authentication.preauth.AbstractPreAuthenticatedProcessingFilter;
 import org.springframework.util.Assert;
-import org.springframework.util.CollectionUtils;
 
 import javax.servlet.FilterChain;
 import javax.servlet.ServletException;
@@ -36,8 +33,8 @@ import javax.servlet.ServletRequest;
 import javax.servlet.ServletResponse;
 import javax.servlet.http.HttpServletRequest;
 import java.io.IOException;
-import java.util.Map;
-import java.util.stream.Collectors;
+
+import static org.springframework.security.oauth2.client.config.annotation.web.configurers.OAuth2ClientSecurityConfigurer.getDefaultClientRegistrationRepository;
 
 /**
  * @author Joe Grandja
@@ -45,31 +42,35 @@ import java.util.stream.Collectors;
 public final class AuthorizationRequestRedirectFilterConfigurer<B extends HttpSecurityBuilder<B>> extends
 		AbstractHttpConfigurer<AuthorizationRequestRedirectFilterConfigurer<B>, B> {
 
-	private String authorizationProcessingBaseUri;
+	private String authorizationProcessingUri;
 
-	private AuthorizationRequestUriBuilder authorizationUriBuilder;
-
-	public AuthorizationRequestRedirectFilterConfigurer<B> authorizationProcessingBaseUri(String authorizationProcessingBaseUri) {
-		this.authorizationProcessingBaseUri = authorizationProcessingBaseUri;
-		return this;
-	}
+	private AuthorizationRequestUriBuilder authorizationRequestBuilder;
 
 	public AuthorizationRequestRedirectFilterConfigurer<B> clientRegistrationRepository(ClientRegistrationRepository clientRegistrationRepository) {
+		Assert.notNull(clientRegistrationRepository, "clientRegistrationRepository cannot be null");
+		Assert.notEmpty(clientRegistrationRepository.getRegistrations(), "clientRegistrationRepository cannot be empty");
 		this.getBuilder().setSharedObject(ClientRegistrationRepository.class, clientRegistrationRepository);
 		return this;
 	}
 
-	public AuthorizationRequestRedirectFilterConfigurer<B> authorizationUriBuilder(AuthorizationRequestUriBuilder authorizationUriBuilder) {
-		this.authorizationUriBuilder = authorizationUriBuilder;
+	public AuthorizationRequestRedirectFilterConfigurer<B> authorizationProcessingUri(String authorizationProcessingUri) {
+		Assert.notNull(authorizationProcessingUri, "authorizationProcessingUri cannot be null");
+		this.authorizationProcessingUri = authorizationProcessingUri;
+		return this;
+	}
+
+	public AuthorizationRequestRedirectFilterConfigurer<B> authorizationRequestBuilder(AuthorizationRequestUriBuilder authorizationRequestBuilder) {
+		Assert.notNull(authorizationRequestBuilder, "authorizationRequestBuilder cannot be null");
+		this.authorizationRequestBuilder = authorizationRequestBuilder;
 		return this;
 	}
 
 	@Override
 	public void configure(B http) throws Exception {
 		AuthorizationRequestRedirectFilter filter = new AuthorizationRequestRedirectFilter(
-				this.getAuthorizationProcessingBaseUri(),
+				this.getAuthorizationProcessingUri(),
 				this.getClientRegistrationRepository(),
-				this.getAuthorizationUriBuilder());
+				this.getAuthorizationRequestBuilder());
 
 		// TODO Temporary workaround
 		// 		Remove this after we add an order in FilterComparator for AuthorizationRequestRedirectFilter
@@ -78,30 +79,25 @@ public final class AuthorizationRequestRedirectFilterConfigurer<B extends HttpSe
 		http.addFilter(this.postProcess(filter));
 	}
 
-	private String getAuthorizationProcessingBaseUri() {
-		return (this.authorizationProcessingBaseUri != null ?
-				this.authorizationProcessingBaseUri : AuthorizationRequestRedirectFilter.DEFAULT_FILTER_PROCESSING_BASE_URI);
+	private String getAuthorizationProcessingUri() {
+		return (this.authorizationProcessingUri != null ?
+				this.authorizationProcessingUri : AuthorizationRequestRedirectFilter.DEFAULT_FILTER_PROCESSING_URI);
 	}
 
 	private ClientRegistrationRepository getClientRegistrationRepository() {
 		ClientRegistrationRepository clientRegistrationRepository = this.getBuilder().getSharedObject(ClientRegistrationRepository.class);
 		if (clientRegistrationRepository == null) {
-			ApplicationContext context = this.getBuilder().getSharedObject(ApplicationContext.class);
-			Map<String, ClientRegistration> clientRegistrations = context.getBeansOfType(ClientRegistration.class);
-			Assert.state(!CollectionUtils.isEmpty(clientRegistrations),
-					"There must be at least 1 bean configured of type " + ClientRegistration.class.getName());
-			clientRegistrationRepository = new InMemoryClientRegistrationRepository(
-					clientRegistrations.values().stream().collect(Collectors.toList()));
+			clientRegistrationRepository = getDefaultClientRegistrationRepository(this.getBuilder().getSharedObject(ApplicationContext.class));
 			this.getBuilder().setSharedObject(ClientRegistrationRepository.class, clientRegistrationRepository);
 		}
 		return clientRegistrationRepository;
 	}
 
-	private AuthorizationRequestUriBuilder getAuthorizationUriBuilder() {
-		if (this.authorizationUriBuilder == null) {
-			this.authorizationUriBuilder = new NimbusAuthorizationRequestUriBuilder();
+	private AuthorizationRequestUriBuilder getAuthorizationRequestBuilder() {
+		if (this.authorizationRequestBuilder == null) {
+			this.authorizationRequestBuilder = new NimbusAuthorizationRequestUriBuilder();
 		}
-		return this.authorizationUriBuilder;
+		return this.authorizationRequestBuilder;
 	}
 
 	public static AuthorizationRequestRedirectFilterConfigurer<HttpSecurity> authorizationRedirector() {

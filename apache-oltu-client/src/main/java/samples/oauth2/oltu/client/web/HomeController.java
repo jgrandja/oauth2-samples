@@ -32,7 +32,7 @@ public class HomeController {
 	@Autowired
 	protected ClientRegistrationRepository clientRegistrationRepository;
 
-	@RequestMapping("/login/oauth2")
+	@RequestMapping("/oauth2/clients")
 	public String login(Model model) {
 		model.addAttribute("clientRegistrations", clientRegistrationRepository.getRegistrations());
 		return "login";

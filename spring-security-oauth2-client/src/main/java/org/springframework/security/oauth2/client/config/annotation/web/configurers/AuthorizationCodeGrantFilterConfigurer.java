@@ -22,27 +22,24 @@ import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.configurers.AbstractAuthenticationFilterConfigurer;
 import org.springframework.security.oauth2.client.authentication.AuthorizationCodeGrantAuthenticationProvider;
 import org.springframework.security.oauth2.client.authentication.AuthorizationCodeGrantAuthenticationToken;
+import org.springframework.security.oauth2.client.authentication.AuthorizationGrantTokenExchanger;
 import org.springframework.security.oauth2.client.authentication.nimbus.NimbusAuthorizationCodeGrantTokenExchanger;
-import org.springframework.security.oauth2.client.registration.ClientRegistration;
-import org.springframework.security.oauth2.client.registration.ClientRegistrationRepository;
-import org.springframework.security.oauth2.client.registration.InMemoryClientRegistrationRepository;
 import org.springframework.security.oauth2.client.filter.AuthorizationCodeGrantProcessingFilter;
 import org.springframework.security.oauth2.client.filter.AuthorizationUtil;
+import org.springframework.security.oauth2.client.registration.ClientRegistrationRepository;
 import org.springframework.security.oauth2.client.userdetails.UserInfoUserDetailsService;
 import org.springframework.security.oauth2.client.userdetails.nimbus.NimbusUserInfoUserDetailsService;
-import org.springframework.security.oauth2.client.authentication.AuthorizationGrantTokenExchanger;
 import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
 import org.springframework.security.web.util.matcher.RequestMatcher;
 import org.springframework.util.Assert;
-import org.springframework.util.CollectionUtils;
 
 import javax.servlet.FilterChain;
 import javax.servlet.ServletException;
 import javax.servlet.ServletRequest;
 import javax.servlet.ServletResponse;
 import java.io.IOException;
-import java.util.Map;
-import java.util.stream.Collectors;
+
+import static org.springframework.security.oauth2.client.config.annotation.web.configurers.OAuth2ClientSecurityConfigurer.getDefaultClientRegistrationRepository;
 
 /**
  * @author Joe Grandja
@@ -50,7 +47,7 @@ import java.util.stream.Collectors;
 public final class AuthorizationCodeGrantFilterConfigurer<H extends HttpSecurityBuilder<H>> extends
 		AbstractAuthenticationFilterConfigurer<H, AuthorizationCodeGrantFilterConfigurer<H>, AuthorizationCodeGrantProcessingFilter> {
 
-	public static final String DEFAULT_LOGIN_PAGE_URI = "/login/oauth2";
+	public static final String DEFAULT_CLIENTS_PAGE_URI = "/oauth2/clients";
 
 	private AuthorizationGrantTokenExchanger<AuthorizationCodeGrantAuthenticationToken> authorizationCodeGrantTokenExchanger;
 
@@ -62,17 +59,28 @@ public final class AuthorizationCodeGrantFilterConfigurer<H extends HttpSecurity
 	}
 
 	public AuthorizationCodeGrantFilterConfigurer<H> clientRegistrationRepository(ClientRegistrationRepository clientRegistrationRepository) {
+		Assert.notNull(clientRegistrationRepository, "clientRegistrationRepository cannot be null");
+		Assert.notEmpty(clientRegistrationRepository.getRegistrations(), "clientRegistrationRepository cannot be empty");
 		this.getBuilder().setSharedObject(ClientRegistrationRepository.class, clientRegistrationRepository);
+		return this;
+	}
+
+	public AuthorizationCodeGrantFilterConfigurer<H> clientsPage(String clientsPage) {
+		Assert.notNull(clientsPage, "clientsPage cannot be null");
+		this.loginPage(clientsPage);
 		return this;
 	}
 
 	public AuthorizationCodeGrantFilterConfigurer<H> authorizationCodeGrantTokenExchanger(
 			AuthorizationGrantTokenExchanger<AuthorizationCodeGrantAuthenticationToken> authorizationCodeGrantTokenExchanger) {
+
+		Assert.notNull(authorizationCodeGrantTokenExchanger, "authorizationCodeGrantTokenExchanger cannot be null");
 		this.authorizationCodeGrantTokenExchanger = authorizationCodeGrantTokenExchanger;
 		return this;
 	}
 
 	public AuthorizationCodeGrantFilterConfigurer<H> userInfoUserDetailsService(UserInfoUserDetailsService userInfoUserDetailsService) {
+		Assert.notNull(userInfoUserDetailsService, "userInfoUserDetailsService cannot be null");
 		this.userInfoUserDetailsService = userInfoUserDetailsService;
 		return this;
 	}
@@ -80,8 +88,11 @@ public final class AuthorizationCodeGrantFilterConfigurer<H extends HttpSecurity
 	@Override
 	public void init(H http) throws Exception {
 		if (!this.isCustomLoginPage()) {
-			// Override the default login page /login (if not already configured)
-			this.loginPage(DEFAULT_LOGIN_PAGE_URI);
+			// Override the default login page /login (if not already configured by the user)
+			//	NOTE:
+			// 		This is not really a login page per se, rather a page that displays
+			// 		all the registered clients with a link that initiates the 'Authorization Request' flow
+			this.loginPage(DEFAULT_CLIENTS_PAGE_URI);
 			this.permitAll();
 		}
 
@@ -106,11 +117,6 @@ public final class AuthorizationCodeGrantFilterConfigurer<H extends HttpSecurity
 	}
 
 	@Override
-	public AuthorizationCodeGrantFilterConfigurer<H> loginPage(String loginPage) {
-		return super.loginPage(loginPage);
-	}
-
-	@Override
 	protected RequestMatcher createLoginProcessingUrlMatcher(String loginProcessingUrl) {
 		// NOTE: loginProcessingUrl is purposely ignored as the matcher depends
 		// 			on specific request parameters instead of the requestUri
@@ -120,12 +126,7 @@ public final class AuthorizationCodeGrantFilterConfigurer<H extends HttpSecurity
 	private ClientRegistrationRepository getClientRegistrationRepository() {
 		ClientRegistrationRepository clientRegistrationRepository = this.getBuilder().getSharedObject(ClientRegistrationRepository.class);
 		if (clientRegistrationRepository == null) {
-			ApplicationContext context = this.getBuilder().getSharedObject(ApplicationContext.class);
-			Map<String, ClientRegistration> clientRegistrations = context.getBeansOfType(ClientRegistration.class);
-			Assert.state(!CollectionUtils.isEmpty(clientRegistrations),
-					"There must be at least 1 bean configured of type " + ClientRegistration.class.getName());
-			clientRegistrationRepository = new InMemoryClientRegistrationRepository(
-					clientRegistrations.values().stream().collect(Collectors.toList()));
+			clientRegistrationRepository = getDefaultClientRegistrationRepository(this.getBuilder().getSharedObject(ApplicationContext.class));
 			this.getBuilder().setSharedObject(ClientRegistrationRepository.class, clientRegistrationRepository);
 		}
 		return clientRegistrationRepository;

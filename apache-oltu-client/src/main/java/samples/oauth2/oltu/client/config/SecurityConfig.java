@@ -22,20 +22,19 @@ import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
 import org.springframework.security.config.annotation.web.configuration.WebSecurityConfigurerAdapter;
 import org.springframework.security.oauth2.client.authentication.AuthorizationCodeGrantAuthenticationToken;
+import org.springframework.security.oauth2.client.authentication.AuthorizationGrantTokenExchanger;
 import org.springframework.security.oauth2.client.authentication.oltu.OltuAuthorizationCodeGrantTokenExchanger;
+import org.springframework.security.oauth2.client.filter.AuthorizationRequestUriBuilder;
+import org.springframework.security.oauth2.client.filter.oltu.OltuAuthorizationRequestUriBuilder;
 import org.springframework.security.oauth2.client.registration.ClientRegistration;
 import org.springframework.security.oauth2.client.registration.ClientRegistrationRepository;
 import org.springframework.security.oauth2.client.registration.InMemoryClientRegistrationRepository;
-import org.springframework.security.oauth2.client.filter.AuthorizationRequestUriBuilder;
-import org.springframework.security.oauth2.client.filter.oltu.OltuAuthorizationRequestUriBuilder;
 import org.springframework.security.oauth2.client.userdetails.UserInfoUserDetailsService;
 import org.springframework.security.oauth2.client.userdetails.oltu.OltuUserInfoUserDetailsService;
-import org.springframework.security.oauth2.client.authentication.AuthorizationGrantTokenExchanger;
 
 import java.util.List;
 
-import static org.springframework.security.oauth2.client.config.annotation.web.configurers.AuthorizationCodeGrantFilterConfigurer.authorizationCodeGrant;
-import static org.springframework.security.oauth2.client.config.annotation.web.configurers.AuthorizationRequestRedirectFilterConfigurer.authorizationRedirector;
+import static org.springframework.security.oauth2.client.config.annotation.web.configurers.OAuth2ClientSecurityConfigurer.oauth2Client;
 
 /**
  *
@@ -52,13 +51,10 @@ public class SecurityConfig extends WebSecurityConfigurerAdapter {
 				.authorizeRequests()
 					.anyRequest().fullyAuthenticated()
 					.and()
-				.apply(authorizationRedirector()
-						.authorizationUriBuilder(authorizationRequestUriBuilder()))
-					.and()
-				.apply(authorizationCodeGrant()
+				.apply(oauth2Client()
+						.authorizationRequestBuilder(authorizationRequestBuilder())
 						.authorizationCodeGrantTokenExchanger(authorizationCodeGrantTokenExchanger())
-						.userInfoUserDetailsService(userInfoUserDetailsService()));
-
+						.userInfoEndpointService(userInfoEndpointService()));
 	}
 	// @formatter:on
 
@@ -79,7 +75,7 @@ public class SecurityConfig extends WebSecurityConfigurerAdapter {
 		return new InMemoryClientRegistrationRepository(clientRegistrations);
 	}
 
-	private AuthorizationRequestUriBuilder authorizationRequestUriBuilder() {
+	private AuthorizationRequestUriBuilder authorizationRequestBuilder() {
 		return new OltuAuthorizationRequestUriBuilder();
 	}
 
@@ -87,7 +83,7 @@ public class SecurityConfig extends WebSecurityConfigurerAdapter {
 		return new OltuAuthorizationCodeGrantTokenExchanger();
 	}
 
-	private UserInfoUserDetailsService userInfoUserDetailsService() {
+	private UserInfoUserDetailsService userInfoEndpointService() {
 		return new OltuUserInfoUserDetailsService();
 	}
 }

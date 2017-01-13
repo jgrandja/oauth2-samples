@@ -13,7 +13,7 @@
             <div>
                 <ul>
                     <li th:each="clientRegistration : ${clientRegistrations}">
-                        <a href="/login/oauth2" th:href="@{'/login/oauth2/' + ${clientRegistration.clientAlias}}"><span th:text="${clientRegistration.clientName}">Client Name</span></a>
+                        <a href="/oauth2/authorize" th:href="@{'/oauth2/authorize/' + ${clientRegistration.clientAlias}}"><span th:text="${clientRegistration.clientName}">Client Name</span></a>
                     </li>
                 </ul>
             </div>

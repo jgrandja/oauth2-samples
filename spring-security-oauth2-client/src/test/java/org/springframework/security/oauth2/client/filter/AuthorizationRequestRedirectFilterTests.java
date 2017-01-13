@@ -88,7 +88,7 @@ public class AuthorizationRequestRedirectFilterTests {
 		AuthorizationRequestRedirectFilter filter =
 				setupFilter(authorizationUri, clientRegistration);
 
-		String requestUri = AuthorizationRequestRedirectFilter.DEFAULT_FILTER_PROCESSING_BASE_URI +
+		String requestUri = AuthorizationRequestRedirectFilter.DEFAULT_FILTER_PROCESSING_URI +
 				"/" + clientRegistration.getClientAlias();
 		MockHttpServletRequest request = new MockHttpServletRequest("GET", requestUri);
 		request.setServletPath(requestUri);
@@ -109,7 +109,7 @@ public class AuthorizationRequestRedirectFilterTests {
 		AuthorizationRequestRedirectFilter filter =
 				setupFilter(authorizationUri, clientRegistration);
 
-		String requestUri = AuthorizationRequestRedirectFilter.DEFAULT_FILTER_PROCESSING_BASE_URI +
+		String requestUri = AuthorizationRequestRedirectFilter.DEFAULT_FILTER_PROCESSING_URI +
 				"/" + clientRegistration.getClientAlias();
 		MockHttpServletRequest request = new MockHttpServletRequest("GET", requestUri);
 		request.setServletPath(requestUri);
@@ -167,7 +167,7 @@ public class AuthorizationRequestRedirectFilterTests {
 
 		AuthorizationRequestRedirectFilter filter = setupFilter(authorizationUriBuilder, clientRegistration);
 
-		String requestUri = AuthorizationRequestRedirectFilter.DEFAULT_FILTER_PROCESSING_BASE_URI +
+		String requestUri = AuthorizationRequestRedirectFilter.DEFAULT_FILTER_PROCESSING_URI +
 				"/" + clientRegistration.getClientAlias();
 		MockHttpServletRequest request = new MockHttpServletRequest("GET", requestUri);
 		request.setServletPath(requestUri);
@@ -201,7 +201,7 @@ public class AuthorizationRequestRedirectFilterTests {
 	private AuthorizationRequestRedirectFilter setupFilter(
 			String authorizationUri, ClientRegistration... clientRegistrations) throws Exception {
 
-		return setupFilter(AuthorizationRequestRedirectFilter.DEFAULT_FILTER_PROCESSING_BASE_URI,
+		return setupFilter(AuthorizationRequestRedirectFilter.DEFAULT_FILTER_PROCESSING_URI,
 				authorizationUri, clientRegistrations);
 	}
 
@@ -218,7 +218,7 @@ public class AuthorizationRequestRedirectFilterTests {
 	private AuthorizationRequestRedirectFilter setupFilter(AuthorizationRequestUriBuilder authorizationUriBuilder,
 														   ClientRegistration... clientRegistrations) throws Exception {
 
-		return setupFilter(AuthorizationRequestRedirectFilter.DEFAULT_FILTER_PROCESSING_BASE_URI,
+		return setupFilter(AuthorizationRequestRedirectFilter.DEFAULT_FILTER_PROCESSING_URI,
 				authorizationUriBuilder, clientRegistrations);
 	}
 

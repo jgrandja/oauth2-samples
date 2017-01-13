@@ -27,8 +27,7 @@ import org.springframework.security.oauth2.client.registration.InMemoryClientReg
 
 import java.util.List;
 
-import static org.springframework.security.oauth2.client.config.annotation.web.configurers.AuthorizationCodeGrantFilterConfigurer.authorizationCodeGrant;
-import static org.springframework.security.oauth2.client.config.annotation.web.configurers.AuthorizationRequestRedirectFilterConfigurer.authorizationRedirector;
+import static org.springframework.security.oauth2.client.config.annotation.web.configurers.OAuth2ClientSecurityConfigurer.oauth2Client;
 
 /**
  *
@@ -45,9 +44,7 @@ public class SecurityConfig extends WebSecurityConfigurerAdapter {
 				.authorizeRequests()
 					.anyRequest().fullyAuthenticated()
 					.and()
-				.apply(authorizationRedirector())
-					.and()
-				.apply(authorizationCodeGrant());
+				.apply(oauth2Client());
 	}
 	// @formatter:on
 
