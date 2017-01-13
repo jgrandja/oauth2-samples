@@ -23,11 +23,13 @@ import org.apache.oltu.oauth2.common.exception.OAuthProblemException;
 import org.apache.oltu.oauth2.common.exception.OAuthSystemException;
 import org.apache.oltu.oauth2.common.message.types.GrantType;
 import org.springframework.http.MediaType;
+import org.springframework.security.authentication.AuthenticationServiceException;
 import org.springframework.security.oauth2.client.authentication.AuthorizationCodeGrantAuthenticationToken;
 import org.springframework.security.oauth2.client.authentication.AuthorizationGrantTokenExchanger;
 import org.springframework.security.oauth2.client.registration.ClientRegistration;
 import org.springframework.security.oauth2.core.AccessTokenType;
-import org.springframework.security.oauth2.core.OAuth2Exception;
+import org.springframework.security.oauth2.core.OAuth2AuthenticationException;
+import org.springframework.security.oauth2.core.OAuth2Error;
 import org.springframework.security.oauth2.core.protocol.TokenResponseAttributes;
 
 import java.util.Arrays;
@@ -41,7 +43,9 @@ import java.util.stream.Collectors;
 public class OltuAuthorizationCodeGrantTokenExchanger implements AuthorizationGrantTokenExchanger<AuthorizationCodeGrantAuthenticationToken> {
 
 	@Override
-	public TokenResponseAttributes exchange(AuthorizationCodeGrantAuthenticationToken authorizationGrantAuthentication) {
+	public TokenResponseAttributes exchange(AuthorizationCodeGrantAuthenticationToken authorizationGrantAuthentication)
+			throws OAuth2AuthenticationException {
+
 		ClientRegistration clientRegistration = authorizationGrantAuthentication.getClientRegistration();
 
 		OAuthJSONAccessTokenResponse tokenResponse;
@@ -63,11 +67,11 @@ public class OltuAuthorizationCodeGrantTokenExchanger implements AuthorizationGr
 			tokenResponse = oauthClient.accessToken(tokenRequest, OAuthJSONAccessTokenResponse.class);
 
 		} catch (OAuthProblemException pe) {
-			// TODO Throw OAuth2-specific exception for downstream handling
-			throw new OAuth2Exception(pe.getMessage(), pe);
+			OAuth2Error oauth2Error = OAuth2Error.valueOf(pe.getError());
+			throw new OAuth2AuthenticationException(oauth2Error, oauth2Error.getErrorMessage());
 		} catch (OAuthSystemException se) {
-			// TODO Throw OAuth2-specific exception for downstream handling
-			throw new OAuth2Exception(se.getMessage(), se);
+			throw new AuthenticationServiceException("An error occurred while sending the Access Token Request: " +
+					se.getMessage(), se);
 		}
 
 		String accessToken = tokenResponse.getAccessToken();

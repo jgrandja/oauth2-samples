@@ -21,7 +21,6 @@ import com.nimbusds.oauth2.sdk.Scope;
 import com.nimbusds.oauth2.sdk.id.ClientID;
 import com.nimbusds.oauth2.sdk.id.State;
 import org.springframework.security.oauth2.client.filter.AuthorizationRequestUriBuilder;
-import org.springframework.security.oauth2.core.OAuth2Exception;
 import org.springframework.security.oauth2.core.protocol.AuthorizationRequestAttributes;
 
 import java.net.URI;
@@ -35,30 +34,24 @@ import java.net.URISyntaxException;
 public class NimbusAuthorizationRequestUriBuilder implements AuthorizationRequestUriBuilder {
 
 	@Override
-	public URI build(AuthorizationRequestAttributes authorizationRequestAttributes) {
-		URI result;
-		try {
-			URI authorizationUri = new URI(authorizationRequestAttributes.getAuthorizeUri());
-			ClientID clientId = new ClientID(authorizationRequestAttributes.getClientId());
-			Scope scope = new Scope(authorizationRequestAttributes.getScope().stream().toArray(String[]::new));
-			URI redirectUri = new URI(authorizationRequestAttributes.getRedirectUri());		// TODO Redirect URI may be null
-			State state = new State(authorizationRequestAttributes.getState());
-
-			AuthorizationRequest authorizationRequest = new AuthorizationRequest.Builder(
-					new ResponseType(ResponseType.Value.CODE), clientId)
-					.endpointURI(authorizationUri)
-					.scope(scope)
-					.redirectionURI(redirectUri)
-					.state(state)
-					.build();
-
-			result = authorizationRequest.toURI();
-
-		} catch (URISyntaxException ex) {
-			// TODO Throw "appropriate" exception for downstream handling
-			throw new OAuth2Exception(ex.getMessage(), ex);
+	public URI build(AuthorizationRequestAttributes authorizationRequestAttributes) throws URISyntaxException {
+		URI authorizationUri = new URI(authorizationRequestAttributes.getAuthorizeUri());
+		ClientID clientId = new ClientID(authorizationRequestAttributes.getClientId());
+		Scope scope = new Scope(authorizationRequestAttributes.getScope().stream().toArray(String[]::new));
+		URI redirectUri = null;
+		if (authorizationRequestAttributes.getRedirectUri() != null) {
+			redirectUri = new URI(authorizationRequestAttributes.getRedirectUri());
 		}
+		State state = new State(authorizationRequestAttributes.getState());
 
-		return result;
+		AuthorizationRequest authorizationRequest = new AuthorizationRequest.Builder(
+				new ResponseType(ResponseType.Value.CODE), clientId)
+				.endpointURI(authorizationUri)
+				.scope(scope)
+				.redirectionURI(redirectUri)
+				.state(state)
+				.build();
+
+		return authorizationRequest.toURI();
 	}
 }

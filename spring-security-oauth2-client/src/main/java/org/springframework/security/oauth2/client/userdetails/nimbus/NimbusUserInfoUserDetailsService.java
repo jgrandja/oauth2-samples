@@ -15,6 +15,7 @@
  */
 package org.springframework.security.oauth2.client.userdetails.nimbus;
 
+import com.nimbusds.oauth2.sdk.ErrorObject;
 import com.nimbusds.oauth2.sdk.ParseException;
 import com.nimbusds.oauth2.sdk.http.HTTPRequest;
 import com.nimbusds.oauth2.sdk.http.HTTPResponse;
@@ -23,11 +24,13 @@ import com.nimbusds.openid.connect.sdk.UserInfoErrorResponse;
 import com.nimbusds.openid.connect.sdk.UserInfoRequest;
 import com.nimbusds.openid.connect.sdk.UserInfoSuccessResponse;
 import org.springframework.http.MediaType;
+import org.springframework.security.authentication.AuthenticationServiceException;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.security.oauth2.client.authentication.OAuth2AuthenticationToken;
 import org.springframework.security.oauth2.client.userdetails.UserInfoUserDetailsService;
-import org.springframework.security.oauth2.core.OAuth2Exception;
+import org.springframework.security.oauth2.core.OAuth2AuthenticationException;
+import org.springframework.security.oauth2.core.OAuth2Error;
 import org.springframework.security.oauth2.core.userdetails.OAuth2User;
 import org.springframework.security.oauth2.core.userdetails.OAuth2UserBuilder;
 import org.springframework.security.openid.connect.core.userdetails.OpenIDConnectUserBuilder;
@@ -42,12 +45,12 @@ import java.net.URISyntaxException;
 public class NimbusUserInfoUserDetailsService implements UserInfoUserDetailsService {
 
 	@Override
-	public UserDetails loadUserDetails(OAuth2AuthenticationToken authenticationRequest) throws UsernameNotFoundException {
+	public UserDetails loadUserDetails(OAuth2AuthenticationToken authenticationToken) throws UsernameNotFoundException {
 		OAuth2User oauth2User;
 
 		try {
-			URI userInfoUri = toURI(authenticationRequest.getClientRegistration().getUserInfoUri());
-			BearerAccessToken accessToken = new BearerAccessToken(authenticationRequest.getAccessToken().getValue());
+			URI userInfoUri = toURI(authenticationToken.getClientRegistration().getUserInfoUri());
+			BearerAccessToken accessToken = new BearerAccessToken(authenticationToken.getAccessToken().getValue());
 
 			// Request the User Info
 			UserInfoRequest userInfoRequest = new UserInfoRequest(userInfoUri, accessToken);
@@ -56,12 +59,14 @@ public class NimbusUserInfoUserDetailsService implements UserInfoUserDetailsServ
 			HTTPResponse httpResponse = httpRequest.send();
 
 			if (httpResponse.getStatusCode() != HTTPResponse.SC_OK) {
-				// TODO Throw OAuth2-specific exception for downstream handling
 				UserInfoErrorResponse userInfoErrorResponse = UserInfoErrorResponse.parse(httpResponse);
-				throw new OAuth2Exception(userInfoErrorResponse.getErrorObject().getDescription());
+				ErrorObject errorObject = userInfoErrorResponse.getErrorObject();
+				OAuth2Error oauth2Error = OAuth2Error.valueOf(
+						errorObject.getCode(), errorObject.getDescription(), errorObject.getURI());
+				throw new OAuth2AuthenticationException(oauth2Error, oauth2Error.getErrorMessage());
 			}
 
-			if (authenticationRequest.getClientRegistration().isClientOpenIDConnect()) {
+			if (authenticationToken.getClientRegistration().isClientOpenIDConnect()) {
 				UserInfoSuccessResponse userInfoResponse = UserInfoSuccessResponse.parse(httpResponse);
 				oauth2User = new OpenIDConnectUserBuilder()
 						.userAttributes(userInfoResponse.getUserInfo().toJSONObject())
@@ -73,11 +78,12 @@ public class NimbusUserInfoUserDetailsService implements UserInfoUserDetailsServ
 			}
 
 		} catch (ParseException pe) {
-			// TODO Throw OAuth2-specific exception for downstream handling
-			throw new OAuth2Exception(pe);
+			// This error occurs if the User Info Response is not well-formed or invalid
+			throw new OAuth2AuthenticationException(OAuth2Error.invalidUserInfoResponse(), pe);
 		} catch (IOException ioe) {
-			// TODO Throw OAuth2-specific exception for downstream handling
-			throw new OAuth2Exception(ioe);
+			// This error occurs when there is a network-related issue
+			throw new AuthenticationServiceException("An error occurred while sending the User Info Request: " +
+					ioe.getMessage(), ioe);
 		}
 
 		return oauth2User;

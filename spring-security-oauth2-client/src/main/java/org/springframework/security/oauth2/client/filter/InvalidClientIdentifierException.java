@@ -15,16 +15,27 @@
  */
 package org.springframework.security.oauth2.client.filter;
 
-
-import org.springframework.security.oauth2.core.protocol.AuthorizationRequestAttributes;
-
-import java.net.URI;
-import java.net.URISyntaxException;
+import org.springframework.security.oauth2.core.OAuth2Exception;
+import org.springframework.util.Assert;
 
 /**
  * @author Joe Grandja
  */
-public interface AuthorizationRequestUriBuilder {
+public class InvalidClientIdentifierException extends OAuth2Exception {
+	private final String clientIdentifier;
 
-	URI build(AuthorizationRequestAttributes authorizationRequestAttributes) throws URISyntaxException;
+	public InvalidClientIdentifierException(String clientIdentifier) {
+		this(clientIdentifier, "Invalid Client Identifier: " + clientIdentifier);
+	}
+
+	public InvalidClientIdentifierException(String clientIdentifier, String message) {
+		super(message);
+
+		Assert.notNull(clientIdentifier, "clientIdentifier cannot be null");
+		this.clientIdentifier = clientIdentifier;
+	}
+
+	public final String getClientIdentifier() {
+		return this.clientIdentifier;
+	}
 }

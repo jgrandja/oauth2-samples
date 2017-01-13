@@ -16,7 +16,6 @@
 package org.springframework.security.oauth2.client.authentication;
 
 import org.springframework.security.authentication.AuthenticationProvider;
-import org.springframework.security.authentication.AuthenticationServiceException;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.AuthenticationException;
 import org.springframework.security.core.GrantedAuthority;
@@ -55,13 +54,8 @@ public class AuthorizationCodeGrantAuthenticationProvider implements Authenticat
 		AuthorizationCodeGrantAuthenticationToken authorizationCodeGrantAuthentication =
 				(AuthorizationCodeGrantAuthenticationToken) authentication;
 
-		TokenResponseAttributes tokenResponse;
-		try {
-			tokenResponse = this.authorizationCodeGrantTokenExchanger.exchange(authorizationCodeGrantAuthentication);
-		} catch (Exception ex) {
-			// TODO If the authorization code is invalid/expired then we should throw BadCredentialsException?
-			throw new AuthenticationServiceException(ex.getMessage(), ex);
-		}
+		TokenResponseAttributes tokenResponse =
+				this.authorizationCodeGrantTokenExchanger.exchange(authorizationCodeGrantAuthentication);
 
 		AccessToken accessToken = new AccessToken(tokenResponse.getAccessTokenType(),
 				tokenResponse.getAccessToken(), tokenResponse.getExpiresIn(), tokenResponse.getScope());
@@ -73,13 +67,7 @@ public class AuthorizationCodeGrantAuthenticationProvider implements Authenticat
 				authorizationCodeGrantAuthentication.getClientRegistration(), accessToken, refreshToken);
 		accessTokenAuthentication.setDetails(authorizationCodeGrantAuthentication.getDetails());
 
-		UserDetails userDetails;
-		try {
-			userDetails = this.userInfoUserDetailsService.loadUserDetails(accessTokenAuthentication);
-		} catch (Exception ex) {
-			// TODO If the access token is invalid or has insufficient access/scope then we should throw BadCredentialsException?
-			throw new AuthenticationServiceException(ex.getMessage(), ex);
-		}
+		UserDetails userDetails = this.userInfoUserDetailsService.loadUserDetails(accessTokenAuthentication);
 
 		Collection<? extends GrantedAuthority> authorities =
 				this.authoritiesMapper.mapAuthorities(userDetails.getAuthorities());

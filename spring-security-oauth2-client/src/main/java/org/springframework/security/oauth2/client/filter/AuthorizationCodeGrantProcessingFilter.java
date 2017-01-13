@@ -15,14 +15,14 @@
  */
 package org.springframework.security.oauth2.client.filter;
 
-import org.springframework.security.authentication.AuthenticationServiceException;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.AuthenticationException;
 import org.springframework.security.oauth2.client.authentication.AuthorizationCodeGrantAuthenticationToken;
 import org.springframework.security.oauth2.client.registration.ClientRegistration;
 import org.springframework.security.oauth2.client.registration.ClientRegistrationRepository;
 import org.springframework.security.oauth2.core.OAuth2Attributes;
-import org.springframework.security.oauth2.core.OAuth2Exception;
+import org.springframework.security.oauth2.core.OAuth2AuthenticationException;
+import org.springframework.security.oauth2.core.OAuth2Error;
 import org.springframework.security.oauth2.core.protocol.AuthorizationCodeGrantAuthorizationResponseAttributes;
 import org.springframework.security.oauth2.core.protocol.AuthorizationRequestAttributes;
 import org.springframework.security.oauth2.core.protocol.ErrorResponseAttributes;
@@ -61,13 +61,10 @@ public class AuthorizationCodeGrantProcessingFilter extends AbstractAuthenticati
 			throws AuthenticationException, IOException, ServletException {
 
 		if (isAuthorizationCodeGrantError(request)) {
-			// The authorization request was denied or some error occurred
-			ErrorResponseAttributes authorizationErrorAttributes = parseErrorAttributes(request);
-
-			// TODO Throw OAuth2-specific exception (it should extend AuthenticationServiceException)
-			// We should also find the matching Authorization Request using the 'state' parameter and
-			// pass this into the exception for more context info when handling
-			throw new AuthenticationServiceException("Authorization error: " + authorizationErrorAttributes.getErrorCode());
+			ErrorResponseAttributes authorizationError = parseErrorAttributes(request);
+			OAuth2Error oauth2Error = OAuth2Error.valueOf(authorizationError.getErrorCode(),
+					authorizationError.getErrorDescription(), authorizationError.getErrorUri());
+			throw new OAuth2AuthenticationException(oauth2Error, oauth2Error.getErrorMessage());
 		}
 
 		AuthorizationRequestAttributes matchingAuthorizationRequest = this.resolveAuthorizationRequest(request);
@@ -88,27 +85,27 @@ public class AuthorizationCodeGrantProcessingFilter extends AbstractAuthenticati
 		return authenticated;
 	}
 
-	protected AuthorizationRequestAttributes resolveAuthorizationRequest(HttpServletRequest request) {
+	private AuthorizationRequestAttributes resolveAuthorizationRequest(HttpServletRequest request) {
 		AuthorizationRequestAttributes authorizationRequest = AuthorizationUtil.getAuthorizationRequest(request);
 		if (authorizationRequest == null) {
-			// TODO Throw OAuth2-specific exception for downstream handling
-			throw new OAuth2Exception("Unable to resolve matching authorization request");
+			OAuth2Error oauth2Error = OAuth2Error.authorizationRequestNotFound();
+			throw new OAuth2AuthenticationException(oauth2Error, oauth2Error.getErrorMessage());
 		}
 		this.assertMatchingAuthorizationRequest(request, authorizationRequest);
 		return authorizationRequest;
 	}
 
-	protected void assertMatchingAuthorizationRequest(HttpServletRequest request, AuthorizationRequestAttributes authorizationRequest) {
+	private void assertMatchingAuthorizationRequest(HttpServletRequest request, AuthorizationRequestAttributes authorizationRequest) {
 		String state = request.getParameter(OAuth2Attributes.STATE);
 		if (!authorizationRequest.getState().equals(state)) {
-			// TODO Throw OAuth2-specific exception for downstream handling
-			throw new OAuth2Exception("Invalid state parameter");
+			OAuth2Error oauth2Error = OAuth2Error.invalidStateParameter();
+			throw new OAuth2AuthenticationException(oauth2Error, oauth2Error.getErrorMessage());
 		}
 
 		URI redirectUri = URI.create(authorizationRequest.getRedirectUri());
 		if (!request.getRequestURI().equals(redirectUri.getPath())) {
-			// TODO Throw OAuth2-specific exception for downstream handling
-			throw new OAuth2Exception("Invalid redirect_uri parameter");
+			OAuth2Error oauth2Error = OAuth2Error.invalidRedirectUriParameter();
+			throw new OAuth2AuthenticationException(oauth2Error, oauth2Error.getErrorMessage());
 		}
 	}
 

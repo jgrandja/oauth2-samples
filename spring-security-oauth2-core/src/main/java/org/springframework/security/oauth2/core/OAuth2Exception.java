@@ -15,16 +15,21 @@
  */
 package org.springframework.security.oauth2.core;
 
+import org.springframework.security.core.Authentication;
+
 /**
+ * Root exception for all OAuth2-related general errors.
+ *
+ * NOTE:
+ * For {@link Authentication} specific errors,
+ * use {@link OAuth2AuthenticationException} instead.
+ *
  * @author Joe Grandja
  */
-public class OAuth2Exception extends RuntimeException {
+public abstract class OAuth2Exception extends RuntimeException {
 
 	public OAuth2Exception() {
-	}
-
-	public OAuth2Exception(Throwable cause) {
-		super(cause);
+		super();
 	}
 
 	public OAuth2Exception(String message) {

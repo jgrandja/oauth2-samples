@@ -20,14 +20,14 @@ import org.mockito.ArgumentCaptor;
 import org.springframework.mock.web.MockHttpServletRequest;
 import org.springframework.mock.web.MockHttpServletResponse;
 import org.springframework.security.authentication.AuthenticationManager;
-import org.springframework.security.authentication.AuthenticationServiceException;
 import org.springframework.security.authentication.TestingAuthenticationToken;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.AuthenticationException;
 import org.springframework.security.oauth2.client.registration.ClientRegistration;
 import org.springframework.security.oauth2.client.registration.ClientRegistrationRepository;
 import org.springframework.security.oauth2.core.OAuth2Attributes;
-import org.springframework.security.oauth2.core.OAuth2Exception;
+import org.springframework.security.oauth2.core.OAuth2AuthenticationException;
+import org.springframework.security.oauth2.core.OAuth2Error;
 import org.springframework.security.oauth2.core.protocol.AuthorizationRequestAttributes;
 import org.springframework.security.web.authentication.AuthenticationFailureHandler;
 import org.springframework.security.web.authentication.AuthenticationSuccessHandler;
@@ -91,7 +91,7 @@ public class AuthorizationCodeGrantProcessingFilterTests {
 		String requestURI = "/path";
 		MockHttpServletRequest request = new MockHttpServletRequest("GET", requestURI);
 		request.setServletPath(requestURI);
-		String errorCode = "some error code";
+		String errorCode = OAuth2Error.ErrorCode.INVALID_GRANT.toString();
 		request.addParameter(OAuth2Attributes.ERROR, errorCode);
 		request.addParameter(OAuth2Attributes.STATE, "some state");
 		MockHttpServletResponse response = new MockHttpServletResponse();
@@ -100,13 +100,8 @@ public class AuthorizationCodeGrantProcessingFilterTests {
 		filter.doFilter(request, response, filterChain);
 
 		verify(filter).attemptAuthentication(any(HttpServletRequest.class), any(HttpServletResponse.class));
-
-		ArgumentCaptor<AuthenticationException> authenticationExceptionArgCaptor =
-				ArgumentCaptor.forClass(AuthenticationException.class);
 		verify(failureHandler).onAuthenticationFailure(any(HttpServletRequest.class), any(HttpServletResponse.class),
-				authenticationExceptionArgCaptor.capture());
-		assertThat(authenticationExceptionArgCaptor.getValue()).isInstanceOf(AuthenticationServiceException.class);
-		assertThat(authenticationExceptionArgCaptor.getValue().getMessage()).isEqualTo("Authorization error: " + errorCode);
+				any(AuthenticationException.class));
 	}
 
 	@Test
@@ -143,11 +138,13 @@ public class AuthorizationCodeGrantProcessingFilterTests {
 		assertThat(authenticationArgCaptor.getValue()).isEqualTo(authentication);
 	}
 
-	@Test(expected = OAuth2Exception.class)
-	public void doFilterWhenAuthorizationCodeGrantSuccessResponseAndNoMatchingAuthorizationRequestThenThrowOAuth2Exception() throws Exception {
+	@Test
+	public void doFilterWhenAuthorizationCodeGrantSuccessResponseAndNoMatchingAuthorizationRequestThenThrowOAuth2AuthenticationExceptionAuthorizationRequestNotFound() throws Exception {
 		ClientRegistration clientRegistration = githubClientRegistration();
 
 		AuthorizationCodeGrantProcessingFilter filter = spy(setupFilter(clientRegistration));
+		AuthenticationFailureHandler failureHandler = mock(AuthenticationFailureHandler.class);
+		filter.setAuthenticationFailureHandler(failureHandler);
 
 		String requestURI = "/path";
 		MockHttpServletRequest request = new MockHttpServletRequest("GET", requestURI);
@@ -160,13 +157,17 @@ public class AuthorizationCodeGrantProcessingFilterTests {
 		FilterChain filterChain = mock(FilterChain.class);
 
 		filter.doFilter(request, response, filterChain);
+
+		verifyThrowsOAuth2AuthenticationExceptionWithErrorCode(filter, failureHandler, OAuth2Error.ErrorCode.AUTHORIZATION_REQUEST_NOT_FOUND);
 	}
 
-	@Test(expected = OAuth2Exception.class)
-	public void doFilterWhenAuthorizationCodeGrantSuccessResponseWithInvalidStateParamThenThrowOAuth2Exception() throws Exception {
+	@Test
+	public void doFilterWhenAuthorizationCodeGrantSuccessResponseWithInvalidStateParamThenThrowOAuth2AuthenticationExceptionInvalidStateParameter() throws Exception {
 		ClientRegistration clientRegistration = githubClientRegistration();
 
 		AuthorizationCodeGrantProcessingFilter filter = spy(setupFilter(clientRegistration));
+		AuthenticationFailureHandler failureHandler = mock(AuthenticationFailureHandler.class);
+		filter.setAuthenticationFailureHandler(failureHandler);
 
 		String requestURI = "/path";
 		MockHttpServletRequest request = new MockHttpServletRequest("GET", requestURI);
@@ -180,13 +181,17 @@ public class AuthorizationCodeGrantProcessingFilterTests {
 		FilterChain filterChain = mock(FilterChain.class);
 
 		filter.doFilter(request, response, filterChain);
+
+		verifyThrowsOAuth2AuthenticationExceptionWithErrorCode(filter, failureHandler, OAuth2Error.ErrorCode.INVALID_STATE_PARAMETER);
 	}
 
-	@Test(expected = OAuth2Exception.class)
-	public void doFilterWhenAuthorizationCodeGrantSuccessResponseWithInvalidRedirectUriParamThenThrowOAuth2Exception() throws Exception {
+	@Test
+	public void doFilterWhenAuthorizationCodeGrantSuccessResponseWithInvalidRedirectUriParamThenThrowOAuth2AuthenticationExceptionInvalidRedirectUriParameter() throws Exception {
 		ClientRegistration clientRegistration = githubClientRegistration();
 
 		AuthorizationCodeGrantProcessingFilter filter = spy(setupFilter(clientRegistration));
+		AuthenticationFailureHandler failureHandler = mock(AuthenticationFailureHandler.class);
+		filter.setAuthenticationFailureHandler(failureHandler);
 
 		String requestURI = "/path2";
 		clientRegistration.setRedirectUri("/path");
@@ -201,6 +206,25 @@ public class AuthorizationCodeGrantProcessingFilterTests {
 		FilterChain filterChain = mock(FilterChain.class);
 
 		filter.doFilter(request, response, filterChain);
+
+		verifyThrowsOAuth2AuthenticationExceptionWithErrorCode(filter, failureHandler, OAuth2Error.ErrorCode.INVALID_REDIRECT_URI_PARAMETER);
+	}
+
+	private void verifyThrowsOAuth2AuthenticationExceptionWithErrorCode(AuthorizationCodeGrantProcessingFilter filter,
+																		AuthenticationFailureHandler failureHandler,
+														   				OAuth2Error.ErrorCode errorCode) throws Exception {
+
+		verify(filter).attemptAuthentication(any(HttpServletRequest.class), any(HttpServletResponse.class));
+
+		ArgumentCaptor<AuthenticationException> authenticationExceptionArgCaptor =
+				ArgumentCaptor.forClass(AuthenticationException.class);
+		verify(failureHandler).onAuthenticationFailure(any(HttpServletRequest.class), any(HttpServletResponse.class),
+				authenticationExceptionArgCaptor.capture());
+		assertThat(authenticationExceptionArgCaptor.getValue()).isInstanceOf(OAuth2AuthenticationException.class);
+		OAuth2AuthenticationException oauth2AuthenticationException =
+				(OAuth2AuthenticationException)authenticationExceptionArgCaptor.getValue();
+		assertThat(oauth2AuthenticationException.getErrorObject()).isNotNull();
+		assertThat(oauth2AuthenticationException.getErrorObject().getErrorCode()).isEqualTo(errorCode);
 	}
 
 	private AuthorizationCodeGrantProcessingFilter setupFilter(ClientRegistration... clientRegistrations) throws Exception {

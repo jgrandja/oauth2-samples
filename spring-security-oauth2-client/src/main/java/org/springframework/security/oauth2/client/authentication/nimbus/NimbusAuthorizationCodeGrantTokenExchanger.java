@@ -23,11 +23,13 @@ import com.nimbusds.oauth2.sdk.auth.Secret;
 import com.nimbusds.oauth2.sdk.http.HTTPRequest;
 import com.nimbusds.oauth2.sdk.id.ClientID;
 import org.springframework.http.MediaType;
+import org.springframework.security.authentication.AuthenticationServiceException;
 import org.springframework.security.oauth2.client.authentication.AuthorizationCodeGrantAuthenticationToken;
 import org.springframework.security.oauth2.client.authentication.AuthorizationGrantTokenExchanger;
 import org.springframework.security.oauth2.client.registration.ClientRegistration;
 import org.springframework.security.oauth2.core.AccessTokenType;
-import org.springframework.security.oauth2.core.OAuth2Exception;
+import org.springframework.security.oauth2.core.OAuth2AuthenticationException;
+import org.springframework.security.oauth2.core.OAuth2Error;
 import org.springframework.security.oauth2.core.protocol.TokenResponseAttributes;
 import org.springframework.util.CollectionUtils;
 
@@ -45,7 +47,9 @@ import java.util.stream.Collectors;
 public class NimbusAuthorizationCodeGrantTokenExchanger implements AuthorizationGrantTokenExchanger<AuthorizationCodeGrantAuthenticationToken> {
 
 	@Override
-	public TokenResponseAttributes exchange(AuthorizationCodeGrantAuthenticationToken authorizationGrantAuthentication) {
+	public TokenResponseAttributes exchange(AuthorizationCodeGrantAuthenticationToken authorizationGrantAuthentication)
+			throws OAuth2AuthenticationException {
+
 		ClientRegistration clientRegistration = authorizationGrantAuthentication.getClientRegistration();
 
 		// Build the authorization code grant request for the token endpoint
@@ -67,17 +71,21 @@ public class NimbusAuthorizationCodeGrantTokenExchanger implements Authorization
 			httpRequest.setAccept(MediaType.APPLICATION_JSON_VALUE);
 			tokenResponse = TokenResponse.parse(httpRequest.send());
 		} catch (ParseException pe) {
-			// TODO Throw OAuth2-specific exception for downstream handling
-			throw new OAuth2Exception(pe.getMessage(), pe);
+			// This error occurs if the Access Token Response is not well-formed,
+			// for example, a required attribute is missing
+			throw new OAuth2AuthenticationException(OAuth2Error.invalidTokenResponse(), pe);
 		} catch (IOException ioe) {
-			// TODO Throw OAuth2-specific exception for downstream handling
-			throw new OAuth2Exception(ioe.getMessage(), ioe);
+			// This error occurs when there is a network-related issue
+			throw new AuthenticationServiceException("An error occurred while sending the Access Token Request: " +
+					ioe.getMessage(), ioe);
 		}
 
 		if (!tokenResponse.indicatesSuccess()) {
-			// TODO Throw OAuth2-specific exception for downstream handling
 			TokenErrorResponse tokenErrorResponse = (TokenErrorResponse) tokenResponse;
-			throw new OAuth2Exception(tokenErrorResponse.getErrorObject().getDescription());
+			ErrorObject errorObject = tokenErrorResponse.getErrorObject();
+			OAuth2Error oauth2Error = OAuth2Error.valueOf(
+					errorObject.getCode(), errorObject.getDescription(), errorObject.getURI());
+			throw new OAuth2AuthenticationException(oauth2Error, oauth2Error.getErrorMessage());
 		}
 
 		AccessTokenResponse accessTokenResponse = (AccessTokenResponse) tokenResponse;

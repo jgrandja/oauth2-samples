@@ -33,6 +33,7 @@ import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 import java.io.IOException;
 import java.net.URI;
+import java.net.URISyntaxException;
 import java.util.List;
 
 
@@ -89,7 +90,11 @@ public class AuthorizationRequestRedirectFilter extends OncePerRequestFilter {
 			throws ServletException, IOException {
 
 		if (this.authorizationRequestMatcher.matches(request)) {
-			this.obtainAuthorization(request, response);
+			try {
+				this.obtainAuthorization(request, response);
+			} catch (OAuth2Exception failed) {
+				this.unsuccessfulAuthorizationRequest(request, response, failed);
+			}
 			return;
 		}
 
@@ -103,8 +108,7 @@ public class AuthorizationRequestRedirectFilter extends OncePerRequestFilter {
 				.extractUriTemplateVariables(request).get(CLIENT_ALIAS_VARIABLE_NAME);
 		ClientRegistration clientRegistration = this.clientRegistrationRepository.getRegistrationByClientAlias(clientAlias);
 		if (clientRegistration == null) {
-			// TODO Throw OAuth2-specific exception (Bad Request) for downstream handling
-			throw new OAuth2Exception("Invalid client alias: " + clientAlias);
+			throw new InvalidClientIdentifierException(clientAlias);
 		}
 
 		AuthorizationRequestAttributes authorizationRequestAttributes =
@@ -116,10 +120,24 @@ public class AuthorizationRequestRedirectFilter extends OncePerRequestFilter {
 						this.stateGenerator.generateKey());
 		AuthorizationUtil.saveAuthorizationRequest(request, authorizationRequestAttributes);
 
-		URI redirectUri = this.authorizationUriBuilder.build(authorizationRequestAttributes);
+		URI redirectUri = null;
+		try {
+			redirectUri = this.authorizationUriBuilder.build(authorizationRequestAttributes);
+		} catch (URISyntaxException ex) {
+			logger.error("An error occurred building the Authorization Request: " + ex.getMessage(), ex);
+		}
 		Assert.notNull(redirectUri, "Authorization redirectUri cannot be null");
 
 		this.authorizationRedirectStrategy.sendRedirect(request, response, redirectUri.toString());
+	}
+
+	private void unsuccessfulAuthorizationRequest(HttpServletRequest request, HttpServletResponse response,
+													OAuth2Exception failed) throws IOException, ServletException {
+
+		if (logger.isDebugEnabled()) {
+			logger.debug("Authorization Request failed: " + failed.toString(), failed);
+		}
+		response.sendError(HttpServletResponse.SC_BAD_REQUEST, failed.getMessage());
 	}
 
 	private String normalizeUri(String uri) {

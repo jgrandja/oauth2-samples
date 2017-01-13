@@ -75,7 +75,6 @@ public class AuthorizationUtil {
 
 		String error = request.getParameter(OAuth2Attributes.ERROR);
 		Assert.hasText(error, OAuth2Attributes.ERROR + " attribute is required");
-		// TODO Validate - ensure 'error' is a valid code as per spec
 
 		String errorDescription = request.getParameter(OAuth2Attributes.ERROR_DESCRIPTION);
 
@@ -85,7 +84,7 @@ public class AuthorizationUtil {
 			try {
 				errorUri = new URI(errorUriStr);
 			} catch (URISyntaxException ex) {
-				throw new IllegalArgumentException("Invalid " + OAuth2Attributes.ERROR_URI + ": " + errorUriStr, ex);
+				// Ignore as this is an optional attribute
 			}
 		}
 

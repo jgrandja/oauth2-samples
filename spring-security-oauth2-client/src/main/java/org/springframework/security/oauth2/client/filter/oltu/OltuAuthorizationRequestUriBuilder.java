@@ -18,7 +18,6 @@ package org.springframework.security.oauth2.client.filter.oltu;
 import org.apache.oltu.oauth2.client.request.OAuthClientRequest;
 import org.apache.oltu.oauth2.common.exception.OAuthSystemException;
 import org.springframework.security.oauth2.client.filter.AuthorizationRequestUriBuilder;
-import org.springframework.security.oauth2.core.OAuth2Exception;
 import org.springframework.security.oauth2.core.protocol.AuthorizationRequestAttributes;
 
 import java.net.URI;
@@ -33,7 +32,7 @@ import java.util.stream.Collectors;
 public class OltuAuthorizationRequestUriBuilder implements AuthorizationRequestUriBuilder {
 
 	@Override
-	public URI build(AuthorizationRequestAttributes authorizationRequestAttributes) {
+	public URI build(AuthorizationRequestAttributes authorizationRequestAttributes) throws URISyntaxException {
 		URI result;
 		try {
 			OAuthClientRequest authorizationRequest = OAuthClientRequest
@@ -48,12 +47,9 @@ public class OltuAuthorizationRequestUriBuilder implements AuthorizationRequestU
 
 			result = new URI(authorizationRequest.getLocationUri());
 
-		} catch (OAuthSystemException sysex) {
-			// TODO Throw "appropriate" exception for downstream handling
-			throw new OAuth2Exception(sysex.getMessage(), sysex);
-		} catch (URISyntaxException uriex) {
-			// TODO Throw "appropriate" exception for downstream handling
-			throw new OAuth2Exception(uriex.getMessage(), uriex);
+		} catch (OAuthSystemException ex) {
+			// This should be cleaner but not bothering since this class will get thrown away
+			throw new RuntimeException(ex);
 		}
 
 		return result;

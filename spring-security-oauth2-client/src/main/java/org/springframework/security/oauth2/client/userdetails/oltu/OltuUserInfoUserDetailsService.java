@@ -21,11 +21,13 @@ import org.apache.oltu.oauth2.client.request.OAuthClientRequest;
 import org.apache.oltu.oauth2.common.exception.OAuthProblemException;
 import org.apache.oltu.oauth2.common.exception.OAuthSystemException;
 import org.springframework.http.MediaType;
+import org.springframework.security.authentication.AuthenticationServiceException;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.security.oauth2.client.authentication.OAuth2AuthenticationToken;
 import org.springframework.security.oauth2.client.userdetails.UserInfoUserDetailsService;
-import org.springframework.security.oauth2.core.OAuth2Exception;
+import org.springframework.security.oauth2.core.OAuth2AuthenticationException;
+import org.springframework.security.oauth2.core.OAuth2Error;
 import org.springframework.security.oauth2.core.userdetails.OAuth2User;
 import org.springframework.security.oauth2.core.userdetails.OAuth2UserBuilder;
 import org.springframework.security.openid.connect.core.userdetails.OpenIDConnectUserBuilder;
@@ -36,13 +38,13 @@ import org.springframework.security.openid.connect.core.userdetails.OpenIDConnec
 public class OltuUserInfoUserDetailsService implements UserInfoUserDetailsService {
 
 	@Override
-	public UserDetails loadUserDetails(OAuth2AuthenticationToken authenticationRequest) throws UsernameNotFoundException {
+	public UserDetails loadUserDetails(OAuth2AuthenticationToken authenticationToken) throws UsernameNotFoundException {
 		OAuth2User oauth2User;
 
 		try {
 			OAuthClientRequest userInfoRequest = OltuUserInfoRequest
-					.userInfoLocation(authenticationRequest.getClientRegistration().getUserInfoUri())
-					.accessToken(authenticationRequest.getAccessToken().getValue())
+					.userInfoLocation(authenticationToken.getClientRegistration().getUserInfoUri())
+					.accessToken(authenticationToken.getAccessToken().getValue())
 					.buildHeaderMessage();
 			userInfoRequest.setHeader("Accept", MediaType.APPLICATION_JSON_VALUE);
 
@@ -51,7 +53,7 @@ public class OltuUserInfoUserDetailsService implements UserInfoUserDetailsServic
 			OltuUserInfoResponse userInfoResponse = oauthClient.resource(
 					userInfoRequest, "GET", OltuUserInfoResponse.class);
 
-			if (authenticationRequest.getClientRegistration().isClientOpenIDConnect()) {
+			if (authenticationToken.getClientRegistration().isClientOpenIDConnect()) {
 				oauth2User = new OpenIDConnectUserBuilder()
 						.userAttributes(userInfoResponse.getAttributes())
 						.build();
@@ -62,11 +64,13 @@ public class OltuUserInfoUserDetailsService implements UserInfoUserDetailsServic
 			}
 
 		} catch (OAuthProblemException pe) {
-			// TODO Throw OAuth2-specific exception for downstream handling
-			throw new OAuth2Exception(pe.getMessage(), pe);
+			// This error occurs if the User Info Response is not well-formed or invalid
+			OAuth2Error oauth2Error = OAuth2Error.valueOf(pe.getError());
+			throw new OAuth2AuthenticationException(oauth2Error, oauth2Error.getErrorMessage());
 		} catch (OAuthSystemException se) {
-			// TODO Throw OAuth2-specific exception for downstream handling
-			throw new OAuth2Exception(se.getMessage(), se);
+			// This error occurs when there is a network-related issue
+			throw new AuthenticationServiceException("An error occurred while sending the User Info Request: " +
+					se.getMessage(), se);
 		}
 
 		return oauth2User;
