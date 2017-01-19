@@ -300,7 +300,7 @@ public class NimbusOAuth2ClientApplicationTests {
 	}
 
 	private void assertClientsPage(HtmlPage page) throws Exception {
-		assertThat(page.getTitleText()).isEqualTo("Nimbus - OAuth Clients");
+		assertThat(page.getTitleText()).isEqualTo("OAuth2 Client Login Page");
 
 		assertThat(page.getElementsByTagName("li").size()).isEqualTo(2);
 
@@ -312,11 +312,11 @@ public class NimbusOAuth2ClientApplicationTests {
 		String githubClientAuthorizeUri = baseAuthorizeUri + this.githubClientRegistration.getClientAlias();
 
 		assertThat(clientAnchorElements.get(0).getAttribute("href")).isIn(googleClientAuthorizeUri, githubClientAuthorizeUri);
-		assertThat(clientAnchorElements.get(0).getTextContent()).isIn(
+		assertThat(clientAnchorElements.get(0).asText()).isIn(
 				this.googleClientRegistration.getClientName(), this.githubClientRegistration.getClientName());
 
 		assertThat(clientAnchorElements.get(1).getAttribute("href")).isIn(googleClientAuthorizeUri, githubClientAuthorizeUri);
-		assertThat(clientAnchorElements.get(1).getTextContent()).isIn(
+		assertThat(clientAnchorElements.get(1).asText()).isIn(
 				this.googleClientRegistration.getClientName(), this.githubClientRegistration.getClientName());
 	}
 
@@ -325,13 +325,13 @@ public class NimbusOAuth2ClientApplicationTests {
 
 		DomNodeList<HtmlElement> divElements = page.getBody().getElementsByTagName("div");
 
-		assertThat(divElements.get(0).getTextContent()).contains("Logged in user: id=joeg");
-		assertThat(divElements.get(2).getTextContent()).contains("User Attributes: [first-name=Joe, last-name=Grandja]");
+		assertThat(divElements.get(0).asText()).contains("Logged in user: id=joeg");
+		assertThat(divElements.get(2).asText()).contains("User Attributes: [first-name=Joe, last-name=Grandja]");
 	}
 
 	private HtmlAnchor getClientAnchorElement(HtmlPage page, ClientRegistration clientRegistration) {
 		Optional<HtmlAnchor> clientAnchorElement = page.getAnchors().stream()
-				.filter(e -> e.getTextContent().equals(clientRegistration.getClientName())).findFirst();
+				.filter(e -> e.asText().equals(clientRegistration.getClientName())).findFirst();
 
 		return (clientAnchorElement.isPresent() ? clientAnchorElement.get() : null);
 	}

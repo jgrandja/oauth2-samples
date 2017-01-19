@@ -27,12 +27,8 @@ import org.springframework.security.oauth2.client.authentication.oltu.OltuAuthor
 import org.springframework.security.oauth2.client.filter.AuthorizationRequestUriBuilder;
 import org.springframework.security.oauth2.client.filter.oltu.OltuAuthorizationRequestUriBuilder;
 import org.springframework.security.oauth2.client.registration.ClientRegistration;
-import org.springframework.security.oauth2.client.registration.ClientRegistrationRepository;
-import org.springframework.security.oauth2.client.registration.InMemoryClientRegistrationRepository;
 import org.springframework.security.oauth2.client.userdetails.UserInfoUserDetailsService;
 import org.springframework.security.oauth2.client.userdetails.oltu.OltuUserInfoUserDetailsService;
-
-import java.util.List;
 
 import static org.springframework.security.oauth2.client.config.annotation.web.configurers.OAuth2ClientSecurityConfigurer.oauth2Client;
 
@@ -69,11 +65,6 @@ public class SecurityConfig extends WebSecurityConfigurerAdapter {
 	@Bean
 	public ClientRegistration githubClientRegistration() {
 		return new ClientRegistration();
-	}
-
-	@Bean
-	public ClientRegistrationRepository clientRegistrationRepository(List<ClientRegistration> clientRegistrations) {
-		return new InMemoryClientRegistrationRepository(clientRegistrations);
 	}
 
 	private AuthorizationRequestUriBuilder authorizationRequestBuilder() {

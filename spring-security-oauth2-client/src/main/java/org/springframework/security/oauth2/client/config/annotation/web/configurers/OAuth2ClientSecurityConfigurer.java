@@ -16,21 +16,32 @@
 package org.springframework.security.oauth2.client.config.annotation.web.configurers;
 
 import org.springframework.context.ApplicationContext;
+import org.springframework.security.config.annotation.ObjectPostProcessor;
 import org.springframework.security.config.annotation.web.HttpSecurityBuilder;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.configurers.AbstractHttpConfigurer;
 import org.springframework.security.oauth2.client.authentication.AuthorizationCodeGrantAuthenticationToken;
 import org.springframework.security.oauth2.client.authentication.AuthorizationGrantTokenExchanger;
+import org.springframework.security.oauth2.client.authentication.ui.DefaultOAuth2LoginPageGeneratingFilter;
 import org.springframework.security.oauth2.client.filter.AuthorizationRequestUriBuilder;
 import org.springframework.security.oauth2.client.registration.ClientRegistration;
 import org.springframework.security.oauth2.client.registration.ClientRegistrationRepository;
 import org.springframework.security.oauth2.client.registration.InMemoryClientRegistrationRepository;
 import org.springframework.security.oauth2.client.userdetails.UserInfoUserDetailsService;
+import org.springframework.security.web.authentication.ui.DefaultLoginPageGeneratingFilter;
 import org.springframework.util.Assert;
 
+import javax.servlet.FilterChain;
+import javax.servlet.ServletException;
+import javax.servlet.ServletRequest;
+import javax.servlet.ServletResponse;
+import java.io.IOException;
 import java.util.Arrays;
 import java.util.Map;
 import java.util.stream.Collectors;
+
+import static org.springframework.security.oauth2.client.authentication.ui.AbstractLoginPageGeneratingFilter.ERROR_PARAMETER_NAME;
+import static org.springframework.security.oauth2.client.authentication.ui.AbstractLoginPageGeneratingFilter.LOGOUT_PARAMETER_NAME;
 
 /**
  * @author Joe Grandja
@@ -42,9 +53,13 @@ public final class OAuth2ClientSecurityConfigurer<B extends HttpSecurityBuilder<
 
 	private AuthorizationCodeGrantFilterConfigurer<B> authorizationCodeGrantFilterConfigurer;
 
+	private boolean loginPageFilterEnabled;
+
+
 	public OAuth2ClientSecurityConfigurer() {
 		this.authorizationRequestRedirectFilterConfigurer = new AuthorizationRequestRedirectFilterConfigurer<>();
 		this.authorizationCodeGrantFilterConfigurer = new AuthorizationCodeGrantFilterConfigurer<>();
+		this.loginPageFilterEnabled = true;
 	}
 
 	public OAuth2ClientSecurityConfigurer<B> clients(ClientRegistration... clientRegistrations) {
@@ -62,6 +77,7 @@ public final class OAuth2ClientSecurityConfigurer<B extends HttpSecurityBuilder<
 	public OAuth2ClientSecurityConfigurer<B> clientsPage(String clientsPage) {
 		Assert.notNull(clientsPage, "clientsPage cannot be null");
 		this.authorizationCodeGrantFilterConfigurer.clientsPage(clientsPage);
+		this.loginPageFilterEnabled = false;
 		return this;
 	}
 
@@ -104,6 +120,7 @@ public final class OAuth2ClientSecurityConfigurer<B extends HttpSecurityBuilder<
 	public void configure(B http) throws Exception {
 		this.authorizationRequestRedirectFilterConfigurer.configure(http);
 		this.authorizationCodeGrantFilterConfigurer.configure(http);
+		this.initDefaultLoginFilter(http);
 	}
 
 	public static OAuth2ClientSecurityConfigurer<HttpSecurity> oauth2Client() {
@@ -115,5 +132,46 @@ public final class OAuth2ClientSecurityConfigurer<B extends HttpSecurityBuilder<
 		ClientRegistrationRepository clientRegistrationRepository = new InMemoryClientRegistrationRepository(
 				clientRegistrations.values().stream().collect(Collectors.toList()));
 		return clientRegistrationRepository;
+	}
+
+	private void initDefaultLoginFilter(B http) {
+		if (!this.loginPageFilterEnabled) {
+			return;
+		}
+
+		DefaultOAuth2LoginPageGeneratingFilter loginPageGeneratingFilter = new DefaultOAuth2LoginPageGeneratingFilter(
+				this.getBuilder().getSharedObject(ClientRegistrationRepository.class));
+		String clientsPage = this.authorizationCodeGrantFilterConfigurer.getClientsPage();
+		loginPageGeneratingFilter.setLoginPageUrl(clientsPage);
+		loginPageGeneratingFilter.setLogoutSuccessUrl(clientsPage + "?" + LOGOUT_PARAMETER_NAME);
+		loginPageGeneratingFilter.setFailureUrl(clientsPage + "?" + ERROR_PARAMETER_NAME);
+		loginPageGeneratingFilter.setAuthenticationUrl(
+				this.authorizationRequestRedirectFilterConfigurer.getAuthorizationProcessingUri());
+		loginPageGeneratingFilter.setLoginEnabled(true);
+
+		// TODO Temporary workaround
+		// 		Remove this after we add an order in FilterComparator for DefaultOAuth2LoginPageGeneratingFilter
+		this.addObjectPostProcessor(new OrderedFilterWrappingPostProcessor());
+
+		http.addFilter(this.postProcess(loginPageGeneratingFilter));
+	}
+
+	// TODO Temporary workaround
+	// 		Remove this after we add an order in FilterComparator for DefaultOAuth2LoginPageGeneratingFilter
+	private final class OrderedFilterWrappingPostProcessor implements ObjectPostProcessor<Object> {
+
+		@SuppressWarnings({ "rawtypes", "unchecked" })
+		public Object postProcess(final Object delegateFilter) {
+			DefaultLoginPageGeneratingFilter orderedFilter = new DefaultLoginPageGeneratingFilter() {
+
+				@Override
+				public void doFilter(ServletRequest request, ServletResponse response,
+									 FilterChain chain) throws IOException, ServletException {
+
+					((DefaultOAuth2LoginPageGeneratingFilter)delegateFilter).doFilter(request, response, chain);
+				}
+			};
+			return orderedFilter;
+		}
 	}
 }

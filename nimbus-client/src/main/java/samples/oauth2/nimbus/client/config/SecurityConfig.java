@@ -22,10 +22,6 @@ import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
 import org.springframework.security.config.annotation.web.configuration.WebSecurityConfigurerAdapter;
 import org.springframework.security.oauth2.client.registration.ClientRegistration;
-import org.springframework.security.oauth2.client.registration.ClientRegistrationRepository;
-import org.springframework.security.oauth2.client.registration.InMemoryClientRegistrationRepository;
-
-import java.util.List;
 
 import static org.springframework.security.oauth2.client.config.annotation.web.configurers.OAuth2ClientSecurityConfigurer.oauth2Client;
 
@@ -59,10 +55,5 @@ public class SecurityConfig extends WebSecurityConfigurerAdapter {
 	@Bean
 	public ClientRegistration githubClientRegistration() {
 		return new ClientRegistration();
-	}
-
-	@Bean
-	public ClientRegistrationRepository clientRegistrationRepository(List<ClientRegistration> clientRegistrations) {
-		return new InMemoryClientRegistrationRepository(clientRegistrations);
 	}
 }

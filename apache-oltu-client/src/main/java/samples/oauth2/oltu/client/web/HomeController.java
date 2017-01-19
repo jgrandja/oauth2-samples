@@ -15,9 +15,7 @@
  */
 package samples.oauth2.oltu.client.web;
 
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
-import org.springframework.security.oauth2.client.registration.ClientRegistrationRepository;
 import org.springframework.security.oauth2.core.userdetails.OAuth2UserDetails;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
@@ -28,15 +26,6 @@ import org.springframework.web.bind.annotation.RequestMapping;
  */
 @Controller
 public class HomeController {
-
-	@Autowired
-	protected ClientRegistrationRepository clientRegistrationRepository;
-
-	@RequestMapping("/oauth2/clients")
-	public String clients(Model model) {
-		model.addAttribute("clientRegistrations", clientRegistrationRepository.getRegistrations());
-		return "clients";
-	}
 
 	@RequestMapping("/")
 	public String index(Model model, @AuthenticationPrincipal OAuth2UserDetails user) {

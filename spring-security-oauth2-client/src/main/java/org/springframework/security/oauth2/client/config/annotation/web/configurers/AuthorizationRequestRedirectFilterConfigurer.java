@@ -79,7 +79,7 @@ public final class AuthorizationRequestRedirectFilterConfigurer<B extends HttpSe
 		http.addFilter(this.postProcess(filter));
 	}
 
-	private String getAuthorizationProcessingUri() {
+	String getAuthorizationProcessingUri() {
 		return (this.authorizationProcessingUri != null ?
 				this.authorizationProcessingUri : AuthorizationRequestRedirectFilter.DEFAULT_FILTER_PROCESSING_URI);
 	}

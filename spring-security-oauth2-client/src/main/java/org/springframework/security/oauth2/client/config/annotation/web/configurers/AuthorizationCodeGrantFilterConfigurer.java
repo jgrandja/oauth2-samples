@@ -123,6 +123,10 @@ public final class AuthorizationCodeGrantFilterConfigurer<H extends HttpSecurity
 		return AuthorizationUtil::isAuthorizationCodeGrantResponse;
 	}
 
+	String getClientsPage() {
+		return this.getLoginPage();
+	}
+
 	private ClientRegistrationRepository getClientRegistrationRepository() {
 		ClientRegistrationRepository clientRegistrationRepository = this.getBuilder().getSharedObject(ClientRegistrationRepository.class);
 		if (clientRegistrationRepository == null) {
