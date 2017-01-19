@@ -18,7 +18,6 @@ package org.springframework.security.oauth2.client.config.annotation.web.configu
 import org.springframework.context.ApplicationContext;
 import org.springframework.security.config.annotation.ObjectPostProcessor;
 import org.springframework.security.config.annotation.web.HttpSecurityBuilder;
-import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.configurers.AbstractHttpConfigurer;
 import org.springframework.security.oauth2.client.filter.AuthorizationRequestRedirectFilter;
 import org.springframework.security.oauth2.client.filter.AuthorizationRequestUriBuilder;
@@ -39,27 +38,27 @@ import static org.springframework.security.oauth2.client.config.annotation.web.c
 /**
  * @author Joe Grandja
  */
-public final class AuthorizationRequestRedirectFilterConfigurer<B extends HttpSecurityBuilder<B>> extends
+final class AuthorizationRequestRedirectFilterConfigurer<B extends HttpSecurityBuilder<B>> extends
 		AbstractHttpConfigurer<AuthorizationRequestRedirectFilterConfigurer<B>, B> {
 
 	private String authorizationProcessingUri;
 
 	private AuthorizationRequestUriBuilder authorizationRequestBuilder;
 
-	public AuthorizationRequestRedirectFilterConfigurer<B> clientRegistrationRepository(ClientRegistrationRepository clientRegistrationRepository) {
+	AuthorizationRequestRedirectFilterConfigurer<B> clientRegistrationRepository(ClientRegistrationRepository clientRegistrationRepository) {
 		Assert.notNull(clientRegistrationRepository, "clientRegistrationRepository cannot be null");
 		Assert.notEmpty(clientRegistrationRepository.getRegistrations(), "clientRegistrationRepository cannot be empty");
 		this.getBuilder().setSharedObject(ClientRegistrationRepository.class, clientRegistrationRepository);
 		return this;
 	}
 
-	public AuthorizationRequestRedirectFilterConfigurer<B> authorizationProcessingUri(String authorizationProcessingUri) {
+	AuthorizationRequestRedirectFilterConfigurer<B> authorizationProcessingUri(String authorizationProcessingUri) {
 		Assert.notNull(authorizationProcessingUri, "authorizationProcessingUri cannot be null");
 		this.authorizationProcessingUri = authorizationProcessingUri;
 		return this;
 	}
 
-	public AuthorizationRequestRedirectFilterConfigurer<B> authorizationRequestBuilder(AuthorizationRequestUriBuilder authorizationRequestBuilder) {
+	AuthorizationRequestRedirectFilterConfigurer<B> authorizationRequestBuilder(AuthorizationRequestUriBuilder authorizationRequestBuilder) {
 		Assert.notNull(authorizationRequestBuilder, "authorizationRequestBuilder cannot be null");
 		this.authorizationRequestBuilder = authorizationRequestBuilder;
 		return this;
@@ -98,12 +97,6 @@ public final class AuthorizationRequestRedirectFilterConfigurer<B extends HttpSe
 			this.authorizationRequestBuilder = new NimbusAuthorizationRequestUriBuilder();
 		}
 		return this.authorizationRequestBuilder;
-	}
-
-	public static AuthorizationRequestRedirectFilterConfigurer<HttpSecurity> authorizationRedirector() {
-		AuthorizationRequestRedirectFilterConfigurer<HttpSecurity> configurer = new AuthorizationRequestRedirectFilterConfigurer<>();
-
-		return configurer;
 	}
 
 	// TODO Temporary workaround

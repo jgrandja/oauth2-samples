@@ -18,7 +18,6 @@ package org.springframework.security.oauth2.client.config.annotation.web.configu
 import org.springframework.context.ApplicationContext;
 import org.springframework.security.config.annotation.ObjectPostProcessor;
 import org.springframework.security.config.annotation.web.HttpSecurityBuilder;
-import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.configurers.AbstractAuthenticationFilterConfigurer;
 import org.springframework.security.oauth2.client.authentication.AuthorizationCodeGrantAuthenticationProvider;
 import org.springframework.security.oauth2.client.authentication.AuthorizationCodeGrantAuthenticationToken;
@@ -44,34 +43,34 @@ import static org.springframework.security.oauth2.client.config.annotation.web.c
 /**
  * @author Joe Grandja
  */
-public final class AuthorizationCodeGrantFilterConfigurer<H extends HttpSecurityBuilder<H>> extends
+final class AuthorizationCodeGrantFilterConfigurer<H extends HttpSecurityBuilder<H>> extends
 		AbstractAuthenticationFilterConfigurer<H, AuthorizationCodeGrantFilterConfigurer<H>, AuthorizationCodeGrantProcessingFilter> {
 
-	public static final String DEFAULT_CLIENTS_PAGE_URI = "/oauth2/clients";
+	static final String DEFAULT_CLIENTS_PAGE_URI = "/oauth2/clients";
 
 	private AuthorizationGrantTokenExchanger<AuthorizationCodeGrantAuthenticationToken> authorizationCodeGrantTokenExchanger;
 
 	private UserInfoUserDetailsService userInfoUserDetailsService;
 
 
-	public AuthorizationCodeGrantFilterConfigurer() {
+	AuthorizationCodeGrantFilterConfigurer() {
 		super(new AuthorizationCodeGrantProcessingFilter(), null);
 	}
 
-	public AuthorizationCodeGrantFilterConfigurer<H> clientRegistrationRepository(ClientRegistrationRepository clientRegistrationRepository) {
+	AuthorizationCodeGrantFilterConfigurer<H> clientRegistrationRepository(ClientRegistrationRepository clientRegistrationRepository) {
 		Assert.notNull(clientRegistrationRepository, "clientRegistrationRepository cannot be null");
 		Assert.notEmpty(clientRegistrationRepository.getRegistrations(), "clientRegistrationRepository cannot be empty");
 		this.getBuilder().setSharedObject(ClientRegistrationRepository.class, clientRegistrationRepository);
 		return this;
 	}
 
-	public AuthorizationCodeGrantFilterConfigurer<H> clientsPage(String clientsPage) {
+	AuthorizationCodeGrantFilterConfigurer<H> clientsPage(String clientsPage) {
 		Assert.notNull(clientsPage, "clientsPage cannot be null");
 		this.loginPage(clientsPage);
 		return this;
 	}
 
-	public AuthorizationCodeGrantFilterConfigurer<H> authorizationCodeGrantTokenExchanger(
+	AuthorizationCodeGrantFilterConfigurer<H> authorizationCodeGrantTokenExchanger(
 			AuthorizationGrantTokenExchanger<AuthorizationCodeGrantAuthenticationToken> authorizationCodeGrantTokenExchanger) {
 
 		Assert.notNull(authorizationCodeGrantTokenExchanger, "authorizationCodeGrantTokenExchanger cannot be null");
@@ -79,7 +78,7 @@ public final class AuthorizationCodeGrantFilterConfigurer<H extends HttpSecurity
 		return this;
 	}
 
-	public AuthorizationCodeGrantFilterConfigurer<H> userInfoUserDetailsService(UserInfoUserDetailsService userInfoUserDetailsService) {
+	AuthorizationCodeGrantFilterConfigurer<H> userInfoUserDetailsService(UserInfoUserDetailsService userInfoUserDetailsService) {
 		Assert.notNull(userInfoUserDetailsService, "userInfoUserDetailsService cannot be null");
 		this.userInfoUserDetailsService = userInfoUserDetailsService;
 		return this;
@@ -148,12 +147,6 @@ public final class AuthorizationCodeGrantFilterConfigurer<H extends HttpSecurity
 			this.userInfoUserDetailsService = new NimbusUserInfoUserDetailsService();
 		}
 		return this.userInfoUserDetailsService;
-	}
-
-	public static AuthorizationCodeGrantFilterConfigurer<HttpSecurity> authorizationCodeGrant() {
-		AuthorizationCodeGrantFilterConfigurer<HttpSecurity> configurer = new AuthorizationCodeGrantFilterConfigurer<>();
-
-		return configurer;
 	}
 
 	// TODO Temporary workaround
