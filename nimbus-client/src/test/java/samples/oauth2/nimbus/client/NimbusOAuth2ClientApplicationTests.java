@@ -1,0 +1,415 @@
+/*
+ * Copyright 2012-2016 the original author or authors.
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *      http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+package samples.oauth2.nimbus.client;
+
+import com.gargoylesoftware.htmlunit.FailingHttpStatusCodeException;
+import com.gargoylesoftware.htmlunit.WebClient;
+import com.gargoylesoftware.htmlunit.WebResponse;
+import com.gargoylesoftware.htmlunit.html.DomNodeList;
+import com.gargoylesoftware.htmlunit.html.HtmlAnchor;
+import com.gargoylesoftware.htmlunit.html.HtmlElement;
+import com.gargoylesoftware.htmlunit.html.HtmlPage;
+import org.junit.Before;
+import org.junit.Test;
+import org.junit.runner.RunWith;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Qualifier;
+import org.springframework.boot.SpringBootConfiguration;
+import org.springframework.boot.autoconfigure.EnableAutoConfiguration;
+import org.springframework.boot.context.properties.ConfigurationProperties;
+import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
+import org.springframework.boot.test.context.SpringBootTest;
+import org.springframework.context.annotation.Bean;
+import org.springframework.context.annotation.ComponentScan;
+import org.springframework.context.annotation.Configuration;
+import org.springframework.http.HttpStatus;
+import org.springframework.security.config.annotation.web.builders.HttpSecurity;
+import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
+import org.springframework.security.config.annotation.web.configuration.WebSecurityConfigurerAdapter;
+import org.springframework.security.oauth2.client.authentication.AuthorizationCodeGrantAuthenticationToken;
+import org.springframework.security.oauth2.client.authentication.AuthorizationGrantTokenExchanger;
+import org.springframework.security.oauth2.client.filter.AuthorizationCodeGrantProcessingFilter;
+import org.springframework.security.oauth2.client.filter.AuthorizationRequestRedirectFilter;
+import org.springframework.security.oauth2.client.registration.ClientRegistration;
+import org.springframework.security.oauth2.client.registration.ClientRegistrationRepository;
+import org.springframework.security.oauth2.client.registration.InMemoryClientRegistrationRepository;
+import org.springframework.security.oauth2.client.userdetails.UserInfoUserDetailsService;
+import org.springframework.security.oauth2.core.AccessTokenType;
+import org.springframework.security.oauth2.core.OAuth2Attributes;
+import org.springframework.security.oauth2.core.OAuth2Error;
+import org.springframework.security.oauth2.core.ResponseType;
+import org.springframework.security.oauth2.core.protocol.TokenResponseAttributes;
+import org.springframework.security.oauth2.core.userdetails.OAuth2User;
+import org.springframework.security.oauth2.core.userdetails.OAuth2UserAttribute;
+import org.springframework.test.context.junit4.SpringRunner;
+import org.springframework.web.util.UriComponents;
+import org.springframework.web.util.UriComponentsBuilder;
+
+import java.net.URI;
+import java.net.URL;
+import java.net.URLDecoder;
+import java.util.*;
+import java.util.stream.Collectors;
+
+import static org.assertj.core.api.Assertions.assertThat;
+import static org.mockito.Matchers.any;
+import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.when;
+import static org.springframework.security.oauth2.client.config.annotation.web.configurers.OAuth2ClientSecurityConfigurer.oauth2Client;
+
+/**
+ * Integration tests for the OAuth2 filters {@link AuthorizationRequestRedirectFilter}
+ * and {@link AuthorizationCodeGrantProcessingFilter}.
+ *
+ * @author Joe Grandja
+ */
+@RunWith(SpringRunner.class)
+@SpringBootTest
+@AutoConfigureMockMvc
+public class NimbusOAuth2ClientApplicationTests {
+
+	@Autowired
+	private WebClient webClient;
+
+	@Autowired
+	@Qualifier("googleClientRegistration")
+	private ClientRegistration googleClientRegistration;
+
+	@Autowired
+	@Qualifier("githubClientRegistration")
+	private ClientRegistration githubClientRegistration;
+
+
+	@Before
+	public void setup() {
+		this.webClient.getCookieManager().clearCookies();
+	}
+
+	@Test
+	public void requestHomePageWhenNotAuthenticatedThenDisplayClientsPage() throws Exception {
+		HtmlPage page = this.webClient.getPage("/");
+		this.assertClientsPage(page);
+	}
+
+	@Test
+	public void requestOtherPageWhenNotAuthenticatedThenDisplayClientsPage() throws Exception {
+		HtmlPage page = this.webClient.getPage("/other-page");
+		this.assertClientsPage(page);
+	}
+
+	@Test
+	public void requestAuthorizeGitHubClientWhenLinkClickedThenStatusRedirectForAuthorization() throws Exception {
+		HtmlPage page = this.webClient.getPage("/");
+
+		HtmlAnchor clientAnchorElement = this.getClientAnchorElement(page, this.githubClientRegistration);
+		assertThat(clientAnchorElement).isNotNull();
+
+		WebResponse response = this.followLinkDisableRedirects(clientAnchorElement);
+
+		assertThat(response.getStatusCode()).isEqualTo(HttpStatus.MOVED_PERMANENTLY.value());
+
+		String authorizeRedirectUri = response.getResponseHeaderValue("Location");
+		assertThat(authorizeRedirectUri).isNotNull();
+
+		UriComponents uriComponents = UriComponentsBuilder.fromUri(URI.create(authorizeRedirectUri)).build();
+
+		String requestUri = uriComponents.getScheme() + "://" + uriComponents.getHost() + uriComponents.getPath();
+		assertThat(requestUri).isEqualTo(this.githubClientRegistration.getAuthorizeUri());
+
+		Map<String, String> params = uriComponents.getQueryParams().toSingleValueMap();
+
+		assertThat(params.get(OAuth2Attributes.RESPONSE_TYPE)).isEqualTo(ResponseType.CODE.value());
+		assertThat(params.get(OAuth2Attributes.CLIENT_ID)).isEqualTo(this.githubClientRegistration.getClientId());
+		assertThat(URLDecoder.decode(params.get(OAuth2Attributes.REDIRECT_URI), "UTF-8"))
+				.isEqualTo(this.githubClientRegistration.getRedirectUri());
+		assertThat(URLDecoder.decode(params.get(OAuth2Attributes.SCOPE), "UTF-8"))
+				.isEqualTo(this.githubClientRegistration.getScope().stream().collect(Collectors.joining(" ")));
+		assertThat(params.get(OAuth2Attributes.STATE)).isNotNull();
+	}
+
+	@Test
+	public void requestAuthorizeClientWhenInvalidClientThenStatusBadRequest() throws Exception {
+		HtmlPage page = this.webClient.getPage("/");
+
+		HtmlAnchor clientAnchorElement = this.getClientAnchorElement(page, this.googleClientRegistration);
+		assertThat(clientAnchorElement).isNotNull();
+		clientAnchorElement.setAttribute("href", clientAnchorElement.getHrefAttribute() + "-invalid");
+
+		WebResponse response = null;
+		try {
+			clientAnchorElement.click();
+		} catch (FailingHttpStatusCodeException ex) {
+			response = ex.getResponse();
+		}
+
+		assertThat(response.getStatusCode()).isEqualTo(HttpStatus.BAD_REQUEST.value());
+	}
+
+	@Test
+	public void requestAuthorizationCodeGrantWhenValidAuthorizationResponseThenDisplayUserInfoPage() throws Exception {
+		HtmlPage page = this.webClient.getPage("/");
+
+		HtmlAnchor clientAnchorElement = this.getClientAnchorElement(page, this.githubClientRegistration);
+		assertThat(clientAnchorElement).isNotNull();
+
+		WebResponse response = this.followLinkDisableRedirects(clientAnchorElement);
+
+		UriComponents authorizeRequestUriComponents = UriComponentsBuilder.fromUri(
+				URI.create(response.getResponseHeaderValue("Location"))).build();
+
+		Map<String, String> params = authorizeRequestUriComponents.getQueryParams().toSingleValueMap();
+		String code = "auth-code";
+		String state = URLDecoder.decode(params.get(OAuth2Attributes.STATE), "UTF-8");
+		String redirectUri = URLDecoder.decode(params.get(OAuth2Attributes.REDIRECT_URI), "UTF-8");
+
+		String authorizationResponseUri =
+				UriComponentsBuilder.fromHttpUrl(redirectUri)
+						.queryParam(OAuth2Attributes.CODE, code)
+						.queryParam(OAuth2Attributes.STATE, state)
+						.build().encode().toUriString();
+
+		page = this.webClient.getPage(new URL(authorizationResponseUri));
+		this.assertUserInfoPage(page);
+	}
+
+	@Test
+	public void requestAuthorizationCodeGrantWhenNoMatchingAuthorizationRequestThenDisplayErrorClientsPage() throws Exception {
+		HtmlPage page = this.webClient.getPage("/");
+		URL clientsPageUrl = page.getBaseURL();
+		URL clientsErrorPageUrl = new URL(clientsPageUrl.toString() + "?error");
+
+		String code = "auth-code";
+		String state = "state";
+		String redirectUri = this.googleClientRegistration.getRedirectUri();
+
+		String authorizationResponseUri =
+				UriComponentsBuilder.fromHttpUrl(redirectUri)
+						.queryParam(OAuth2Attributes.CODE, code)
+						.queryParam(OAuth2Attributes.STATE, state)
+						.build().encode().toUriString();
+
+		// Clear session cookie will ensure the session-saved
+		// Authorization Request (from previous request) is not found
+		this.webClient.getCookieManager().clearCookies();
+
+		page = this.webClient.getPage(new URL(authorizationResponseUri));
+		assertThat(page.getBaseURL()).isEqualTo(clientsErrorPageUrl);
+	}
+
+	@Test
+	public void requestAuthorizationCodeGrantWhenInvalidStateParamThenDisplayErrorClientsPage() throws Exception {
+		HtmlPage page = this.webClient.getPage("/");
+		URL clientsPageUrl = page.getBaseURL();
+		URL clientsErrorPageUrl = new URL(clientsPageUrl.toString() + "?error");
+
+		String code = "auth-code";
+		String state = "invalid-state";
+		String redirectUri = this.githubClientRegistration.getRedirectUri();
+
+		String authorizationResponseUri =
+				UriComponentsBuilder.fromHttpUrl(redirectUri)
+						.queryParam(OAuth2Attributes.CODE, code)
+						.queryParam(OAuth2Attributes.STATE, state)
+						.build().encode().toUriString();
+
+		page = this.webClient.getPage(new URL(authorizationResponseUri));
+		assertThat(page.getBaseURL()).isEqualTo(clientsErrorPageUrl);
+	}
+
+	@Test
+	public void requestAuthorizationCodeGrantWhenInvalidRedirectUriThenDisplayErrorClientsPage() throws Exception {
+		HtmlPage page = this.webClient.getPage("/");
+		URL clientsPageUrl = page.getBaseURL();
+		URL clientsErrorPageUrl = new URL(clientsPageUrl.toString() + "?error");
+
+		HtmlAnchor clientAnchorElement = this.getClientAnchorElement(page, this.googleClientRegistration);
+		assertThat(clientAnchorElement).isNotNull();
+
+		WebResponse response = this.followLinkDisableRedirects(clientAnchorElement);
+
+		UriComponents authorizeRequestUriComponents = UriComponentsBuilder.fromUri(
+				URI.create(response.getResponseHeaderValue("Location"))).build();
+
+		Map<String, String> params = authorizeRequestUriComponents.getQueryParams().toSingleValueMap();
+		String code = "auth-code";
+		String state = URLDecoder.decode(params.get(OAuth2Attributes.STATE), "UTF-8");
+		String redirectUri = URLDecoder.decode(params.get(OAuth2Attributes.REDIRECT_URI), "UTF-8");
+		redirectUri += "-invalid";
+
+		String authorizationResponseUri =
+				UriComponentsBuilder.fromHttpUrl(redirectUri)
+						.queryParam(OAuth2Attributes.CODE, code)
+						.queryParam(OAuth2Attributes.STATE, state)
+						.build().encode().toUriString();
+
+		page = this.webClient.getPage(new URL(authorizationResponseUri));
+		assertThat(page.getBaseURL()).isEqualTo(clientsErrorPageUrl);
+	}
+
+	@Test
+	public void requestAuthorizationCodeGrantWhenValidAuthorizationErrorResponseThenDisplayErrorClientsPage() throws Exception {
+		HtmlPage page = this.webClient.getPage("/");
+		URL clientsPageUrl = page.getBaseURL();
+		URL clientsErrorPageUrl = new URL(clientsPageUrl.toString() + "?error");
+
+		String error = OAuth2Error.ErrorCode.UNAUTHORIZED_CLIENT.toString();
+		String state = "state";
+		String redirectUri = this.githubClientRegistration.getRedirectUri();
+
+		String authorizationResponseUri =
+				UriComponentsBuilder.fromHttpUrl(redirectUri)
+						.queryParam(OAuth2Attributes.ERROR, error)
+						.queryParam(OAuth2Attributes.STATE, state)
+						.build().encode().toUriString();
+
+		page = this.webClient.getPage(new URL(authorizationResponseUri));
+		assertThat(page.getBaseURL()).isEqualTo(clientsErrorPageUrl);
+	}
+
+	@Test
+	public void requestAuthorizationCodeGrantWhenInvalidErrorCodeThenDisplayErrorClientsPage() throws Exception {
+		HtmlPage page = this.webClient.getPage("/");
+		URL clientsPageUrl = page.getBaseURL();
+		URL clientsErrorPageUrl = new URL(clientsPageUrl.toString() + "?error");
+
+		String error = "invalid-error-code";
+		String state = "state";
+		String redirectUri = this.googleClientRegistration.getRedirectUri();
+
+		String authorizationResponseUri =
+				UriComponentsBuilder.fromHttpUrl(redirectUri)
+						.queryParam(OAuth2Attributes.ERROR, error)
+						.queryParam(OAuth2Attributes.STATE, state)
+						.build().encode().toUriString();
+
+		page = this.webClient.getPage(new URL(authorizationResponseUri));
+		assertThat(page.getBaseURL()).isEqualTo(clientsErrorPageUrl);
+	}
+
+	private void assertClientsPage(HtmlPage page) throws Exception {
+		assertThat(page.getTitleText()).isEqualTo("Nimbus - OAuth Clients");
+
+		assertThat(page.getElementsByTagName("li").size()).isEqualTo(2);
+
+		List<HtmlAnchor> clientAnchorElements = page.getAnchors();
+		assertThat(clientAnchorElements.size()).isEqualTo(2);
+
+		String baseAuthorizeUri = AuthorizationRequestRedirectFilter.DEFAULT_FILTER_PROCESSING_URI + "/";
+		String googleClientAuthorizeUri = baseAuthorizeUri + this.googleClientRegistration.getClientAlias();
+		String githubClientAuthorizeUri = baseAuthorizeUri + this.githubClientRegistration.getClientAlias();
+
+		assertThat(clientAnchorElements.get(0).getAttribute("href")).isIn(googleClientAuthorizeUri, githubClientAuthorizeUri);
+		assertThat(clientAnchorElements.get(0).getTextContent()).isIn(
+				this.googleClientRegistration.getClientName(), this.githubClientRegistration.getClientName());
+
+		assertThat(clientAnchorElements.get(1).getAttribute("href")).isIn(googleClientAuthorizeUri, githubClientAuthorizeUri);
+		assertThat(clientAnchorElements.get(1).getTextContent()).isIn(
+				this.googleClientRegistration.getClientName(), this.githubClientRegistration.getClientName());
+	}
+
+	private void assertUserInfoPage(HtmlPage page) throws Exception {
+		assertThat(page.getTitleText()).isEqualTo("Nimbus - OAuth User Info");
+
+		DomNodeList<HtmlElement> divElements = page.getBody().getElementsByTagName("div");
+
+		assertThat(divElements.get(0).getTextContent()).contains("Logged in user: id=joeg");
+		assertThat(divElements.get(2).getTextContent()).contains("User Attributes: [first-name=Joe, last-name=Grandja]");
+	}
+
+	private HtmlAnchor getClientAnchorElement(HtmlPage page, ClientRegistration clientRegistration) {
+		Optional<HtmlAnchor> clientAnchorElement = page.getAnchors().stream()
+				.filter(e -> e.getTextContent().equals(clientRegistration.getClientName())).findFirst();
+
+		return (clientAnchorElement.isPresent() ? clientAnchorElement.get() : null);
+	}
+
+	private WebResponse followLinkDisableRedirects(HtmlAnchor anchorElement) throws Exception {
+		WebResponse response = null;
+		try {
+			// Disable the automatic redirection (which will trigger
+			// an exception) so that we can capture the response
+			this.webClient.getOptions().setRedirectEnabled(false);
+			anchorElement.click();
+		} catch (FailingHttpStatusCodeException ex) {
+			response = ex.getResponse();
+			this.webClient.getOptions().setRedirectEnabled(true);
+		}
+		return response;
+	}
+
+
+	@Configuration
+	@EnableWebSecurity
+	public static class SecurityTestConfig extends WebSecurityConfigurerAdapter {
+
+		// @formatter:off
+		@Override
+		protected void configure(HttpSecurity http) throws Exception {
+			http
+					.authorizeRequests()
+						.antMatchers("/favicon.ico").permitAll()
+						.anyRequest().fullyAuthenticated()
+						.and()
+					.apply(oauth2Client()
+							.authorizationCodeGrantTokenExchanger(this.mockAuthorizationCodeGrantTokenExchanger())
+							.userInfoEndpointService(this.mockUserInfoEndpointService()));
+		}
+		// @formatter:on
+
+		@ConfigurationProperties(prefix = "security.oauth2.client.google")
+		@Bean
+		public ClientRegistration googleClientRegistration() {
+			return new ClientRegistration();
+		}
+
+		@ConfigurationProperties(prefix = "security.oauth2.client.github")
+		@Bean
+		public ClientRegistration githubClientRegistration() {
+			return new ClientRegistration();
+		}
+
+		private AuthorizationGrantTokenExchanger<AuthorizationCodeGrantAuthenticationToken> mockAuthorizationCodeGrantTokenExchanger() {
+			TokenResponseAttributes tokenResponse = new TokenResponseAttributes(
+					"access-token-1234", AccessTokenType.BEARER, 60 * 1000, Collections.singletonList("openid"), "refresh-token-5678");
+
+			AuthorizationGrantTokenExchanger mock = mock(AuthorizationGrantTokenExchanger.class);
+			when(mock.exchange(any())).thenReturn(tokenResponse);
+			return mock;
+		}
+
+		private UserInfoUserDetailsService mockUserInfoEndpointService() {
+			OAuth2UserAttribute identifierAttribute = new OAuth2UserAttribute("id", "joeg");
+			OAuth2UserAttribute firstNameAttribute = new OAuth2UserAttribute("first-name", "Joe");
+			OAuth2UserAttribute lastNameAttribute = new OAuth2UserAttribute("last-name", "Grandja");
+			OAuth2User userDetails = new OAuth2User(identifierAttribute, Arrays.asList(firstNameAttribute, lastNameAttribute));
+
+			UserInfoUserDetailsService mock = mock(UserInfoUserDetailsService.class);
+			when(mock.loadUserDetails(any())).thenReturn(userDetails);
+			return mock;
+		}
+	}
+
+	@SpringBootConfiguration
+	@EnableAutoConfiguration
+	@ComponentScan(basePackages = "samples.oauth2.nimbus.client.web")
+	public static class SpringBootApplicationTestConfig {
+
+		@Bean
+		public ClientRegistrationRepository clientRegistrationRepository(List<ClientRegistration> clientRegistrations) {
+			return new InMemoryClientRegistrationRepository(clientRegistrations);
+		}
+	}
+}

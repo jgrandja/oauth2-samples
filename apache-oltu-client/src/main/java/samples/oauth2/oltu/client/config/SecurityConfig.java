@@ -49,6 +49,7 @@ public class SecurityConfig extends WebSecurityConfigurerAdapter {
 	protected void configure(HttpSecurity http) throws Exception {
 		http
 				.authorizeRequests()
+					.antMatchers("/favicon.ico").permitAll()
 					.anyRequest().fullyAuthenticated()
 					.and()
 				.apply(oauth2Client()

@@ -33,15 +33,15 @@ public class HomeController {
 	protected ClientRegistrationRepository clientRegistrationRepository;
 
 	@RequestMapping("/oauth2/clients")
-	public String login(Model model) {
+	public String clients(Model model) {
 		model.addAttribute("clientRegistrations", clientRegistrationRepository.getRegistrations());
-		return "login";
+		return "clients";
 	}
 
 	@RequestMapping("/")
 	public String index(Model model, @AuthenticationPrincipal OAuth2UserDetails user) {
 		populateUserInfo(model, user);
-		return "user-details";
+		return "user-info";
 	}
 
 	private void populateUserInfo(Model model, OAuth2UserDetails user) {

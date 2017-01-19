@@ -45,7 +45,8 @@ public final class OAuth2Error {
 		INVALID_USER_INFO_RESPONSE("invalid_user_info_response", HttpStatus.UNPROCESSABLE_ENTITY),
 		AUTHORIZATION_REQUEST_NOT_FOUND("authorization_request_not_found", HttpStatus.UNAUTHORIZED),
 		INVALID_STATE_PARAMETER("invalid_state_parameter", HttpStatus.UNAUTHORIZED),
-		INVALID_REDIRECT_URI_PARAMETER("invalid_redirect_uri_parameter", HttpStatus.UNAUTHORIZED);
+		INVALID_REDIRECT_URI_PARAMETER("invalid_redirect_uri_parameter", HttpStatus.UNAUTHORIZED),
+		UNKNOWN_ERROR_CODE("unknown_error_code", HttpStatus.BAD_REQUEST);
 
 		private String errorCode;
 		private HttpStatus mappedStatusCode;
@@ -122,7 +123,7 @@ public final class OAuth2Error {
 	public static OAuth2Error valueOf(String errorCode, String description, URI uri) {
 		ErrorCode errCode = ErrorCode.fromValue(errorCode);
 		if (errCode == null) {
-			throw new IllegalArgumentException("Invalid error code: " + errorCode);
+			errCode = ErrorCode.UNKNOWN_ERROR_CODE;
 		}
 		return new OAuth2Error(errCode, description, uri, errCode.mappedStatusCode);
 	}

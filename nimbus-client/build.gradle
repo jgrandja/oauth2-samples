@@ -13,6 +13,7 @@ dependencies {
             "org.springframework.security:spring-security-config:$springSecurityVersion",
             "org.springframework.security:spring-security-web:$springSecurityVersion"
 
-    testCompile "org.springframework.boot:spring-boot-starter-test"
+    testCompile "org.springframework.boot:spring-boot-starter-test",
+                "net.sourceforge.htmlunit:htmlunit:2.24"
 
 }

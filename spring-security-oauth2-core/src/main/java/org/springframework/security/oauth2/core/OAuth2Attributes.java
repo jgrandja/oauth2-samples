@@ -20,11 +20,17 @@ package org.springframework.security.oauth2.core;
  */
 public interface OAuth2Attributes {
 
-	String CODE = "code";
+	String RESPONSE_TYPE = "response_type";
+
+	String CLIENT_ID = "client_id";
+
+	String REDIRECT_URI = "redirect_uri";
+
+	String SCOPE = "scope";
 
 	String STATE = "state";
 
-	String REDIRECT_URI = "redirect_uri";
+	String CODE = "code";
 
 	String ERROR = "error";
 
