@@ -71,6 +71,23 @@ public class OAuth2User implements OAuth2UserDetails {
 		return (userAttribute.isPresent() ? userAttribute.get() : null);
 	}
 
+	public String getAttributeString(String name) {
+		OAuth2UserAttribute userAttribute = this.getAttribute(name);
+		return (userAttribute != null ? userAttribute.getValue().toString() : null);
+	}
+
+	public Long getAttributeLong(String name) {
+		try {
+			return Long.valueOf(this.getAttributeString(name));
+		} catch (NumberFormatException ex) {
+			return -1L;
+		}
+	}
+
+	public Boolean getAttributeBoolean(String name) {
+		return Boolean.valueOf(this.getAttributeString(name));
+	}
+
 	@Override
 	public Collection<? extends GrantedAuthority> getAuthorities() {
 		return this.authorities;

@@ -89,9 +89,8 @@ public class OpenIDConnectUser extends OAuth2User {
 		return this.getAttributeString(EMAIL);
 	}
 
-	public String getEmailVerified() {
-		// TODO Spec defines as boolean type
-		return this.getAttributeString(EMAIL_VERIFIED);
+	public boolean getEmailVerified() {
+		return this.getAttributeBoolean(EMAIL_VERIFIED);
 	}
 
 	public String getGender() {
@@ -114,23 +113,15 @@ public class OpenIDConnectUser extends OAuth2User {
 		return this.getAttributeString(PHONE_NUMBER);
 	}
 
-	public String getPhoneNumberVerified() {
-		// TODO Spec defines as boolean type
-		return this.getAttributeString(PHONE_NUMBER_VERIFIED);
+	public boolean getPhoneNumberVerified() {
+		return this.getAttributeBoolean(PHONE_NUMBER_VERIFIED);
 	}
 
 	public String getAddress() {
-		// TODO Spec defines as JSON object type
 		return this.getAttributeString(ADDRESS);
 	}
 
-	public String getUpdatedAt() {
-		// TODO Spec defines as number type
-		return this.getAttributeString(UPDATED_AT);
-	}
-
-	private String getAttributeString(String name) {
-		OAuth2UserAttribute userAttribute = this.getAttribute(name);
-		return (userAttribute != null ? userAttribute.getValue().toString() : null);
+	public long getUpdatedAt() {
+		return this.getAttributeLong(UPDATED_AT);
 	}
 }
