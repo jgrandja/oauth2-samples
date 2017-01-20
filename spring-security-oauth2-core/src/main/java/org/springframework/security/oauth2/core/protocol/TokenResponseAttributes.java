@@ -19,8 +19,8 @@ import org.springframework.security.oauth2.core.AccessTokenType;
 import org.springframework.util.Assert;
 
 import java.util.Collections;
-import java.util.List;
 import java.util.Map;
+import java.util.Set;
 
 /**
  * @author Joe Grandja
@@ -29,26 +29,26 @@ public class TokenResponseAttributes {
 	private final String accessToken;
 	private final AccessTokenType accessTokenType;
 	private final long expiresIn;
-	private final List<String> scope;
+	private final Set<String> scopes;
 	private final String refreshToken;
 	private final Map<String,String> additionalParameters;
 
 	public TokenResponseAttributes(String accessToken, AccessTokenType accessTokenType, long expiresIn) {
-		this(accessToken, accessTokenType, expiresIn, Collections.emptyList());
+		this(accessToken, accessTokenType, expiresIn, Collections.emptySet());
 	}
 
-	public TokenResponseAttributes(String accessToken, AccessTokenType accessTokenType, long expiresIn, List<String> scope) {
-		this(accessToken, accessTokenType, expiresIn, scope, null);
-	}
-
-	public TokenResponseAttributes(String accessToken, AccessTokenType accessTokenType, long expiresIn,
-								   List<String> scope, String refreshToken) {
-
-		this(accessToken, accessTokenType, expiresIn, scope, refreshToken, Collections.emptyMap());
+	public TokenResponseAttributes(String accessToken, AccessTokenType accessTokenType, long expiresIn, Set<String> scopes) {
+		this(accessToken, accessTokenType, expiresIn, scopes, null);
 	}
 
 	public TokenResponseAttributes(String accessToken, AccessTokenType accessTokenType, long expiresIn,
-								   List<String> scope, String refreshToken, Map<String,String> additionalParameters) {
+								   Set<String> scopes, String refreshToken) {
+
+		this(accessToken, accessTokenType, expiresIn, scopes, refreshToken, Collections.emptyMap());
+	}
+
+	public TokenResponseAttributes(String accessToken, AccessTokenType accessTokenType, long expiresIn,
+								   Set<String> scopes, String refreshToken, Map<String,String> additionalParameters) {
 
 		Assert.notNull(accessToken, "accessToken cannot be null");
 		this.accessToken = accessToken;
@@ -59,7 +59,7 @@ public class TokenResponseAttributes {
 		Assert.isTrue(expiresIn >= 0, "expiresIn must be a positive number");
 		this.expiresIn = expiresIn;
 
-		this.scope = Collections.unmodifiableList(scope != null ? scope : Collections.emptyList());
+		this.scopes = Collections.unmodifiableSet(scopes != null ? scopes : Collections.emptySet());
 		this.refreshToken = refreshToken;
 		this.additionalParameters = Collections.unmodifiableMap(additionalParameters != null ?
 				additionalParameters : Collections.emptyMap());
@@ -77,8 +77,8 @@ public class TokenResponseAttributes {
 		return this.expiresIn;
 	}
 
-	public final List<String> getScope() {
-		return this.scope;
+	public final Set<String> getScopes() {
+		return this.scopes;
 	}
 
 	public final String getRefreshToken() {

@@ -16,7 +16,7 @@
 package org.springframework.security.oauth2.client.registration;
 
 import java.io.Serializable;
-import java.util.List;
+import java.util.Set;
 
 
 /**
@@ -32,7 +32,7 @@ public class ClientRegistration implements Serializable {
 	private String tokenUri;
 	private String userInfoUri;
 	private String redirectUri;
-	private List<String> scope;
+	private Set<String> scopes;
 
 	public enum ClientType {
 		OPENID_CONNECT("openid-connect"),
@@ -121,12 +121,12 @@ public class ClientRegistration implements Serializable {
 		this.redirectUri = redirectUri;
 	}
 
-	public List<String> getScope() {
-		return scope;
+	public Set<String> getScopes() {
+		return scopes;
 	}
 
-	public void setScope(List<String> scope) {
-		this.scope = scope;
+	public void setScopes(Set<String> scopes) {
+		this.scopes = scopes;
 	}
 
 	public boolean isClientOpenIDConnect() {

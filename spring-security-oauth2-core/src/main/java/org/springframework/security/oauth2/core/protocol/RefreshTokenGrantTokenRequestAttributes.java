@@ -19,29 +19,29 @@ import org.springframework.security.oauth2.core.AuthorizationGrantType;
 import org.springframework.util.Assert;
 
 import java.util.Collections;
-import java.util.List;
+import java.util.Set;
 
 /**
  * @author Joe Grandja
  */
 public class RefreshTokenGrantTokenRequestAttributes extends AbstractTokenRequestAttributes {
 	private final String refreshToken;
-	private final List<String> scope;
+	private final Set<String> scopes;
 
-	public RefreshTokenGrantTokenRequestAttributes(String refreshToken, List<String> scope) {
+	public RefreshTokenGrantTokenRequestAttributes(String refreshToken, Set<String> scopes) {
 		super(AuthorizationGrantType.REFRESH_TOKEN);
 
 		Assert.notNull(refreshToken, "refreshToken cannot be null");
 		this.refreshToken = refreshToken;
 
-		this.scope = Collections.unmodifiableList((scope != null ? scope : Collections.emptyList()));
+		this.scopes = Collections.unmodifiableSet((scopes != null ? scopes : Collections.emptySet()));
 	}
 
 	public final String getRefreshToken() {
 		return this.refreshToken;
 	}
 
-	public final List<String> getScope() {
-		return this.scope;
+	public final Set<String> getScopes() {
+		return this.scopes;
 	}
 }

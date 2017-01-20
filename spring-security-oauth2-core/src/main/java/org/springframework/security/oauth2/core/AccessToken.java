@@ -18,7 +18,7 @@ package org.springframework.security.oauth2.core;
 import org.springframework.util.Assert;
 
 import java.util.Collections;
-import java.util.List;
+import java.util.Set;
 
 /**
  * @author Joe Grandja
@@ -26,17 +26,17 @@ import java.util.List;
 public class AccessToken extends AbstractToken {
 	private final AccessTokenType accessTokenType;
 	private final long expiredAt;
-	private final List<String> scopes;
+	private final Set<String> scopes;
 
 	public AccessToken(AccessTokenType accessTokenType, String value) {
 		this(accessTokenType, value, 0);
 	}
 
 	public AccessToken(AccessTokenType accessTokenType, String value, long expiredAt) {
-		this(accessTokenType, value, expiredAt, Collections.emptyList());
+		this(accessTokenType, value, expiredAt, Collections.emptySet());
 	}
 
-	public AccessToken(AccessTokenType accessTokenType, String value, long expiredAt, List<String> scopes) {
+	public AccessToken(AccessTokenType accessTokenType, String value, long expiredAt, Set<String> scopes) {
 		super(value);
 
 		Assert.notNull(accessTokenType, "accessTokenType cannot be null");
@@ -45,7 +45,7 @@ public class AccessToken extends AbstractToken {
 		Assert.isTrue(expiredAt >= 0, "expiredAt must be a positive number");
 		this.expiredAt = expiredAt;
 
-		this.scopes = Collections.unmodifiableList((scopes != null ? scopes : Collections.emptyList()));
+		this.scopes = Collections.unmodifiableSet((scopes != null ? scopes : Collections.emptySet()));
 	}
 
 	public final AccessTokenType getAccessTokenType() {
@@ -56,7 +56,7 @@ public class AccessToken extends AbstractToken {
 		return this.expiredAt;
 	}
 
-	public final List<String> getScopes() {
+	public final Set<String> getScopes() {
 		return this.scopes;
 	}
 }

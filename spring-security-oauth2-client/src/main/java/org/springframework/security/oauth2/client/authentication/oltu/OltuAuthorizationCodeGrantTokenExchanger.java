@@ -34,7 +34,7 @@ import org.springframework.security.oauth2.core.protocol.TokenResponseAttributes
 
 import java.util.Arrays;
 import java.util.Collections;
-import java.util.List;
+import java.util.Set;
 import java.util.stream.Collectors;
 
 /**
@@ -58,7 +58,7 @@ public class OltuAuthorizationCodeGrantTokenExchanger implements AuthorizationGr
 					.setClientSecret(clientRegistration.getClientSecret())
 					.setRedirectURI(clientRegistration.getRedirectUri())
 					.setCode(authorizationGrantAuthentication.getAuthorizationCode())
-					.setScope(clientRegistration.getScope().stream().collect(Collectors.joining(" ")))
+					.setScope(clientRegistration.getScopes().stream().collect(Collectors.joining(" ")))
 					.buildBodyMessage();
 			tokenRequest.setHeader("Accept", MediaType.APPLICATION_JSON_VALUE);
 
@@ -82,10 +82,11 @@ public class OltuAuthorizationCodeGrantTokenExchanger implements AuthorizationGr
 			accessTokenType = AccessTokenType.MAC;
 		}
 		long expiresIn = (tokenResponse.getExpiresIn() != null ? tokenResponse.getExpiresIn() : 0);
-		List<String> scope = (tokenResponse.getScope() != null ?
-				Arrays.asList(tokenResponse.getScope().split(" ")) : Collections.emptyList());
+		Set<String> scopes = (tokenResponse.getScope() != null ?
+				Arrays.stream(tokenResponse.getScope().split(" ")).collect(Collectors.toSet()) :
+				Collections.emptySet());
 		String refreshToken = (tokenResponse.getRefreshToken() != null ? tokenResponse.getRefreshToken() : null);
 
-		return new TokenResponseAttributes(accessToken, accessTokenType, expiresIn, scope, refreshToken);
+		return new TokenResponseAttributes(accessToken, accessTokenType, expiresIn, scopes, refreshToken);
 	}
 }

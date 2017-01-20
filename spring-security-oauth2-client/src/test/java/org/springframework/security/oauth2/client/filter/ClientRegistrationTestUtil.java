@@ -20,6 +20,7 @@ import org.springframework.security.oauth2.client.registration.ClientRegistratio
 import org.springframework.security.oauth2.client.registration.InMemoryClientRegistrationRepository;
 
 import java.util.Arrays;
+import java.util.stream.Collectors;
 
 /**
  * @author Joe Grandja
@@ -41,7 +42,7 @@ class ClientRegistrationTestUtil {
 		clientRegistration.setTokenUri("https://accounts.google.com/o/oauth2/token");
 		clientRegistration.setUserInfoUri("https://www.googleapis.com/oauth2/v3/userinfo");
 		clientRegistration.setRedirectUri("http://localhost:8080/oauth2/client/google");
-		clientRegistration.setScope(Arrays.asList("openid", "email"));
+		clientRegistration.setScopes(Arrays.stream(new String[] {"openid", "email"}).collect(Collectors.toSet()));
 		return clientRegistration;
 	}
 
@@ -56,7 +57,7 @@ class ClientRegistrationTestUtil {
 		clientRegistration.setTokenUri("https://github.com/login/oauth/access_token");
 		clientRegistration.setUserInfoUri("https://api.github.com/user");
 		clientRegistration.setRedirectUri("http://localhost:8080/oauth2/client/github");
-		clientRegistration.setScope(Arrays.asList("openid", " user:email"));
+		clientRegistration.setScopes(Arrays.stream(new String[] {"openid", "user:email"}).collect(Collectors.toSet()));
 		return clientRegistration;
 	}
 }

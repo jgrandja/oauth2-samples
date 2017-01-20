@@ -58,7 +58,7 @@ public class AuthorizationCodeGrantAuthenticationProvider implements Authenticat
 				this.authorizationCodeGrantTokenExchanger.exchange(authorizationCodeGrantAuthentication);
 
 		AccessToken accessToken = new AccessToken(tokenResponse.getAccessTokenType(),
-				tokenResponse.getAccessToken(), tokenResponse.getExpiresIn(), tokenResponse.getScope());
+				tokenResponse.getAccessToken(), tokenResponse.getExpiresIn(), tokenResponse.getScopes());
 		RefreshToken refreshToken = null;
 		if (tokenResponse.getRefreshToken() != null) {
 			refreshToken = new RefreshToken(tokenResponse.getRefreshToken());

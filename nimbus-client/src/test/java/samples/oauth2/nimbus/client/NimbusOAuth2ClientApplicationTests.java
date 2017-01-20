@@ -136,7 +136,7 @@ public class NimbusOAuth2ClientApplicationTests {
 		assertThat(URLDecoder.decode(params.get(OAuth2Attributes.REDIRECT_URI), "UTF-8"))
 				.isEqualTo(this.githubClientRegistration.getRedirectUri());
 		assertThat(URLDecoder.decode(params.get(OAuth2Attributes.SCOPE), "UTF-8"))
-				.isEqualTo(this.githubClientRegistration.getScope().stream().collect(Collectors.joining(" ")));
+				.isEqualTo(this.githubClientRegistration.getScopes().stream().collect(Collectors.joining(" ")));
 		assertThat(params.get(OAuth2Attributes.STATE)).isNotNull();
 	}
 
@@ -407,7 +407,7 @@ public class NimbusOAuth2ClientApplicationTests {
 
 		private AuthorizationGrantTokenExchanger<AuthorizationCodeGrantAuthenticationToken> mockAuthorizationCodeGrantTokenExchanger() {
 			TokenResponseAttributes tokenResponse = new TokenResponseAttributes(
-					"access-token-1234", AccessTokenType.BEARER, 60 * 1000, Collections.singletonList("openid"), "refresh-token-5678");
+					"access-token-1234", AccessTokenType.BEARER, 60 * 1000, Collections.singleton("openid"), "refresh-token-5678");
 
 			AuthorizationGrantTokenExchanger mock = mock(AuthorizationGrantTokenExchanger.class);
 			when(mock.exchange(any())).thenReturn(tokenResponse);

@@ -49,7 +49,7 @@ public class DefaultAuthorizationRequestUriBuilder implements AuthorizationReque
 		uriBuilder
 				.queryParam(OAuth2Attributes.CLIENT_ID, authorizationRequestAttributes.getClientId())
 				.queryParam(OAuth2Attributes.SCOPE,
-						authorizationRequestAttributes.getScope().stream().collect(Collectors.joining(" ")))
+						authorizationRequestAttributes.getScopes().stream().collect(Collectors.joining(" ")))
 				.queryParam(OAuth2Attributes.STATE, authorizationRequestAttributes.getState());
 
 		return uriBuilder.build().encode().toUri();

@@ -19,7 +19,7 @@ import org.springframework.security.oauth2.core.AuthorizationGrantType;
 import org.springframework.util.Assert;
 
 import java.util.Collections;
-import java.util.List;
+import java.util.Set;
 
 /**
  * @author Joe Grandja
@@ -27,9 +27,9 @@ import java.util.List;
 public class PasswordGrantTokenRequestAttributes extends AbstractTokenRequestAttributes {
 	private final String userName;
 	private final String password;
-	private final List<String> scope;
+	private final Set<String> scopes;
 
-	public PasswordGrantTokenRequestAttributes(String userName, String password, List<String> scope) {
+	public PasswordGrantTokenRequestAttributes(String userName, String password, Set<String> scopes) {
 		super(AuthorizationGrantType.PASSWORD);
 
 		Assert.notNull(userName, "userName cannot be null");
@@ -38,7 +38,7 @@ public class PasswordGrantTokenRequestAttributes extends AbstractTokenRequestAtt
 		Assert.notNull(password, "password cannot be null");
 		this.password = password;
 
-		this.scope = Collections.unmodifiableList((scope != null ? scope : Collections.emptyList()));
+		this.scopes = Collections.unmodifiableSet((scopes != null ? scopes : Collections.emptySet()));
 	}
 
 	public final String getUserName() {
@@ -49,7 +49,7 @@ public class PasswordGrantTokenRequestAttributes extends AbstractTokenRequestAtt
 		return this.password;
 	}
 
-	public final List<String> getScope() {
-		return this.scope;
+	public final Set<String> getScopes() {
+		return this.scopes;
 	}
 }

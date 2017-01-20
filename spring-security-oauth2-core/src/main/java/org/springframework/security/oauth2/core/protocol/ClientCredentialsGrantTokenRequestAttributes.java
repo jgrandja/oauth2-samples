@@ -18,20 +18,20 @@ package org.springframework.security.oauth2.core.protocol;
 import org.springframework.security.oauth2.core.AuthorizationGrantType;
 
 import java.util.Collections;
-import java.util.List;
+import java.util.Set;
 
 /**
  * @author Joe Grandja
  */
 public class ClientCredentialsGrantTokenRequestAttributes extends AbstractTokenRequestAttributes {
-	private final List<String> scope;
+	private final Set<String> scopes;
 
-	public ClientCredentialsGrantTokenRequestAttributes(List<String> scope) {
+	public ClientCredentialsGrantTokenRequestAttributes(Set<String> scopes) {
 		super(AuthorizationGrantType.CLIENT_CREDENTIALS);
-		this.scope = Collections.unmodifiableList((scope != null ? scope : Collections.emptyList()));
+		this.scopes = Collections.unmodifiableSet((scopes != null ? scopes : Collections.emptySet()));
 	}
 
-	public final List<String> getScope() {
-		return this.scope;
+	public final Set<String> getScopes() {
+		return this.scopes;
 	}
 }

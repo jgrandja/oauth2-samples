@@ -21,7 +21,7 @@ import org.springframework.util.Assert;
 
 import java.io.Serializable;
 import java.util.Collections;
-import java.util.List;
+import java.util.Set;
 
 /**
  * @author Joe Grandja
@@ -32,12 +32,12 @@ public class AuthorizationRequestAttributes implements Serializable {
 	private final ResponseType responseType;
 	private final String clientId;
 	private final String redirectUri;
-	private final List<String> scope;
+	private final Set<String> scopes;
 	private final String state;
 
 	public AuthorizationRequestAttributes(String authorizeUri, AuthorizationGrantType authorizationGrantType,
 										  ResponseType responseType, String clientId, String redirectUri,
-										  List<String> scope, String state) {
+										  Set<String> scopes, String state) {
 
 		Assert.hasText(authorizeUri, "authorizeUri cannot be empty");
 		this.authorizeUri = authorizeUri;
@@ -59,20 +59,20 @@ public class AuthorizationRequestAttributes implements Serializable {
 		this.clientId = clientId;
 
 		this.redirectUri = redirectUri;
-		this.scope = Collections.unmodifiableList((scope != null ? scope : Collections.emptyList()));
+		this.scopes = Collections.unmodifiableSet((scopes != null ? scopes : Collections.emptySet()));
 		this.state = state;
 	}
 
 	public static AuthorizationRequestAttributes authorizationCodeGrant(String authorizeUri, String clientId,
-																		String redirectUri, List<String> scope, String state) {
+																		String redirectUri, Set<String> scopes, String state) {
 		return new AuthorizationRequestAttributes(authorizeUri, AuthorizationGrantType.AUTHORIZATION_CODE,
-				ResponseType.CODE, clientId, redirectUri, scope, state);
+				ResponseType.CODE, clientId, redirectUri, scopes, state);
 	}
 
 	public static AuthorizationRequestAttributes implicitGrant(String authorizeUri, String clientId,
-															   String redirectUri, List<String> scope, String state) {
+															   String redirectUri, Set<String> scopes, String state) {
 		return new AuthorizationRequestAttributes(authorizeUri, AuthorizationGrantType.IMPLICIT,
-				ResponseType.TOKEN, clientId, redirectUri, scope, state);
+				ResponseType.TOKEN, clientId, redirectUri, scopes, state);
 	}
 
 	public final String getAuthorizeUri() {
@@ -95,8 +95,8 @@ public class AuthorizationRequestAttributes implements Serializable {
 		return this.redirectUri;
 	}
 
-	public final List<String> getScope() {
-		return this.scope;
+	public final Set<String> getScopes() {
+		return this.scopes;
 	}
 
 	public final String getState() {

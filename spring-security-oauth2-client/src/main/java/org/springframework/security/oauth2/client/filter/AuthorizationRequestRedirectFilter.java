@@ -114,7 +114,7 @@ public class AuthorizationRequestRedirectFilter extends OncePerRequestFilter {
 						clientRegistration.getAuthorizeUri(),
 						clientRegistration.getClientId(),
 						clientRegistration.getRedirectUri(),
-						clientRegistration.getScope(),
+						clientRegistration.getScopes(),
 						this.stateGenerator.generateKey());
 		AuthorizationUtil.saveAuthorizationRequest(request, authorizationRequestAttributes);
 

@@ -36,9 +36,7 @@ import org.springframework.util.CollectionUtils;
 import java.io.IOException;
 import java.net.URI;
 import java.net.URISyntaxException;
-import java.util.Collections;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 import java.util.stream.Collectors;
 
 /**
@@ -98,9 +96,9 @@ public class NimbusAuthorizationCodeGrantTokenExchanger implements Authorization
 			accessTokenType = AccessTokenType.MAC;
 		}
 		long expiresIn = accessTokenResponse.getTokens().getAccessToken().getLifetime();
-		List<String> scope = Collections.emptyList();
+		Set<String> scopes = Collections.emptySet();
 		if (!CollectionUtils.isEmpty(accessTokenResponse.getTokens().getAccessToken().getScope())) {
-			scope = accessTokenResponse.getTokens().getAccessToken().getScope().toStringList();
+			scopes = new HashSet<>(accessTokenResponse.getTokens().getAccessToken().getScope().toStringList());
 		}
 		String refreshToken = null;
 		if (accessTokenResponse.getTokens().getRefreshToken() != null) {
@@ -110,7 +108,7 @@ public class NimbusAuthorizationCodeGrantTokenExchanger implements Authorization
 				.collect(Collectors.toMap(Map.Entry::getKey, e -> e.getValue().toString()));
 
 		return new TokenResponseAttributes(accessToken, accessTokenType, expiresIn,
-				scope, refreshToken, additionalParameters);
+				scopes, refreshToken, additionalParameters);
 	}
 
 	private URI toURI(String uriStr) {

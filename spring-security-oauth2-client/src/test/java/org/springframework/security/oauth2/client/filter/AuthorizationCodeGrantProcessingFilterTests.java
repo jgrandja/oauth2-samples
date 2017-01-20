@@ -252,7 +252,7 @@ public class AuthorizationCodeGrantProcessingFilterTests {
 						clientRegistration.getAuthorizeUri(),
 						clientRegistration.getClientId(),
 						clientRegistration.getRedirectUri(),
-						clientRegistration.getScope(),
+						clientRegistration.getScopes(),
 						state);
 
 		request.getSession().setAttribute(AuthorizationUtil.SAVED_AUTHORIZATION_REQUEST, authorizationRequestAttributes);
