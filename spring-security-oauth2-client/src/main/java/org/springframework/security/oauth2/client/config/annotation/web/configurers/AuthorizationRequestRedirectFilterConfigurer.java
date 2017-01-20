@@ -21,7 +21,7 @@ import org.springframework.security.config.annotation.web.HttpSecurityBuilder;
 import org.springframework.security.config.annotation.web.configurers.AbstractHttpConfigurer;
 import org.springframework.security.oauth2.client.filter.AuthorizationRequestRedirectFilter;
 import org.springframework.security.oauth2.client.filter.AuthorizationRequestUriBuilder;
-import org.springframework.security.oauth2.client.filter.nimbus.NimbusAuthorizationRequestUriBuilder;
+import org.springframework.security.oauth2.client.filter.DefaultAuthorizationRequestUriBuilder;
 import org.springframework.security.oauth2.client.registration.ClientRegistrationRepository;
 import org.springframework.security.web.authentication.preauth.AbstractPreAuthenticatedProcessingFilter;
 import org.springframework.util.Assert;
@@ -94,7 +94,7 @@ final class AuthorizationRequestRedirectFilterConfigurer<B extends HttpSecurityB
 
 	private AuthorizationRequestUriBuilder getAuthorizationRequestBuilder() {
 		if (this.authorizationRequestBuilder == null) {
-			this.authorizationRequestBuilder = new NimbusAuthorizationRequestUriBuilder();
+			this.authorizationRequestBuilder = new DefaultAuthorizationRequestUriBuilder();
 		}
 		return this.authorizationRequestBuilder;
 	}

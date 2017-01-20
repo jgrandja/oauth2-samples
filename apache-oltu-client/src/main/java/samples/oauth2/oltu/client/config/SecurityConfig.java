@@ -24,8 +24,6 @@ import org.springframework.security.config.annotation.web.configuration.WebSecur
 import org.springframework.security.oauth2.client.authentication.AuthorizationCodeGrantAuthenticationToken;
 import org.springframework.security.oauth2.client.authentication.AuthorizationGrantTokenExchanger;
 import org.springframework.security.oauth2.client.authentication.oltu.OltuAuthorizationCodeGrantTokenExchanger;
-import org.springframework.security.oauth2.client.filter.AuthorizationRequestUriBuilder;
-import org.springframework.security.oauth2.client.filter.oltu.OltuAuthorizationRequestUriBuilder;
 import org.springframework.security.oauth2.client.registration.ClientRegistration;
 import org.springframework.security.oauth2.client.userdetails.UserInfoUserDetailsService;
 import org.springframework.security.oauth2.client.userdetails.oltu.OltuUserInfoUserDetailsService;
@@ -49,7 +47,6 @@ public class SecurityConfig extends WebSecurityConfigurerAdapter {
 					.anyRequest().fullyAuthenticated()
 					.and()
 				.apply(oauth2Client()
-						.authorizationRequestBuilder(authorizationRequestBuilder())
 						.authorizationCodeGrantTokenExchanger(authorizationCodeGrantTokenExchanger())
 						.userInfoEndpointService(userInfoEndpointService()));
 	}
@@ -65,10 +62,6 @@ public class SecurityConfig extends WebSecurityConfigurerAdapter {
 	@Bean
 	public ClientRegistration githubClientRegistration() {
 		return new ClientRegistration();
-	}
-
-	private AuthorizationRequestUriBuilder authorizationRequestBuilder() {
-		return new OltuAuthorizationRequestUriBuilder();
 	}
 
 	private AuthorizationGrantTokenExchanger<AuthorizationCodeGrantAuthenticationToken> authorizationCodeGrantTokenExchanger() {
