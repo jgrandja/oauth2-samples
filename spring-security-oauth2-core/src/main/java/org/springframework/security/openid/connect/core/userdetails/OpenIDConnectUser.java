@@ -43,6 +43,7 @@ public class OpenIDConnectUser extends OAuth2User {
 					  boolean accountNonExpired, boolean accountNonLocked, boolean credentialsNonExpired, boolean enabled) {
 
 		super(identifier, attributes, authorities, accountNonExpired, accountNonLocked, credentialsNonExpired, enabled);
+		this.setUserNameAttributeName(SUB);
 	}
 
 	public String getSubject() {

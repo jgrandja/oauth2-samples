@@ -17,7 +17,10 @@ package org.springframework.security.oauth2.core.userdetails;
 
 import org.springframework.security.core.GrantedAuthority;
 import org.springframework.security.core.SpringSecurityCoreVersion;
+import org.springframework.util.Assert;
+import org.springframework.util.CollectionUtils;
 
+import java.io.Serializable;
 import java.util.*;
 
 /**
@@ -25,14 +28,17 @@ import java.util.*;
  */
 public class OAuth2User implements OAuth2UserDetails {
 	private static final long serialVersionUID = SpringSecurityCoreVersion.SERIAL_VERSION_UID;
-
+	public static final String USERNAME_ATTRIBUTE_NAME_EMAIL = "email";
+	public static final String USERNAME_ATTRIBUTE_NAME_ID = "id";
 	private final OAuth2UserAttribute identifier;
 	private final List<OAuth2UserAttribute> attributes;
+	private String userNameAttributeName;
 	private final Set<GrantedAuthority> authorities;
 	private final boolean accountNonExpired;
 	private final boolean accountNonLocked;
 	private final boolean credentialsNonExpired;
 	private final boolean enabled;
+
 
 	public OAuth2User(OAuth2UserAttribute identifier, List<OAuth2UserAttribute> attributes) {
 		this(identifier, attributes, Collections.emptySet());
@@ -42,13 +48,17 @@ public class OAuth2User implements OAuth2UserDetails {
 		this(identifier, attributes, authorities, true, true, true, true);
 	}
 
-
 	public OAuth2User(OAuth2UserAttribute identifier, List<OAuth2UserAttribute> attributes, Set<GrantedAuthority> authorities,
 					  boolean accountNonExpired, boolean accountNonLocked, boolean credentialsNonExpired, boolean enabled) {
 
+		Assert.notNull(identifier, "identifier cannot be null");
 		this.identifier = identifier;
+
+		Assert.notEmpty(attributes, "attributes cannot be empty");
 		this.attributes = Collections.unmodifiableList(attributes);
-		this.authorities = Collections.unmodifiableSet(authorities);		// TODO Sort
+
+		this.userNameAttributeName = USERNAME_ATTRIBUTE_NAME_EMAIL;
+		this.authorities = Collections.unmodifiableSet(this.sortAuthorities(authorities));
 		this.accountNonExpired = accountNonExpired;
 		this.accountNonLocked = accountNonLocked;
 		this.credentialsNonExpired = credentialsNonExpired;
@@ -63,6 +73,15 @@ public class OAuth2User implements OAuth2UserDetails {
 	@Override
 	public List<OAuth2UserAttribute> getAttributes() {
 		return this.attributes;
+	}
+
+	public String getUserNameAttributeName() {
+		return this.userNameAttributeName;
+	}
+
+	public void setUserNameAttributeName(String userNameAttributeName) {
+		Assert.notNull(userNameAttributeName, "userNameAttributeName cannot be null");
+		this.userNameAttributeName = userNameAttributeName;
 	}
 
 	public OAuth2UserAttribute getAttribute(String name) {
@@ -95,14 +114,15 @@ public class OAuth2User implements OAuth2UserDetails {
 
 	@Override
 	public String getPassword() {
-		// TODO Always null...return null or string identifier? For example, n/a
+		// Password is never known (or exposed).
+		// This user is registered with the OAuth2 Provider
+		// which never exposes the password.
 		return null;
 	}
 
 	@Override
 	public String getUsername() {
-		// TODO Not the same as identifier...typically email address
-		return null;
+		return this.getAttributeString(this.getUserNameAttributeName());
 	}
 
 	@Override
@@ -123,5 +143,25 @@ public class OAuth2User implements OAuth2UserDetails {
 	@Override
 	public boolean isEnabled() {
 		return this.enabled;
+	}
+
+	private Set<GrantedAuthority> sortAuthorities(Set<GrantedAuthority> authorities) {
+		if (CollectionUtils.isEmpty(authorities)) {
+			return Collections.emptySet();
+		}
+
+		SortedSet<GrantedAuthority> sortedAuthorities =
+				new TreeSet<>(new GrantedAuthorityComparator());
+		authorities.stream().forEach(sortedAuthorities::add);
+
+		return sortedAuthorities;
+	}
+
+	private static class GrantedAuthorityComparator implements Comparator<GrantedAuthority>, Serializable {
+		private static final long serialVersionUID = SpringSecurityCoreVersion.SERIAL_VERSION_UID;
+
+		public int compare(GrantedAuthority g1, GrantedAuthority g2) {
+			return g1.getAuthority().compareTo(g2.getAuthority());
+		}
 	}
 }
