@@ -186,7 +186,7 @@ public class NimbusOAuth2ClientApplicationTests {
 	}
 
 	@Test
-	public void requestAuthorizationCodeGrantWhenNoMatchingAuthorizationRequestThenDisplayErrorClientsPage() throws Exception {
+	public void requestAuthorizationCodeGrantWhenNoMatchingAuthorizationRequestThenDisplayClientsPageWithError() throws Exception {
 		HtmlPage page = this.webClient.getPage("/");
 		URL clientsPageUrl = page.getBaseURL();
 		URL clientsErrorPageUrl = new URL(clientsPageUrl.toString() + "?error");
@@ -207,13 +207,21 @@ public class NimbusOAuth2ClientApplicationTests {
 
 		page = this.webClient.getPage(new URL(authorizationResponseUri));
 		assertThat(page.getBaseURL()).isEqualTo(clientsErrorPageUrl);
+
+		HtmlElement errorElement = page.getBody().getFirstByXPath("p");
+		assertThat(errorElement).isNotNull();
+		assertThat(errorElement.asText()).contains(OAuth2Error.ErrorCode.AUTHORIZATION_REQUEST_NOT_FOUND.toString());
 	}
 
 	@Test
-	public void requestAuthorizationCodeGrantWhenInvalidStateParamThenDisplayErrorClientsPage() throws Exception {
+	public void requestAuthorizationCodeGrantWhenInvalidStateParamThenDisplayClientsPageWithError() throws Exception {
 		HtmlPage page = this.webClient.getPage("/");
 		URL clientsPageUrl = page.getBaseURL();
 		URL clientsErrorPageUrl = new URL(clientsPageUrl.toString() + "?error");
+
+		HtmlAnchor clientAnchorElement = this.getClientAnchorElement(page, this.googleClientRegistration);
+		assertThat(clientAnchorElement).isNotNull();
+		this.followLinkDisableRedirects(clientAnchorElement);
 
 		String code = "auth-code";
 		String state = "invalid-state";
@@ -227,10 +235,14 @@ public class NimbusOAuth2ClientApplicationTests {
 
 		page = this.webClient.getPage(new URL(authorizationResponseUri));
 		assertThat(page.getBaseURL()).isEqualTo(clientsErrorPageUrl);
+
+		HtmlElement errorElement = page.getBody().getFirstByXPath("p");
+		assertThat(errorElement).isNotNull();
+		assertThat(errorElement.asText()).contains(OAuth2Error.ErrorCode.INVALID_STATE_PARAMETER.toString());
 	}
 
 	@Test
-	public void requestAuthorizationCodeGrantWhenInvalidRedirectUriThenDisplayErrorClientsPage() throws Exception {
+	public void requestAuthorizationCodeGrantWhenInvalidRedirectUriThenDisplayClientsPageWithError() throws Exception {
 		HtmlPage page = this.webClient.getPage("/");
 		URL clientsPageUrl = page.getBaseURL();
 		URL clientsErrorPageUrl = new URL(clientsPageUrl.toString() + "?error");
@@ -257,10 +269,14 @@ public class NimbusOAuth2ClientApplicationTests {
 
 		page = this.webClient.getPage(new URL(authorizationResponseUri));
 		assertThat(page.getBaseURL()).isEqualTo(clientsErrorPageUrl);
+
+		HtmlElement errorElement = page.getBody().getFirstByXPath("p");
+		assertThat(errorElement).isNotNull();
+		assertThat(errorElement.asText()).contains(OAuth2Error.ErrorCode.INVALID_REDIRECT_URI_PARAMETER.toString());
 	}
 
 	@Test
-	public void requestAuthorizationCodeGrantWhenValidAuthorizationErrorResponseThenDisplayErrorClientsPage() throws Exception {
+	public void requestAuthorizationCodeGrantWhenValidAuthorizationErrorResponseThenDisplayClientsPageWithError() throws Exception {
 		HtmlPage page = this.webClient.getPage("/");
 		URL clientsPageUrl = page.getBaseURL();
 		URL clientsErrorPageUrl = new URL(clientsPageUrl.toString() + "?error");
@@ -277,10 +293,14 @@ public class NimbusOAuth2ClientApplicationTests {
 
 		page = this.webClient.getPage(new URL(authorizationResponseUri));
 		assertThat(page.getBaseURL()).isEqualTo(clientsErrorPageUrl);
+
+		HtmlElement errorElement = page.getBody().getFirstByXPath("p");
+		assertThat(errorElement).isNotNull();
+		assertThat(errorElement.asText()).contains(error);
 	}
 
 	@Test
-	public void requestAuthorizationCodeGrantWhenInvalidErrorCodeThenDisplayErrorClientsPage() throws Exception {
+	public void requestAuthorizationCodeGrantWhenInvalidErrorCodeThenDisplayClientsPageWithError() throws Exception {
 		HtmlPage page = this.webClient.getPage("/");
 		URL clientsPageUrl = page.getBaseURL();
 		URL clientsErrorPageUrl = new URL(clientsPageUrl.toString() + "?error");
@@ -297,6 +317,10 @@ public class NimbusOAuth2ClientApplicationTests {
 
 		page = this.webClient.getPage(new URL(authorizationResponseUri));
 		assertThat(page.getBaseURL()).isEqualTo(clientsErrorPageUrl);
+
+		HtmlElement errorElement = page.getBody().getFirstByXPath("p");
+		assertThat(errorElement).isNotNull();
+		assertThat(errorElement.asText()).contains(OAuth2Error.ErrorCode.UNKNOWN_ERROR_CODE.toString());
 	}
 
 	private void assertClientsPage(HtmlPage page) throws Exception {
