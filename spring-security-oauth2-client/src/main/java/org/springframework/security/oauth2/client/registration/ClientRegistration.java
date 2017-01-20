@@ -28,10 +28,10 @@ public class ClientRegistration implements Serializable {
 	private ClientType clientType = ClientType.OAUTH2;
 	private String clientName;
 	private String clientAlias;
-	private String authorizeUri;		// TODO URI instead of String?
-	private String tokenUri;			// TODO URI instead of String?
-	private String userInfoUri;			// TODO URI instead of String?
-	private String redirectUri;			// TODO URI instead of String?
+	private String authorizeUri;
+	private String tokenUri;
+	private String userInfoUri;
+	private String redirectUri;
 	private List<String> scope;
 
 	public enum ClientType {
@@ -48,8 +48,6 @@ public class ClientRegistration implements Serializable {
 			return value;
 		}
 	}
-
-	// TODO Make this class immutable and provide a builder
 
 	public String getClientId() {
 		return clientId;
