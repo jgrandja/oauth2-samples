@@ -16,6 +16,7 @@
 package org.springframework.security.oauth2.core.userdetails;
 
 import org.springframework.security.core.GrantedAuthority;
+import org.springframework.util.Assert;
 
 import java.util.*;
 import java.util.stream.Collectors;
@@ -32,11 +33,13 @@ public abstract class AbstractOAuth2UserDetailsBuilder<O extends OAuth2UserDetai
 	}
 
 	public final AbstractOAuth2UserDetailsBuilder<O> userAttributes(Map<String, Object> userAttributes) {
+		Assert.notEmpty(userAttributes, "userAttributes cannot be empty");
 		this.userAttributes = userAttributes;
 		return this;
 	}
 
 	public final AbstractOAuth2UserDetailsBuilder<O> identifierAttributeName(String identifierAttributeName) {
+		Assert.notNull(identifierAttributeName, "identifierAttributeName cannot be null");
 		this.identifierAttributeName = identifierAttributeName;
 		return this;
 	}

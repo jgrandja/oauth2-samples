@@ -28,6 +28,7 @@ import org.springframework.security.oauth2.client.filter.AuthorizationUtil;
 import org.springframework.security.oauth2.client.registration.ClientRegistrationRepository;
 import org.springframework.security.oauth2.client.userdetails.UserInfoUserDetailsService;
 import org.springframework.security.oauth2.client.userdetails.nimbus.NimbusUserInfoUserDetailsService;
+import org.springframework.security.oauth2.core.userdetails.OAuth2UserDetails;
 import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
 import org.springframework.security.web.util.matcher.RequestMatcher;
 import org.springframework.util.Assert;
@@ -37,6 +38,9 @@ import javax.servlet.ServletException;
 import javax.servlet.ServletRequest;
 import javax.servlet.ServletResponse;
 import java.io.IOException;
+import java.net.URI;
+import java.util.HashMap;
+import java.util.Map;
 
 import static org.springframework.security.oauth2.client.config.annotation.web.configurers.OAuth2ClientSecurityConfigurer.getDefaultClientRegistrationRepository;
 
@@ -51,6 +55,8 @@ final class AuthorizationCodeGrantFilterConfigurer<H extends HttpSecurityBuilder
 	private AuthorizationGrantTokenExchanger<AuthorizationCodeGrantAuthenticationToken> authorizationCodeGrantTokenExchanger;
 
 	private UserInfoUserDetailsService userInfoUserDetailsService;
+
+	private Map<URI, Class<? extends OAuth2UserDetails>> userInfoTypeMapping = new HashMap<>();
 
 
 	AuthorizationCodeGrantFilterConfigurer() {
@@ -81,6 +87,13 @@ final class AuthorizationCodeGrantFilterConfigurer<H extends HttpSecurityBuilder
 	AuthorizationCodeGrantFilterConfigurer<H> userInfoUserDetailsService(UserInfoUserDetailsService userInfoUserDetailsService) {
 		Assert.notNull(userInfoUserDetailsService, "userInfoUserDetailsService cannot be null");
 		this.userInfoUserDetailsService = userInfoUserDetailsService;
+		return this;
+	}
+
+	AuthorizationCodeGrantFilterConfigurer<H> userInfoTypeMapping(Class<? extends OAuth2UserDetails> userInfoType, URI userInfoUri) {
+		Assert.notNull(userInfoType, "userInfoType cannot be null");
+		Assert.notNull(userInfoUri, "userInfoUri cannot be null");
+		this.userInfoTypeMapping.put(userInfoUri, userInfoType);
 		return this;
 	}
 
@@ -145,6 +158,10 @@ final class AuthorizationCodeGrantFilterConfigurer<H extends HttpSecurityBuilder
 	private UserInfoUserDetailsService getUserInfoUserDetailsService() {
 		if (this.userInfoUserDetailsService == null) {
 			this.userInfoUserDetailsService = new NimbusUserInfoUserDetailsService();
+		}
+		if (!this.userInfoTypeMapping.isEmpty()) {
+			this.userInfoTypeMapping.entrySet().stream()
+					.forEach(e -> this.userInfoUserDetailsService.mapUserInfoType(e.getValue(), e.getKey()));
 		}
 		return this.userInfoUserDetailsService;
 	}

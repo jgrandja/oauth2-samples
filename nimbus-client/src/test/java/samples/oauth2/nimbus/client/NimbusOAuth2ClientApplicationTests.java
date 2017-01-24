@@ -389,7 +389,8 @@ public class NimbusOAuth2ClientApplicationTests {
 						.and()
 					.apply(oauth2Client()
 							.authorizationCodeGrantTokenExchanger(this.mockAuthorizationCodeGrantTokenExchanger())
-							.userInfoEndpointService(this.mockUserInfoEndpointService()));
+							.userInfoEndpoint()
+								.userInfoService(this.mockUserInfoEndpointService()));
 		}
 		// @formatter:on
 

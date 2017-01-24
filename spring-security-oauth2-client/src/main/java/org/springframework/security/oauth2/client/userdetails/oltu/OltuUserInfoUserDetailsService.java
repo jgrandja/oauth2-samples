@@ -30,7 +30,10 @@ import org.springframework.security.oauth2.core.OAuth2AuthenticationException;
 import org.springframework.security.oauth2.core.OAuth2Error;
 import org.springframework.security.oauth2.core.userdetails.OAuth2User;
 import org.springframework.security.oauth2.core.userdetails.OAuth2UserBuilder;
+import org.springframework.security.oauth2.core.userdetails.OAuth2UserDetails;
 import org.springframework.security.openid.connect.core.userdetails.OpenIDConnectUserBuilder;
+
+import java.net.URI;
 
 /**
  * @author Joe Grandja
@@ -74,5 +77,10 @@ public class OltuUserInfoUserDetailsService implements UserInfoUserDetailsServic
 		}
 
 		return oauth2User;
+	}
+
+	@Override
+	public void mapUserInfoType(Class<? extends OAuth2UserDetails> userInfoType, URI userInfoUri) {
+		// This class is throwaway so no-op
 	}
 }

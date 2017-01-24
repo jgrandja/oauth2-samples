@@ -28,6 +28,7 @@ import org.springframework.security.oauth2.client.registration.ClientRegistratio
 import org.springframework.security.oauth2.client.registration.ClientRegistrationRepository;
 import org.springframework.security.oauth2.client.registration.InMemoryClientRegistrationRepository;
 import org.springframework.security.oauth2.client.userdetails.UserInfoUserDetailsService;
+import org.springframework.security.oauth2.core.userdetails.OAuth2UserDetails;
 import org.springframework.security.web.authentication.ui.DefaultLoginPageGeneratingFilter;
 import org.springframework.util.Assert;
 
@@ -36,6 +37,8 @@ import javax.servlet.ServletException;
 import javax.servlet.ServletRequest;
 import javax.servlet.ServletResponse;
 import java.io.IOException;
+import java.net.URI;
+import java.net.URISyntaxException;
 import java.util.Arrays;
 import java.util.Map;
 import java.util.stream.Collectors;
@@ -49,9 +52,11 @@ import static org.springframework.security.oauth2.client.authentication.ui.Abstr
 public final class OAuth2ClientSecurityConfigurer<B extends HttpSecurityBuilder<B>> extends
 		AbstractHttpConfigurer<OAuth2ClientSecurityConfigurer<B>, B> {
 
-	private AuthorizationRequestRedirectFilterConfigurer<B> authorizationRequestRedirectFilterConfigurer;
+	private final AuthorizationRequestRedirectFilterConfigurer<B> authorizationRequestRedirectFilterConfigurer;
 
-	private AuthorizationCodeGrantFilterConfigurer<B> authorizationCodeGrantFilterConfigurer;
+	private final AuthorizationCodeGrantFilterConfigurer<B> authorizationCodeGrantFilterConfigurer;
+
+	private final UserInfoEndpointConfig userInfoEndpointConfig;
 
 	private boolean loginPageFilterEnabled;
 
@@ -59,6 +64,7 @@ public final class OAuth2ClientSecurityConfigurer<B extends HttpSecurityBuilder<
 	public OAuth2ClientSecurityConfigurer() {
 		this.authorizationRequestRedirectFilterConfigurer = new AuthorizationRequestRedirectFilterConfigurer<>();
 		this.authorizationCodeGrantFilterConfigurer = new AuthorizationCodeGrantFilterConfigurer<>();
+		this.userInfoEndpointConfig = new UserInfoEndpointConfig();
 		this.loginPageFilterEnabled = true;
 	}
 
@@ -101,10 +107,35 @@ public final class OAuth2ClientSecurityConfigurer<B extends HttpSecurityBuilder<
 		return this;
 	}
 
-	public OAuth2ClientSecurityConfigurer<B> userInfoEndpointService(UserInfoUserDetailsService userInfoEndpointService) {
-		Assert.notNull(userInfoEndpointService, "userInfoEndpointService cannot be null");
-		this.authorizationCodeGrantFilterConfigurer.userInfoUserDetailsService(userInfoEndpointService);
-		return this;
+	public UserInfoEndpointConfig userInfoEndpoint() {
+		return this.userInfoEndpointConfig;
+	}
+
+	public final class UserInfoEndpointConfig {
+
+		private UserInfoEndpointConfig() {
+		}
+
+		public OAuth2ClientSecurityConfigurer<B> userInfoService(UserInfoUserDetailsService userInfoService) {
+			Assert.notNull(userInfoService, "userInfoService cannot be null");
+			OAuth2ClientSecurityConfigurer.this.authorizationCodeGrantFilterConfigurer.userInfoUserDetailsService(userInfoService);
+			return this.and();
+		}
+
+		public OAuth2ClientSecurityConfigurer<B> userInfoTypeMapping(Class<? extends OAuth2UserDetails> userInfoType, String userInfoUri) {
+			Assert.notNull(userInfoType, "userInfoType cannot be null");
+			Assert.notNull(userInfoUri, "userInfoUri cannot be null");
+			try {
+				OAuth2ClientSecurityConfigurer.this.authorizationCodeGrantFilterConfigurer.userInfoTypeMapping(userInfoType, new URI(userInfoUri));
+				return this.and();
+			} catch (URISyntaxException ex) {
+				throw new IllegalArgumentException(ex.getMessage(), ex);
+			}
+		}
+
+		public OAuth2ClientSecurityConfigurer<B> and() {
+			return OAuth2ClientSecurityConfigurer.this;
+		}
 	}
 
 	@Override

@@ -48,7 +48,8 @@ public class SecurityConfig extends WebSecurityConfigurerAdapter {
 					.and()
 				.apply(oauth2Client()
 						.authorizationCodeGrantTokenExchanger(authorizationCodeGrantTokenExchanger())
-						.userInfoEndpointService(userInfoEndpointService()));
+						.userInfoEndpoint()
+							.userInfoService(userInfoService()));
 	}
 	// @formatter:on
 
@@ -68,7 +69,7 @@ public class SecurityConfig extends WebSecurityConfigurerAdapter {
 		return new OltuAuthorizationCodeGrantTokenExchanger();
 	}
 
-	private UserInfoUserDetailsService userInfoEndpointService() {
+	private UserInfoUserDetailsService userInfoService() {
 		return new OltuUserInfoUserDetailsService();
 	}
 }

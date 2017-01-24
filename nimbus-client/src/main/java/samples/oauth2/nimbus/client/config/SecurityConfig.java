@@ -15,6 +15,8 @@
  */
 package samples.oauth2.nimbus.client.config;
 
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.boot.context.properties.ConfigurationProperties;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
@@ -22,6 +24,7 @@ import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
 import org.springframework.security.config.annotation.web.configuration.WebSecurityConfigurerAdapter;
 import org.springframework.security.oauth2.client.registration.ClientRegistration;
+import samples.oauth2.nimbus.client.userdetails.GitHubOAuth2UserDetails;
 
 import static org.springframework.security.oauth2.client.config.annotation.web.configurers.OAuth2ClientSecurityConfigurer.oauth2Client;
 
@@ -33,6 +36,10 @@ import static org.springframework.security.oauth2.client.config.annotation.web.c
 @EnableWebSecurity
 public class SecurityConfig extends WebSecurityConfigurerAdapter {
 
+	@Autowired
+	@Qualifier("githubClientRegistration")
+	private ClientRegistration githubClientRegistration;
+
 	// @formatter:off
 	@Override
 	protected void configure(HttpSecurity http) throws Exception {
@@ -41,7 +48,9 @@ public class SecurityConfig extends WebSecurityConfigurerAdapter {
 					.antMatchers("/favicon.ico").permitAll()
 					.anyRequest().fullyAuthenticated()
 					.and()
-				.apply(oauth2Client());
+				.apply(oauth2Client()
+						.userInfoEndpoint()
+							.userInfoTypeMapping(GitHubOAuth2UserDetails.class, this.githubClientRegistration.getUserInfoUri()));
 	}
 	// @formatter:on
 

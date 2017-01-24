@@ -15,11 +15,15 @@
  */
 package org.springframework.security.oauth2.client.userdetails;
 
-import org.springframework.security.core.userdetails.AuthenticationUserDetailsService;
-import org.springframework.security.oauth2.client.authentication.OAuth2AuthenticationToken;
+import org.springframework.security.oauth2.core.userdetails.OAuth2UserDetails;
+
+import java.net.URI;
 
 /**
  * @author Joe Grandja
  */
-public interface UserInfoUserDetailsService extends AuthenticationUserDetailsService<OAuth2AuthenticationToken>, MappableUserInfoType {
+public interface MappableUserInfoType {
+
+	void mapUserInfoType(Class<? extends OAuth2UserDetails> userInfoType, URI userInfoUri);
+
 }
