@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.springframework.security.oauth2.client.filter;
+package org.springframework.security.oauth2.client.authorization;
 
 
 import org.springframework.security.oauth2.core.protocol.AuthorizationRequestAttributes;
