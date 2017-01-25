@@ -15,7 +15,7 @@
  */
 package org.springframework.security.oauth2.core.protocol;
 
-import org.springframework.security.oauth2.core.AccessTokenType;
+import org.springframework.security.oauth2.core.AccessToken;
 import org.springframework.util.Assert;
 
 import java.util.Collections;
@@ -27,27 +27,27 @@ import java.util.Set;
  */
 public class TokenResponseAttributes {
 	private final String accessToken;
-	private final AccessTokenType accessTokenType;
+	private final AccessToken.TokenType accessTokenType;
 	private final long expiresIn;
 	private final Set<String> scopes;
 	private final String refreshToken;
 	private final Map<String,String> additionalParameters;
 
-	public TokenResponseAttributes(String accessToken, AccessTokenType accessTokenType, long expiresIn) {
+	public TokenResponseAttributes(String accessToken, AccessToken.TokenType accessTokenType, long expiresIn) {
 		this(accessToken, accessTokenType, expiresIn, Collections.emptySet());
 	}
 
-	public TokenResponseAttributes(String accessToken, AccessTokenType accessTokenType, long expiresIn, Set<String> scopes) {
+	public TokenResponseAttributes(String accessToken, AccessToken.TokenType accessTokenType, long expiresIn, Set<String> scopes) {
 		this(accessToken, accessTokenType, expiresIn, scopes, null);
 	}
 
-	public TokenResponseAttributes(String accessToken, AccessTokenType accessTokenType, long expiresIn,
+	public TokenResponseAttributes(String accessToken, AccessToken.TokenType accessTokenType, long expiresIn,
 								   Set<String> scopes, String refreshToken) {
 
 		this(accessToken, accessTokenType, expiresIn, scopes, refreshToken, Collections.emptyMap());
 	}
 
-	public TokenResponseAttributes(String accessToken, AccessTokenType accessTokenType, long expiresIn,
+	public TokenResponseAttributes(String accessToken, AccessToken.TokenType accessTokenType, long expiresIn,
 								   Set<String> scopes, String refreshToken, Map<String,String> additionalParameters) {
 
 		Assert.notNull(accessToken, "accessToken cannot be null");
@@ -69,7 +69,7 @@ public class TokenResponseAttributes {
 		return this.accessToken;
 	}
 
-	public final AccessTokenType getAccessTokenType() {
+	public final AccessToken.TokenType getAccessTokenType() {
 		return this.accessTokenType;
 	}
 

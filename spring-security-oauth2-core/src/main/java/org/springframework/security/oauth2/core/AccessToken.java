@@ -24,23 +24,38 @@ import java.util.Set;
  * @author Joe Grandja
  */
 public class AccessToken extends AbstractToken {
-	private final AccessTokenType accessTokenType;
+	private final TokenType tokenType;
 	private final long expiredAt;
 	private final Set<String> scopes;
 
-	public AccessToken(AccessTokenType accessTokenType, String value) {
-		this(accessTokenType, value, 0);
+	public enum TokenType {
+		BEARER("Bearer"),
+		MAC("mac");
+
+		private final String value;
+
+		TokenType(String value) {
+			this.value = value;
+		}
+
+		public String value() {
+			return this.value;
+		}
 	}
 
-	public AccessToken(AccessTokenType accessTokenType, String value, long expiredAt) {
-		this(accessTokenType, value, expiredAt, Collections.emptySet());
+	public AccessToken(TokenType tokenType, String value) {
+		this(tokenType, value, 0);
 	}
 
-	public AccessToken(AccessTokenType accessTokenType, String value, long expiredAt, Set<String> scopes) {
+	public AccessToken(TokenType tokenType, String value, long expiredAt) {
+		this(tokenType, value, expiredAt, Collections.emptySet());
+	}
+
+	public AccessToken(TokenType tokenType, String value, long expiredAt, Set<String> scopes) {
 		super(value);
 
-		Assert.notNull(accessTokenType, "accessTokenType cannot be null");
-		this.accessTokenType = accessTokenType;
+		Assert.notNull(tokenType, "tokenType cannot be null");
+		this.tokenType = tokenType;
 
 		Assert.isTrue(expiredAt >= 0, "expiredAt must be a positive number");
 		this.expiredAt = expiredAt;
@@ -48,8 +63,8 @@ public class AccessToken extends AbstractToken {
 		this.scopes = Collections.unmodifiableSet((scopes != null ? scopes : Collections.emptySet()));
 	}
 
-	public final AccessTokenType getAccessTokenType() {
-		return this.accessTokenType;
+	public final TokenType getTokenType() {
+		return this.tokenType;
 	}
 
 	public final long getExpiredAt() {

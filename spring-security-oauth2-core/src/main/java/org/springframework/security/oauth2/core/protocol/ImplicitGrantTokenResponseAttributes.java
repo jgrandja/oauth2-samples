@@ -15,7 +15,7 @@
  */
 package org.springframework.security.oauth2.core.protocol;
 
-import org.springframework.security.oauth2.core.AccessTokenType;
+import org.springframework.security.oauth2.core.AccessToken;
 
 import java.util.Collections;
 import java.util.Set;
@@ -26,12 +26,12 @@ import java.util.Set;
 public class ImplicitGrantTokenResponseAttributes extends TokenResponseAttributes {
 	private final String state;
 
-	public ImplicitGrantTokenResponseAttributes(String accessToken, AccessTokenType accessTokenType,
+	public ImplicitGrantTokenResponseAttributes(String accessToken, AccessToken.TokenType accessTokenType,
 												long expiresIn, String state) {
 		this(accessToken, accessTokenType, expiresIn, Collections.emptySet(), state);
 	}
 
-	public ImplicitGrantTokenResponseAttributes(String accessToken, AccessTokenType accessTokenType, long expiresIn,
+	public ImplicitGrantTokenResponseAttributes(String accessToken, AccessToken.TokenType accessTokenType, long expiresIn,
 												Set<String> scopes, String state) {
 		super(accessToken, accessTokenType, expiresIn, scopes, null);
 		this.state = state;

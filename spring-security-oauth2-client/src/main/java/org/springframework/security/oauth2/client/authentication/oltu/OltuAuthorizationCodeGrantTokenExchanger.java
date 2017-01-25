@@ -27,7 +27,7 @@ import org.springframework.security.authentication.AuthenticationServiceExceptio
 import org.springframework.security.oauth2.client.authentication.AuthorizationCodeGrantAuthenticationToken;
 import org.springframework.security.oauth2.client.authentication.AuthorizationGrantTokenExchanger;
 import org.springframework.security.oauth2.client.registration.ClientRegistration;
-import org.springframework.security.oauth2.core.AccessTokenType;
+import org.springframework.security.oauth2.core.AccessToken;
 import org.springframework.security.oauth2.core.OAuth2AuthenticationException;
 import org.springframework.security.oauth2.core.OAuth2Error;
 import org.springframework.security.oauth2.core.protocol.TokenResponseAttributes;
@@ -75,11 +75,11 @@ public class OltuAuthorizationCodeGrantTokenExchanger implements AuthorizationGr
 		}
 
 		String accessToken = tokenResponse.getAccessToken();
-		AccessTokenType accessTokenType = null;
-		if (AccessTokenType.BEARER.value().equalsIgnoreCase(tokenResponse.getTokenType())) {
-			accessTokenType = AccessTokenType.BEARER;
-		} else if (AccessTokenType.MAC.value().equalsIgnoreCase(tokenResponse.getTokenType())) {
-			accessTokenType = AccessTokenType.MAC;
+		AccessToken.TokenType accessTokenType = null;
+		if (AccessToken.TokenType.BEARER.value().equalsIgnoreCase(tokenResponse.getTokenType())) {
+			accessTokenType = AccessToken.TokenType.BEARER;
+		} else if (AccessToken.TokenType.MAC.value().equalsIgnoreCase(tokenResponse.getTokenType())) {
+			accessTokenType = AccessToken.TokenType.MAC;
 		}
 		long expiresIn = (tokenResponse.getExpiresIn() != null ? tokenResponse.getExpiresIn() : 0);
 		Set<String> scopes = (tokenResponse.getScope() != null ?

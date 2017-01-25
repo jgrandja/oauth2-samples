@@ -27,7 +27,7 @@ import org.springframework.security.authentication.AuthenticationServiceExceptio
 import org.springframework.security.oauth2.client.authentication.AuthorizationCodeGrantAuthenticationToken;
 import org.springframework.security.oauth2.client.authentication.AuthorizationGrantTokenExchanger;
 import org.springframework.security.oauth2.client.registration.ClientRegistration;
-import org.springframework.security.oauth2.core.AccessTokenType;
+import org.springframework.security.oauth2.core.AccessToken;
 import org.springframework.security.oauth2.core.OAuth2AuthenticationException;
 import org.springframework.security.oauth2.core.OAuth2Error;
 import org.springframework.security.oauth2.core.protocol.TokenResponseAttributes;
@@ -89,11 +89,11 @@ public class NimbusAuthorizationCodeGrantTokenExchanger implements Authorization
 		AccessTokenResponse accessTokenResponse = (AccessTokenResponse) tokenResponse;
 
 		String accessToken = accessTokenResponse.getTokens().getAccessToken().getValue();
-		AccessTokenType accessTokenType = null;
-		if (AccessTokenType.BEARER.value().equals(accessTokenResponse.getTokens().getAccessToken().getType().getValue())) {
-			accessTokenType = AccessTokenType.BEARER;
-		} else if (AccessTokenType.MAC.value().equals(accessTokenResponse.getTokens().getAccessToken().getType().getValue())) {
-			accessTokenType = AccessTokenType.MAC;
+		AccessToken.TokenType accessTokenType = null;
+		if (AccessToken.TokenType.BEARER.value().equals(accessTokenResponse.getTokens().getAccessToken().getType().getValue())) {
+			accessTokenType = AccessToken.TokenType.BEARER;
+		} else if (AccessToken.TokenType.MAC.value().equals(accessTokenResponse.getTokens().getAccessToken().getType().getValue())) {
+			accessTokenType = AccessToken.TokenType.MAC;
 		}
 		long expiresIn = accessTokenResponse.getTokens().getAccessToken().getLifetime();
 		Set<String> scopes = Collections.emptySet();

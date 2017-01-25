@@ -47,10 +47,7 @@ import org.springframework.security.oauth2.client.registration.ClientRegistratio
 import org.springframework.security.oauth2.client.registration.ClientRegistrationRepository;
 import org.springframework.security.oauth2.client.registration.InMemoryClientRegistrationRepository;
 import org.springframework.security.oauth2.client.userdetails.UserInfoUserDetailsService;
-import org.springframework.security.oauth2.core.AccessTokenType;
-import org.springframework.security.oauth2.core.OAuth2Attributes;
-import org.springframework.security.oauth2.core.OAuth2Error;
-import org.springframework.security.oauth2.core.ResponseType;
+import org.springframework.security.oauth2.core.*;
 import org.springframework.security.oauth2.core.protocol.TokenResponseAttributes;
 import org.springframework.security.oauth2.core.userdetails.OAuth2User;
 import org.springframework.security.oauth2.core.userdetails.OAuth2UserAttribute;
@@ -408,7 +405,7 @@ public class NimbusOAuth2ClientApplicationTests {
 
 		private AuthorizationGrantTokenExchanger<AuthorizationCodeGrantAuthenticationToken> mockAuthorizationCodeGrantTokenExchanger() {
 			TokenResponseAttributes tokenResponse = new TokenResponseAttributes(
-					"access-token-1234", AccessTokenType.BEARER, 60 * 1000, Collections.singleton("openid"), "refresh-token-5678");
+					"access-token-1234", AccessToken.TokenType.BEARER, 60 * 1000, Collections.singleton("openid"), "refresh-token-5678");
 
 			AuthorizationGrantTokenExchanger mock = mock(AuthorizationGrantTokenExchanger.class);
 			when(mock.exchange(any())).thenReturn(tokenResponse);
