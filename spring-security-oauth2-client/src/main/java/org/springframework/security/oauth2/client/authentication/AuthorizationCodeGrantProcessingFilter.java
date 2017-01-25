@@ -69,6 +69,7 @@ public class AuthorizationCodeGrantProcessingFilter extends AbstractAuthenticati
 			ErrorResponseAttributes authorizationError = ResponseAttributesExtractor.extractErrorResponse(request);
 			OAuth2Error oauth2Error = OAuth2Error.valueOf(authorizationError.getErrorCode(),
 					authorizationError.getErrorDescription(), authorizationError.getErrorUri());
+			this.authorizationRequestRepository.removeAuthorizationRequest(request);
 			throw new OAuth2AuthenticationException(oauth2Error, oauth2Error.getErrorMessage());
 		}
 
@@ -121,6 +122,7 @@ public class AuthorizationCodeGrantProcessingFilter extends AbstractAuthenticati
 			OAuth2Error oauth2Error = OAuth2Error.authorizationRequestNotFound();
 			throw new OAuth2AuthenticationException(oauth2Error, oauth2Error.getErrorMessage());
 		}
+		this.authorizationRequestRepository.removeAuthorizationRequest(request);
 		this.assertMatchingAuthorizationRequest(request, authorizationRequest);
 		return authorizationRequest;
 	}
