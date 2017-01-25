@@ -16,10 +16,16 @@
 package org.springframework.security.oauth2.client.userdetails;
 
 import org.springframework.security.core.userdetails.AuthenticationUserDetailsService;
+import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.security.oauth2.client.authentication.OAuth2AuthenticationToken;
+import org.springframework.security.oauth2.core.OAuth2AuthenticationException;
 
 /**
  * @author Joe Grandja
  */
 public interface UserInfoUserDetailsService extends AuthenticationUserDetailsService<OAuth2AuthenticationToken>, MappableUserInfoType {
+
+	@Override
+	UserDetails loadUserDetails(OAuth2AuthenticationToken token) throws OAuth2AuthenticationException;
+
 }

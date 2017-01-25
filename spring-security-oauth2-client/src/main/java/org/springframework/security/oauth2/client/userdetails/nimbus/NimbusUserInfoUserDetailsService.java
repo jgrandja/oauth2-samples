@@ -29,7 +29,6 @@ import org.springframework.http.converter.HttpMessageNotReadableException;
 import org.springframework.http.converter.json.MappingJackson2HttpMessageConverter;
 import org.springframework.security.authentication.AuthenticationServiceException;
 import org.springframework.security.core.userdetails.UserDetails;
-import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.security.oauth2.client.authentication.OAuth2AuthenticationToken;
 import org.springframework.security.oauth2.client.registration.ClientRegistration;
 import org.springframework.security.oauth2.client.userdetails.UserInfoUserDetailsService;
@@ -56,7 +55,7 @@ public class NimbusUserInfoUserDetailsService implements UserInfoUserDetailsServ
 
 
 	@Override
-	public UserDetails loadUserDetails(OAuth2AuthenticationToken authenticationToken) throws UsernameNotFoundException {
+	public UserDetails loadUserDetails(OAuth2AuthenticationToken authenticationToken) throws OAuth2AuthenticationException {
 		OAuth2UserDetails oauth2User = null;
 
 		try {

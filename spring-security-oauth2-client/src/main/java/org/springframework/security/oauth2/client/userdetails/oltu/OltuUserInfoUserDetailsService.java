@@ -23,7 +23,6 @@ import org.apache.oltu.oauth2.common.exception.OAuthSystemException;
 import org.springframework.http.MediaType;
 import org.springframework.security.authentication.AuthenticationServiceException;
 import org.springframework.security.core.userdetails.UserDetails;
-import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.security.oauth2.client.authentication.OAuth2AuthenticationToken;
 import org.springframework.security.oauth2.client.userdetails.UserInfoUserDetailsService;
 import org.springframework.security.oauth2.core.OAuth2AuthenticationException;
@@ -41,7 +40,7 @@ import java.net.URI;
 public class OltuUserInfoUserDetailsService implements UserInfoUserDetailsService {
 
 	@Override
-	public UserDetails loadUserDetails(OAuth2AuthenticationToken authenticationToken) throws UsernameNotFoundException {
+	public UserDetails loadUserDetails(OAuth2AuthenticationToken authenticationToken) throws OAuth2AuthenticationException {
 		OAuth2User oauth2User;
 
 		try {
