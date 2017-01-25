@@ -26,16 +26,16 @@ import org.springframework.security.oauth2.core.OAuth2Error;
 import org.springframework.security.oauth2.core.protocol.AuthorizationCodeGrantAuthorizationResponseAttributes;
 import org.springframework.security.oauth2.core.protocol.AuthorizationRequestAttributes;
 import org.springframework.security.oauth2.core.protocol.ErrorResponseAttributes;
+import org.springframework.security.oauth2.core.protocol.ResponseAttributesExtractor;
 import org.springframework.security.web.authentication.AbstractAuthenticationProcessingFilter;
 import org.springframework.util.Assert;
+import org.springframework.util.StringUtils;
 
 import javax.servlet.ServletException;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 import java.io.IOException;
 import java.net.URI;
-
-import static org.springframework.security.oauth2.client.filter.AuthorizationUtil.*;
 
 
 /**
@@ -47,7 +47,7 @@ public class AuthorizationCodeGrantProcessingFilter extends AbstractAuthenticati
 	private ClientRegistrationRepository clientRegistrationRepository;
 
 	public AuthorizationCodeGrantProcessingFilter() {
-		super(AuthorizationUtil::isAuthorizationCodeGrantResponse);
+		super(AuthorizationCodeGrantProcessingFilter::isAuthorizationCodeGrantResponse);
 	}
 
 	@Override
@@ -61,8 +61,8 @@ public class AuthorizationCodeGrantProcessingFilter extends AbstractAuthenticati
 	public Authentication attemptAuthentication(HttpServletRequest request, HttpServletResponse response)
 			throws AuthenticationException, IOException, ServletException {
 
-		if (isAuthorizationCodeGrantError(request)) {
-			ErrorResponseAttributes authorizationError = parseErrorAttributes(request);
+		if (isAuthorizationCodeGrantErrorResponse(request)) {
+			ErrorResponseAttributes authorizationError = ResponseAttributesExtractor.extractErrorResponse(request);
 			OAuth2Error oauth2Error = OAuth2Error.valueOf(authorizationError.getErrorCode(),
 					authorizationError.getErrorDescription(), authorizationError.getErrorUri());
 			throw new OAuth2AuthenticationException(oauth2Error, oauth2Error.getErrorMessage());
@@ -74,7 +74,7 @@ public class AuthorizationCodeGrantProcessingFilter extends AbstractAuthenticati
 				matchingAuthorizationRequest.getClientId());
 
 		AuthorizationCodeGrantAuthorizationResponseAttributes authorizationCodeGrantAttributes =
-				parseAuthorizationCodeGrantAttributes(request);
+				ResponseAttributesExtractor.extractAuthorizationCodeGrantResponse(request);
 
 		AuthorizationCodeGrantAuthenticationToken authRequest = new AuthorizationCodeGrantAuthenticationToken(
 				authorizationCodeGrantAttributes.getCode(), clientRegistration);
@@ -84,6 +84,25 @@ public class AuthorizationCodeGrantProcessingFilter extends AbstractAuthenticati
 		Authentication authenticated = this.getAuthenticationManager().authenticate(authRequest);
 
 		return authenticated;
+	}
+
+	public final void setClientRegistrationRepository(ClientRegistrationRepository clientRegistrationRepository) {
+		Assert.notNull(clientRegistrationRepository, "clientRegistrationRepository cannot be null");
+		this.clientRegistrationRepository = clientRegistrationRepository;
+	}
+
+	public static final boolean isAuthorizationCodeGrantSuccessResponse(HttpServletRequest request) {
+		return !StringUtils.isEmpty(request.getParameter(OAuth2Attributes.CODE)) &&
+				!StringUtils.isEmpty(request.getParameter(OAuth2Attributes.STATE));
+	}
+
+	public static final boolean isAuthorizationCodeGrantErrorResponse(HttpServletRequest request) {
+		return !StringUtils.isEmpty(request.getParameter(OAuth2Attributes.ERROR)) &&
+				!StringUtils.isEmpty(request.getParameter(OAuth2Attributes.STATE));
+	}
+
+	public static final boolean isAuthorizationCodeGrantResponse(HttpServletRequest request) {
+		return isAuthorizationCodeGrantSuccessResponse(request) || isAuthorizationCodeGrantErrorResponse(request);
 	}
 
 	private AuthorizationRequestAttributes resolveAuthorizationRequest(HttpServletRequest request) {
@@ -108,10 +127,5 @@ public class AuthorizationCodeGrantProcessingFilter extends AbstractAuthenticati
 			OAuth2Error oauth2Error = OAuth2Error.invalidRedirectUriParameter();
 			throw new OAuth2AuthenticationException(oauth2Error, oauth2Error.getErrorMessage());
 		}
-	}
-
-	public final void setClientRegistrationRepository(ClientRegistrationRepository clientRegistrationRepository) {
-		Assert.notNull(clientRegistrationRepository, "clientRegistrationRepository cannot be null");
-		this.clientRegistrationRepository = clientRegistrationRepository;
 	}
 }

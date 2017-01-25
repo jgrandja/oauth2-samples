@@ -15,17 +15,10 @@
  */
 package org.springframework.security.oauth2.client.filter;
 
-import org.springframework.security.oauth2.core.OAuth2Attributes;
-import org.springframework.security.oauth2.core.protocol.AuthorizationCodeGrantAuthorizationResponseAttributes;
 import org.springframework.security.oauth2.core.protocol.AuthorizationRequestAttributes;
-import org.springframework.security.oauth2.core.protocol.ErrorResponseAttributes;
-import org.springframework.util.Assert;
-import org.springframework.util.StringUtils;
 
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpSession;
-import java.net.URI;
-import java.net.URISyntaxException;
 
 /**
  * @author Joe Grandja
@@ -45,57 +38,5 @@ public class AuthorizationUtil {
 			authorizationRequest = (AuthorizationRequestAttributes) session.getAttribute(SAVED_AUTHORIZATION_REQUEST);
 		}
 		return authorizationRequest;
-	}
-
-	static boolean isAuthorizationCodeGrantSuccess(HttpServletRequest request) {
-		return !StringUtils.isEmpty(request.getParameter(OAuth2Attributes.CODE)) &&
-				!StringUtils.isEmpty(request.getParameter(OAuth2Attributes.STATE));
-	}
-
-	static AuthorizationCodeGrantAuthorizationResponseAttributes parseAuthorizationCodeGrantAttributes(HttpServletRequest request) {
-		AuthorizationCodeGrantAuthorizationResponseAttributes result;
-
-		String code = request.getParameter(OAuth2Attributes.CODE);
-		Assert.hasText(code, OAuth2Attributes.CODE + " attribute is required");
-
-		String state = request.getParameter(OAuth2Attributes.STATE);
-
-		result = new AuthorizationCodeGrantAuthorizationResponseAttributes(code, state);
-
-		return result;
-	}
-
-	static boolean isAuthorizationCodeGrantError(HttpServletRequest request) {
-		return !StringUtils.isEmpty(request.getParameter(OAuth2Attributes.ERROR)) &&
-				!StringUtils.isEmpty(request.getParameter(OAuth2Attributes.STATE));
-	}
-
-	static ErrorResponseAttributes parseErrorAttributes(HttpServletRequest request) {
-		ErrorResponseAttributes result;
-
-		String error = request.getParameter(OAuth2Attributes.ERROR);
-		Assert.hasText(error, OAuth2Attributes.ERROR + " attribute is required");
-
-		String errorDescription = request.getParameter(OAuth2Attributes.ERROR_DESCRIPTION);
-
-		URI errorUri = null;
-		String errorUriStr = request.getParameter(OAuth2Attributes.ERROR_URI);
-		if (!StringUtils.isEmpty(errorUriStr)) {
-			try {
-				errorUri = new URI(errorUriStr);
-			} catch (URISyntaxException ex) {
-				// Ignore as this is an optional attribute
-			}
-		}
-
-		String state = request.getParameter(OAuth2Attributes.STATE);
-
-		result = new ErrorResponseAttributes(error, errorDescription, errorUri, state);
-
-		return result;
-	}
-
-	public static boolean isAuthorizationCodeGrantResponse(HttpServletRequest request) {
-		return isAuthorizationCodeGrantSuccess(request) || isAuthorizationCodeGrantError(request);
 	}
 }

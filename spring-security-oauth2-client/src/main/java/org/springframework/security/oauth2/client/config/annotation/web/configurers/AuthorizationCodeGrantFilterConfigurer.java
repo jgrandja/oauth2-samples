@@ -24,7 +24,6 @@ import org.springframework.security.oauth2.client.authentication.AuthorizationCo
 import org.springframework.security.oauth2.client.authentication.AuthorizationGrantTokenExchanger;
 import org.springframework.security.oauth2.client.authentication.nimbus.NimbusAuthorizationCodeGrantTokenExchanger;
 import org.springframework.security.oauth2.client.filter.AuthorizationCodeGrantProcessingFilter;
-import org.springframework.security.oauth2.client.filter.AuthorizationUtil;
 import org.springframework.security.oauth2.client.registration.ClientRegistrationRepository;
 import org.springframework.security.oauth2.client.userdetails.UserInfoUserDetailsService;
 import org.springframework.security.oauth2.client.userdetails.nimbus.NimbusUserInfoUserDetailsService;
@@ -50,7 +49,7 @@ import static org.springframework.security.oauth2.client.config.annotation.web.c
 final class AuthorizationCodeGrantFilterConfigurer<H extends HttpSecurityBuilder<H>> extends
 		AbstractAuthenticationFilterConfigurer<H, AuthorizationCodeGrantFilterConfigurer<H>, AuthorizationCodeGrantProcessingFilter> {
 
-	static final String DEFAULT_CLIENTS_PAGE_URI = "/oauth2/clients";
+	private static final String DEFAULT_CLIENTS_PAGE_URI = "/oauth2/clients";
 
 	private AuthorizationGrantTokenExchanger<AuthorizationCodeGrantAuthenticationToken> authorizationCodeGrantTokenExchanger;
 
@@ -132,7 +131,7 @@ final class AuthorizationCodeGrantFilterConfigurer<H extends HttpSecurityBuilder
 	protected RequestMatcher createLoginProcessingUrlMatcher(String loginProcessingUrl) {
 		// NOTE: loginProcessingUrl is purposely ignored as the matcher depends
 		// 			on specific request parameters instead of the requestUri
-		return AuthorizationUtil::isAuthorizationCodeGrantResponse;
+		return AuthorizationCodeGrantProcessingFilter::isAuthorizationCodeGrantResponse;
 	}
 
 	String getClientsPage() {
