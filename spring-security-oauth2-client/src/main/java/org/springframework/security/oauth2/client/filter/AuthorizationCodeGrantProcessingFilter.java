@@ -18,6 +18,8 @@ package org.springframework.security.oauth2.client.filter;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.AuthenticationException;
 import org.springframework.security.oauth2.client.authentication.AuthorizationCodeGrantAuthenticationToken;
+import org.springframework.security.oauth2.client.authorization.AuthorizationRequestRepository;
+import org.springframework.security.oauth2.client.authorization.HttpSessionAuthorizationRequestRepository;
 import org.springframework.security.oauth2.client.registration.ClientRegistration;
 import org.springframework.security.oauth2.client.registration.ClientRegistrationRepository;
 import org.springframework.security.oauth2.core.OAuth2Attributes;
@@ -45,6 +47,9 @@ import java.net.URI;
  */
 public class AuthorizationCodeGrantProcessingFilter extends AbstractAuthenticationProcessingFilter {
 	private ClientRegistrationRepository clientRegistrationRepository;
+
+	private AuthorizationRequestRepository authorizationRequestRepository = new HttpSessionAuthorizationRequestRepository();
+
 
 	public AuthorizationCodeGrantProcessingFilter() {
 		super(AuthorizationCodeGrantProcessingFilter::isAuthorizationCodeGrantResponse);
@@ -91,6 +96,11 @@ public class AuthorizationCodeGrantProcessingFilter extends AbstractAuthenticati
 		this.clientRegistrationRepository = clientRegistrationRepository;
 	}
 
+	public final void setAuthorizationRequestRepository(AuthorizationRequestRepository authorizationRequestRepository) {
+		Assert.notNull(authorizationRequestRepository, "authorizationRequestRepository cannot be null");
+		this.authorizationRequestRepository = authorizationRequestRepository;
+	}
+
 	public static final boolean isAuthorizationCodeGrantSuccessResponse(HttpServletRequest request) {
 		return !StringUtils.isEmpty(request.getParameter(OAuth2Attributes.CODE)) &&
 				!StringUtils.isEmpty(request.getParameter(OAuth2Attributes.STATE));
@@ -106,7 +116,8 @@ public class AuthorizationCodeGrantProcessingFilter extends AbstractAuthenticati
 	}
 
 	private AuthorizationRequestAttributes resolveAuthorizationRequest(HttpServletRequest request) {
-		AuthorizationRequestAttributes authorizationRequest = AuthorizationUtil.getAuthorizationRequest(request);
+		AuthorizationRequestAttributes authorizationRequest =
+				this.authorizationRequestRepository.loadAuthorizationRequest(request);
 		if (authorizationRequest == null) {
 			OAuth2Error oauth2Error = OAuth2Error.authorizationRequestNotFound();
 			throw new OAuth2AuthenticationException(oauth2Error, oauth2Error.getErrorMessage());

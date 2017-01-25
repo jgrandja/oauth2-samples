@@ -18,6 +18,8 @@ package org.springframework.security.oauth2.client.filter;
 import org.junit.Test;
 import org.springframework.mock.web.MockHttpServletRequest;
 import org.springframework.mock.web.MockHttpServletResponse;
+import org.springframework.security.oauth2.client.authorization.AuthorizationRequestRepository;
+import org.springframework.security.oauth2.client.authorization.HttpSessionAuthorizationRequestRepository;
 import org.springframework.security.oauth2.client.registration.ClientRegistration;
 import org.springframework.security.oauth2.client.registration.ClientRegistrationRepository;
 import org.springframework.security.oauth2.core.protocol.AuthorizationRequestAttributes;
@@ -108,6 +110,8 @@ public class AuthorizationRequestRedirectFilterTests {
 		String authorizationUri = clientRegistration.getAuthorizeUri();
 		AuthorizationRequestRedirectFilter filter =
 				setupFilter(authorizationUri, clientRegistration);
+		AuthorizationRequestRepository authorizationRequestRepository = new HttpSessionAuthorizationRequestRepository();
+		filter.setAuthorizationRequestRepository(authorizationRequestRepository);
 
 		String requestUri = AuthorizationRequestRedirectFilter.DEFAULT_FILTER_PROCESSING_URI +
 				"/" + clientRegistration.getClientAlias();
@@ -122,7 +126,7 @@ public class AuthorizationRequestRedirectFilterTests {
 
 		// The authorization request attributes are saved in the session before the redirect happens
 		AuthorizationRequestAttributes authorizationRequestAttributes =
-				(AuthorizationRequestAttributes) request.getSession().getAttribute(AuthorizationUtil.SAVED_AUTHORIZATION_REQUEST);
+				authorizationRequestRepository.loadAuthorizationRequest(request);
 		assertThat(authorizationRequestAttributes).isNotNull();
 
 		assertThat(authorizationRequestAttributes.getAuthorizeUri()).isNotNull();

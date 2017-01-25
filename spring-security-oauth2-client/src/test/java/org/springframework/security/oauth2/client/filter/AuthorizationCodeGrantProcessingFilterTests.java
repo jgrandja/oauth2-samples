@@ -23,6 +23,8 @@ import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.TestingAuthenticationToken;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.AuthenticationException;
+import org.springframework.security.oauth2.client.authorization.AuthorizationRequestRepository;
+import org.springframework.security.oauth2.client.authorization.HttpSessionAuthorizationRequestRepository;
 import org.springframework.security.oauth2.client.registration.ClientRegistration;
 import org.springframework.security.oauth2.client.registration.ClientRegistrationRepository;
 import org.springframework.security.oauth2.core.OAuth2Attributes;
@@ -115,6 +117,8 @@ public class AuthorizationCodeGrantProcessingFilterTests {
 		AuthorizationCodeGrantProcessingFilter filter = spy(setupFilter(authenticationManager, clientRegistration));
 		AuthenticationSuccessHandler successHandler = mock(AuthenticationSuccessHandler.class);
 		filter.setAuthenticationSuccessHandler(successHandler);
+		AuthorizationRequestRepository authorizationRequestRepository = new HttpSessionAuthorizationRequestRepository();
+		filter.setAuthorizationRequestRepository(authorizationRequestRepository);
 
 		String requestURI = "/path";
 		clientRegistration.setRedirectUri(requestURI);		// requestUri must be same as client redirectUri to pass validation
@@ -124,7 +128,7 @@ public class AuthorizationCodeGrantProcessingFilterTests {
 		String state = "some state";
 		request.addParameter(OAuth2Attributes.CODE, authCode);
 		request.addParameter(OAuth2Attributes.STATE, state);
-		setupAuthorizationRequest(request, clientRegistration, state);
+		setupAuthorizationRequest(authorizationRequestRepository, request, clientRegistration, state);
 		MockHttpServletResponse response = new MockHttpServletResponse();
 		FilterChain filterChain = mock(FilterChain.class);
 
@@ -168,6 +172,8 @@ public class AuthorizationCodeGrantProcessingFilterTests {
 		AuthorizationCodeGrantProcessingFilter filter = spy(setupFilter(clientRegistration));
 		AuthenticationFailureHandler failureHandler = mock(AuthenticationFailureHandler.class);
 		filter.setAuthenticationFailureHandler(failureHandler);
+		AuthorizationRequestRepository authorizationRequestRepository = new HttpSessionAuthorizationRequestRepository();
+		filter.setAuthorizationRequestRepository(authorizationRequestRepository);
 
 		String requestURI = "/path";
 		MockHttpServletRequest request = new MockHttpServletRequest("GET", requestURI);
@@ -176,7 +182,7 @@ public class AuthorizationCodeGrantProcessingFilterTests {
 		String state = "some other state";
 		request.addParameter(OAuth2Attributes.CODE, authCode);
 		request.addParameter(OAuth2Attributes.STATE, state);
-		setupAuthorizationRequest(request, clientRegistration, "some state");
+		setupAuthorizationRequest(authorizationRequestRepository, request, clientRegistration, "some state");
 		MockHttpServletResponse response = new MockHttpServletResponse();
 		FilterChain filterChain = mock(FilterChain.class);
 
@@ -192,6 +198,8 @@ public class AuthorizationCodeGrantProcessingFilterTests {
 		AuthorizationCodeGrantProcessingFilter filter = spy(setupFilter(clientRegistration));
 		AuthenticationFailureHandler failureHandler = mock(AuthenticationFailureHandler.class);
 		filter.setAuthenticationFailureHandler(failureHandler);
+		AuthorizationRequestRepository authorizationRequestRepository = new HttpSessionAuthorizationRequestRepository();
+		filter.setAuthorizationRequestRepository(authorizationRequestRepository);
 
 		String requestURI = "/path2";
 		clientRegistration.setRedirectUri("/path");
@@ -201,7 +209,7 @@ public class AuthorizationCodeGrantProcessingFilterTests {
 		String state = "some state";
 		request.addParameter(OAuth2Attributes.CODE, authCode);
 		request.addParameter(OAuth2Attributes.STATE, state);
-		setupAuthorizationRequest(request, clientRegistration, state);
+		setupAuthorizationRequest(authorizationRequestRepository, request, clientRegistration, state);
 		MockHttpServletResponse response = new MockHttpServletResponse();
 		FilterChain filterChain = mock(FilterChain.class);
 
@@ -246,7 +254,11 @@ public class AuthorizationCodeGrantProcessingFilterTests {
 		return filter;
 	}
 
-	private void setupAuthorizationRequest(HttpServletRequest request, ClientRegistration clientRegistration, String state) {
+	private void setupAuthorizationRequest(AuthorizationRequestRepository authorizationRequestRepository,
+										   HttpServletRequest request,
+										   ClientRegistration clientRegistration,
+										   String state) {
+
 		AuthorizationRequestAttributes authorizationRequestAttributes =
 				AuthorizationRequestAttributes.authorizationCodeGrant(
 						clientRegistration.getAuthorizeUri(),
@@ -255,6 +267,6 @@ public class AuthorizationCodeGrantProcessingFilterTests {
 						clientRegistration.getScopes(),
 						state);
 
-		request.getSession().setAttribute(AuthorizationUtil.SAVED_AUTHORIZATION_REQUEST, authorizationRequestAttributes);
+		authorizationRequestRepository.saveAuthorizationRequest(authorizationRequestAttributes, request);
 	}
 }

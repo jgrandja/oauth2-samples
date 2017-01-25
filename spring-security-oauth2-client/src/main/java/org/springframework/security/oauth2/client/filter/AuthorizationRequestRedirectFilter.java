@@ -16,6 +16,8 @@
 package org.springframework.security.oauth2.client.filter;
 
 import org.springframework.security.crypto.keygen.StringKeyGenerator;
+import org.springframework.security.oauth2.client.authorization.AuthorizationRequestRepository;
+import org.springframework.security.oauth2.client.authorization.HttpSessionAuthorizationRequestRepository;
 import org.springframework.security.oauth2.client.registration.ClientRegistration;
 import org.springframework.security.oauth2.client.registration.ClientRegistrationRepository;
 import org.springframework.security.oauth2.core.DefaultStateGenerator;
@@ -56,6 +58,8 @@ public class AuthorizationRequestRedirectFilter extends OncePerRequestFilter {
 
 	private final StringKeyGenerator stateGenerator = new DefaultStateGenerator();
 
+	private AuthorizationRequestRepository authorizationRequestRepository = new HttpSessionAuthorizationRequestRepository();
+
 
 	public AuthorizationRequestRedirectFilter(ClientRegistrationRepository clientRegistrationRepository,
 											  AuthorizationRequestUriBuilder authorizationUriBuilder) {
@@ -81,6 +85,11 @@ public class AuthorizationRequestRedirectFilter extends OncePerRequestFilter {
 	@Override
 	public final void afterPropertiesSet() {
 		Assert.notEmpty(this.clientRegistrationRepository.getRegistrations(), "clientRegistrationRepository cannot be empty");
+	}
+
+	public final void setAuthorizationRequestRepository(AuthorizationRequestRepository authorizationRequestRepository) {
+		Assert.notNull(authorizationRequestRepository, "authorizationRequestRepository cannot be null");
+		this.authorizationRequestRepository = authorizationRequestRepository;
 	}
 
 	@Override
@@ -116,7 +125,7 @@ public class AuthorizationRequestRedirectFilter extends OncePerRequestFilter {
 						clientRegistration.getRedirectUri(),
 						clientRegistration.getScopes(),
 						this.stateGenerator.generateKey());
-		AuthorizationUtil.saveAuthorizationRequest(request, authorizationRequestAttributes);
+		this.authorizationRequestRepository.saveAuthorizationRequest(authorizationRequestAttributes, request);
 
 		URI redirectUri = null;
 		try {
