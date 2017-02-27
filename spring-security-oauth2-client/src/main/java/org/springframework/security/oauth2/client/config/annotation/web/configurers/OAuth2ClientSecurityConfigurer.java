@@ -38,7 +38,6 @@ import javax.servlet.ServletRequest;
 import javax.servlet.ServletResponse;
 import java.io.IOException;
 import java.net.URI;
-import java.net.URISyntaxException;
 import java.util.Arrays;
 import java.util.Map;
 import java.util.stream.Collectors;
@@ -122,15 +121,11 @@ public final class OAuth2ClientSecurityConfigurer<B extends HttpSecurityBuilder<
 			return this.and();
 		}
 
-		public OAuth2ClientSecurityConfigurer<B> userInfoTypeMapping(Class<? extends OAuth2UserDetails> userInfoType, String userInfoUri) {
+		public OAuth2ClientSecurityConfigurer<B> userInfoTypeMapping(Class<? extends OAuth2UserDetails> userInfoType, URI userInfoUri) {
 			Assert.notNull(userInfoType, "userInfoType cannot be null");
 			Assert.notNull(userInfoUri, "userInfoUri cannot be null");
-			try {
-				OAuth2ClientSecurityConfigurer.this.authorizationCodeGrantFilterConfigurer.userInfoTypeMapping(userInfoType, new URI(userInfoUri));
-				return this.and();
-			} catch (URISyntaxException ex) {
-				throw new IllegalArgumentException(ex.getMessage(), ex);
-			}
+			OAuth2ClientSecurityConfigurer.this.authorizationCodeGrantFilterConfigurer.userInfoTypeMapping(userInfoType, userInfoUri);
+			return this.and();
 		}
 
 		public OAuth2ClientSecurityConfigurer<B> and() {

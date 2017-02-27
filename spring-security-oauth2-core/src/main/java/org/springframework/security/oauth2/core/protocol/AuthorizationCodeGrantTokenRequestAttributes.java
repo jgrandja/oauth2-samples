@@ -18,15 +18,17 @@ package org.springframework.security.oauth2.core.protocol;
 import org.springframework.security.oauth2.core.AuthorizationGrantType;
 import org.springframework.util.Assert;
 
+import java.net.URI;
+
 /**
  * @author Joe Grandja
  */
 public class AuthorizationCodeGrantTokenRequestAttributes extends AbstractTokenRequestAttributes {
 	private final String code;
 	private final String clientId;
-	private final String redirectUri;
+	private final URI redirectUri;
 
-	public AuthorizationCodeGrantTokenRequestAttributes(String code, String clientId, String redirectUri) {
+	public AuthorizationCodeGrantTokenRequestAttributes(String code, String clientId, URI redirectUri) {
 		super(AuthorizationGrantType.AUTHORIZATION_CODE);
 
 		Assert.notNull(code, "code cannot be null");
@@ -46,7 +48,7 @@ public class AuthorizationCodeGrantTokenRequestAttributes extends AbstractTokenR
 		return this.clientId;
 	}
 
-	public final String getRedirectUri() {
+	public final URI getRedirectUri() {
 		return this.redirectUri;
 	}
 }

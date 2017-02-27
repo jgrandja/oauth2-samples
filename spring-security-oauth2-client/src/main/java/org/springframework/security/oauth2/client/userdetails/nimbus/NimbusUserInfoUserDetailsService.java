@@ -61,7 +61,7 @@ public class NimbusUserInfoUserDetailsService implements UserInfoUserDetailsServ
 		try {
 			ClientRegistration clientRegistration = authenticationToken.getClientRegistration();
 
-			URI userInfoUri = URI.create(clientRegistration.getUserInfoUri());
+			URI userInfoUri = clientRegistration.getProviderDetails().getUserInfoUri();
 			BearerAccessToken accessToken = new BearerAccessToken(authenticationToken.getAccessToken().getValue());
 
 			// Request the User Info
@@ -109,7 +109,7 @@ public class NimbusUserInfoUserDetailsService implements UserInfoUserDetailsServ
 	}
 
 	private Class<? extends OAuth2UserDetails> getUserInfoType(ClientRegistration clientRegistration) {
-		return this.userInfoTypeMapping.get(URI.create(clientRegistration.getUserInfoUri()));
+		return this.userInfoTypeMapping.get(clientRegistration.getProviderDetails().getUserInfoUri());
 	}
 
 	private boolean isUserInfoTypeMapped(ClientRegistration clientRegistration) {
@@ -138,7 +138,7 @@ public class NimbusUserInfoUserDetailsService implements UserInfoUserDetailsServ
 
 		try {
 			Map<String, Object> userAttributes = (Map<String, Object>) this.jacksonHttpMessageConverter.read(Map.class, clientHttpResponse);
-			if (clientRegistration.isClientOpenIDConnect()) {
+			if (clientRegistration.getProviderDetails().isOpenIdProvider()) {
 				oauth2User = new OpenIDConnectUserBuilder().userAttributes(userAttributes).build();
 			} else {
 				oauth2User = new OAuth2UserBuilder().userAttributes(userAttributes).build();

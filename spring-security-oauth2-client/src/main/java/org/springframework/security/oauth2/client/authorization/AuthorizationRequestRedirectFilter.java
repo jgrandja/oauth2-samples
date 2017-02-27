@@ -118,7 +118,7 @@ public class AuthorizationRequestRedirectFilter extends OncePerRequestFilter {
 
 		AuthorizationRequestAttributes authorizationRequestAttributes =
 				AuthorizationRequestAttributes.authorizationCodeGrant(
-						clientRegistration.getAuthorizeUri(),
+						clientRegistration.getProviderDetails().getAuthorizationUri(),
 						clientRegistration.getClientId(),
 						clientRegistration.getRedirectUri(),
 						clientRegistration.getScopes(),

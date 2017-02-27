@@ -33,7 +33,7 @@ public class DefaultAuthorizationRequestUriBuilder implements AuthorizationReque
 	@Override
 	public URI build(AuthorizationRequestAttributes authorizationRequestAttributes) throws URISyntaxException {
 		UriComponentsBuilder uriBuilder = UriComponentsBuilder
-				.fromHttpUrl(authorizationRequestAttributes.getAuthorizeUri());
+				.fromUri(authorizationRequestAttributes.getAuthorizeUri());
 
 		if (AuthorizationGrantType.AUTHORIZATION_CODE.equals(authorizationRequestAttributes.getGrantType())) {
 			uriBuilder.queryParam(OAuth2Attributes.RESPONSE_TYPE, ResponseType.CODE.value());

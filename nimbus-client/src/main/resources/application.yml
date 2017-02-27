@@ -16,23 +16,24 @@ security:
       google:
         client-id: 309185963195-29o0gs3ptpfjevd20o387ssrhogbc8t5.apps.googleusercontent.com
         client-secret: d-t-zBvLDh3uwjcAbKMbb1-w
-        client-type: openid-connect
-        client-name: Google Client
-        client-alias: google
-        authorize-uri: https://accounts.google.com/o/oauth2/auth
-        token-uri: https://accounts.google.com/o/oauth2/token
-        user-info-uri: https://www.googleapis.com/oauth2/v3/userinfo
+        authorized-grant-type: authorization_code
         redirect-uri: http://localhost:8080/oauth2/client/google
         scopes: openid, email
+        authorization-uri: https://accounts.google.com/o/oauth2/auth
+        token-uri: https://accounts.google.com/o/oauth2/token
+        user-info-uri: https://www.googleapis.com/oauth2/v3/userinfo
+        open-id-provider: true
+        client-name: Google Client
+        client-alias: google
       github:
         client-id: dc9f9ddcf70d48611625
         client-secret: a5b1b9b533c95e3baf99a45cb28ce89a193c8757
-        client-type: oauth2
-        client-name: Github Client
-        client-alias: github
-        authorize-uri: https://github.com/login/oauth/authorize
-        token-uri: https://github.com/login/oauth/access_token
-        user-info-uri: https://api.github.com/user
+        authorized-grant-type: authorization_code
         redirect-uri: http://localhost:8080/oauth2/client/github
         scopes: openid, user:email
-
+        authorization-uri: https://github.com/login/oauth/authorize
+        token-uri: https://github.com/login/oauth/access_token
+        user-info-uri: https://api.github.com/user
+        open-id-provider: false
+        client-name: Github Client
+        client-alias: github

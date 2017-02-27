@@ -134,7 +134,7 @@ public class AuthorizationCodeGrantProcessingFilter extends AbstractAuthenticati
 			throw new OAuth2AuthenticationException(oauth2Error, oauth2Error.getErrorMessage());
 		}
 
-		URI redirectUri = URI.create(authorizationRequest.getRedirectUri());
+		URI redirectUri = authorizationRequest.getRedirectUri();
 		if (!request.getRequestURI().equals(redirectUri.getPath())) {
 			OAuth2Error oauth2Error = OAuth2Error.invalidRedirectUriParameter();
 			throw new OAuth2AuthenticationException(oauth2Error, oauth2Error.getErrorMessage());

@@ -52,11 +52,11 @@ public class OltuAuthorizationCodeGrantTokenExchanger implements AuthorizationGr
 		try {
 			// Build the authorization code grant request for the token endpoint
 			OAuthClientRequest tokenRequest = OAuthClientRequest
-					.tokenLocation(clientRegistration.getTokenUri())
+					.tokenLocation(clientRegistration.getProviderDetails().getTokenUri().toString())
 					.setGrantType(GrantType.AUTHORIZATION_CODE)
 					.setClientId(clientRegistration.getClientId())
 					.setClientSecret(clientRegistration.getClientSecret())
-					.setRedirectURI(clientRegistration.getRedirectUri())
+					.setRedirectURI(clientRegistration.getRedirectUri().toString())
 					.setCode(authorizationGrantAuthentication.getAuthorizationCode())
 					.setScope(clientRegistration.getScopes().stream().collect(Collectors.joining(" ")))
 					.buildBodyMessage();

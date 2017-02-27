@@ -35,8 +35,10 @@ import org.springframework.util.CollectionUtils;
 
 import java.io.IOException;
 import java.net.URI;
-import java.net.URISyntaxException;
-import java.util.*;
+import java.util.Collections;
+import java.util.HashSet;
+import java.util.Map;
+import java.util.Set;
 import java.util.stream.Collectors;
 
 /**
@@ -52,9 +54,9 @@ public class NimbusAuthorizationCodeGrantTokenExchanger implements Authorization
 
 		// Build the authorization code grant request for the token endpoint
 		AuthorizationCode authorizationCode = new AuthorizationCode(authorizationGrantAuthentication.getAuthorizationCode());
-		URI redirectUri = toURI(clientRegistration.getRedirectUri());
+		URI redirectUri = clientRegistration.getRedirectUri();
 		AuthorizationGrant authorizationCodeGrant = new AuthorizationCodeGrant(authorizationCode, redirectUri);
-		URI tokenUri = toURI(clientRegistration.getTokenUri());
+		URI tokenUri = clientRegistration.getProviderDetails().getTokenUri();
 
 		// Set the credentials to authenticate the client at the token endpoint
 		ClientID clientId = new ClientID(clientRegistration.getClientId());
@@ -109,13 +111,5 @@ public class NimbusAuthorizationCodeGrantTokenExchanger implements Authorization
 
 		return new TokenResponseAttributes(accessToken, accessTokenType, expiresIn,
 				scopes, refreshToken, additionalParameters);
-	}
-
-	private URI toURI(String uriStr) {
-		try {
-			return new URI(uriStr);
-		} catch (URISyntaxException ex) {
-			throw new IllegalArgumentException(ex);
-		}
 	}
 }

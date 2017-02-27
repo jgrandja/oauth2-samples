@@ -24,6 +24,7 @@ import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
 import org.springframework.security.config.annotation.web.configuration.WebSecurityConfigurerAdapter;
 import org.springframework.security.oauth2.client.registration.ClientRegistration;
+import org.springframework.security.oauth2.client.registration.ClientRegistrationProperties;
 import samples.oauth2.nimbus.client.userdetails.GitHubOAuth2UserDetails;
 
 import static org.springframework.security.oauth2.client.config.annotation.web.configurers.OAuth2ClientSecurityConfigurer.oauth2Client;
@@ -50,19 +51,29 @@ public class SecurityConfig extends WebSecurityConfigurerAdapter {
 					.and()
 				.apply(oauth2Client()
 						.userInfoEndpoint()
-							.userInfoTypeMapping(GitHubOAuth2UserDetails.class, this.githubClientRegistration.getUserInfoUri()));
+							.userInfoTypeMapping(GitHubOAuth2UserDetails.class, this.githubClientRegistration.getProviderDetails().getUserInfoUri()));
 	}
 	// @formatter:on
 
 	@ConfigurationProperties(prefix = "security.oauth2.client.google")
 	@Bean
+	public ClientRegistrationProperties googleClientRegistrationProperties() {
+		return new ClientRegistrationProperties();
+	}
+
+	@Bean
 	public ClientRegistration googleClientRegistration() {
-		return new ClientRegistration();
+		return new ClientRegistration.Builder(this.googleClientRegistrationProperties()).build();
 	}
 
 	@ConfigurationProperties(prefix = "security.oauth2.client.github")
 	@Bean
+	public ClientRegistrationProperties githubClientRegistrationProperties() {
+		return new ClientRegistrationProperties();
+	}
+
+	@Bean
 	public ClientRegistration githubClientRegistration() {
-		return new ClientRegistration();
+		return new ClientRegistration.Builder(this.githubClientRegistrationProperties()).build();
 	}
 }
