@@ -40,14 +40,18 @@ import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
 import org.springframework.security.config.annotation.web.configuration.WebSecurityConfigurerAdapter;
 import org.springframework.security.oauth2.client.authentication.AuthorizationCodeGrantAuthenticationToken;
-import org.springframework.security.oauth2.client.authentication.AuthorizationGrantTokenExchanger;
 import org.springframework.security.oauth2.client.authentication.AuthorizationCodeGrantProcessingFilter;
+import org.springframework.security.oauth2.client.authentication.AuthorizationGrantTokenExchanger;
 import org.springframework.security.oauth2.client.authorization.AuthorizationRequestRedirectFilter;
 import org.springframework.security.oauth2.client.registration.ClientRegistration;
+import org.springframework.security.oauth2.client.registration.ClientRegistrationProperties;
 import org.springframework.security.oauth2.client.registration.ClientRegistrationRepository;
 import org.springframework.security.oauth2.client.registration.InMemoryClientRegistrationRepository;
 import org.springframework.security.oauth2.client.userdetails.UserInfoUserDetailsService;
-import org.springframework.security.oauth2.core.*;
+import org.springframework.security.oauth2.core.AccessToken;
+import org.springframework.security.oauth2.core.OAuth2Attributes;
+import org.springframework.security.oauth2.core.OAuth2Error;
+import org.springframework.security.oauth2.core.ResponseType;
 import org.springframework.security.oauth2.core.protocol.TokenResponseAttributes;
 import org.springframework.security.oauth2.core.userdetails.OAuth2User;
 import org.springframework.security.oauth2.core.userdetails.OAuth2UserAttribute;
@@ -124,14 +128,14 @@ public class NimbusOAuth2ClientApplicationTests {
 		UriComponents uriComponents = UriComponentsBuilder.fromUri(URI.create(authorizeRedirectUri)).build();
 
 		String requestUri = uriComponents.getScheme() + "://" + uriComponents.getHost() + uriComponents.getPath();
-		assertThat(requestUri).isEqualTo(this.githubClientRegistration.getAuthorizeUri());
+		assertThat(requestUri).isEqualTo(this.githubClientRegistration.getProviderDetails().getAuthorizationUri().toString());
 
 		Map<String, String> params = uriComponents.getQueryParams().toSingleValueMap();
 
 		assertThat(params.get(OAuth2Attributes.RESPONSE_TYPE)).isEqualTo(ResponseType.CODE.value());
 		assertThat(params.get(OAuth2Attributes.CLIENT_ID)).isEqualTo(this.githubClientRegistration.getClientId());
 		assertThat(URLDecoder.decode(params.get(OAuth2Attributes.REDIRECT_URI), "UTF-8"))
-				.isEqualTo(this.githubClientRegistration.getRedirectUri());
+				.isEqualTo(this.githubClientRegistration.getRedirectUri().toString());
 		assertThat(URLDecoder.decode(params.get(OAuth2Attributes.SCOPE), "UTF-8"))
 				.isEqualTo(this.githubClientRegistration.getScopes().stream().collect(Collectors.joining(" ")));
 		assertThat(params.get(OAuth2Attributes.STATE)).isNotNull();
@@ -190,7 +194,7 @@ public class NimbusOAuth2ClientApplicationTests {
 
 		String code = "auth-code";
 		String state = "state";
-		String redirectUri = this.googleClientRegistration.getRedirectUri();
+		String redirectUri = this.googleClientRegistration.getRedirectUri().toString();
 
 		String authorizationResponseUri =
 				UriComponentsBuilder.fromHttpUrl(redirectUri)
@@ -222,7 +226,7 @@ public class NimbusOAuth2ClientApplicationTests {
 
 		String code = "auth-code";
 		String state = "invalid-state";
-		String redirectUri = this.githubClientRegistration.getRedirectUri();
+		String redirectUri = this.githubClientRegistration.getRedirectUri().toString();
 
 		String authorizationResponseUri =
 				UriComponentsBuilder.fromHttpUrl(redirectUri)
@@ -280,7 +284,7 @@ public class NimbusOAuth2ClientApplicationTests {
 
 		String error = OAuth2Error.ErrorCode.UNAUTHORIZED_CLIENT.toString();
 		String state = "state";
-		String redirectUri = this.githubClientRegistration.getRedirectUri();
+		String redirectUri = this.githubClientRegistration.getRedirectUri().toString();
 
 		String authorizationResponseUri =
 				UriComponentsBuilder.fromHttpUrl(redirectUri)
@@ -304,7 +308,7 @@ public class NimbusOAuth2ClientApplicationTests {
 
 		String error = "invalid-error-code";
 		String state = "state";
-		String redirectUri = this.googleClientRegistration.getRedirectUri();
+		String redirectUri = this.googleClientRegistration.getRedirectUri().toString();
 
 		String authorizationResponseUri =
 				UriComponentsBuilder.fromHttpUrl(redirectUri)
@@ -393,14 +397,24 @@ public class NimbusOAuth2ClientApplicationTests {
 
 		@ConfigurationProperties(prefix = "security.oauth2.client.google")
 		@Bean
+		public ClientRegistrationProperties googleClientRegistrationProperties() {
+			return new ClientRegistrationProperties();
+		}
+
+		@Bean
 		public ClientRegistration googleClientRegistration() {
-			return new ClientRegistration();
+			return new ClientRegistration.Builder(this.googleClientRegistrationProperties()).build();
 		}
 
 		@ConfigurationProperties(prefix = "security.oauth2.client.github")
 		@Bean
+		public ClientRegistrationProperties githubClientRegistrationProperties() {
+			return new ClientRegistrationProperties();
+		}
+
+		@Bean
 		public ClientRegistration githubClientRegistration() {
-			return new ClientRegistration();
+			return new ClientRegistration.Builder(this.githubClientRegistrationProperties()).build();
 		}
 
 		private AuthorizationGrantTokenExchanger<AuthorizationCodeGrantAuthenticationToken> mockAuthorizationCodeGrantTokenExchanger() {

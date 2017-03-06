@@ -70,7 +70,7 @@ public class AuthorizationRequestRedirectFilterTests {
 	@Test
 	public void doFilterWhenRequestDoesNotMatchClientThenContinueChain() throws Exception {
 		ClientRegistration clientRegistration = googleClientRegistration();
-		String authorizationUri = clientRegistration.getAuthorizeUri();
+		String authorizationUri = clientRegistration.getProviderDetails().getAuthorizationUri().toString();
 		AuthorizationRequestRedirectFilter filter =
 				setupFilter(authorizationUri, clientRegistration);
 
@@ -88,7 +88,7 @@ public class AuthorizationRequestRedirectFilterTests {
 	@Test
 	public void doFilterWhenRequestMatchesClientThenRedirectForAuthorization() throws Exception {
 		ClientRegistration clientRegistration = googleClientRegistration();
-		String authorizationUri = clientRegistration.getAuthorizeUri();
+		String authorizationUri = clientRegistration.getProviderDetails().getAuthorizationUri().toString();
 		AuthorizationRequestRedirectFilter filter =
 				setupFilter(authorizationUri, clientRegistration);
 
@@ -109,7 +109,7 @@ public class AuthorizationRequestRedirectFilterTests {
 	@Test
 	public void doFilterWhenRequestMatchesClientThenAuthorizationRequestSavedInSession() throws Exception {
 		ClientRegistration clientRegistration = githubClientRegistration();
-		String authorizationUri = clientRegistration.getAuthorizeUri();
+		String authorizationUri = clientRegistration.getProviderDetails().getAuthorizationUri().toString();
 		AuthorizationRequestRedirectFilter filter =
 				setupFilter(authorizationUri, clientRegistration);
 		AuthorizationRequestRepository authorizationRequestRepository = new HttpSessionAuthorizationRequestRepository();
@@ -186,7 +186,7 @@ public class AuthorizationRequestRedirectFilterTests {
 	private void verifyRequestMatchesClientWithCustomFilterProcessingBaseUri(
 			String filterProcessingBaseUri, ClientRegistration clientRegistration) throws Exception {
 
-		String authorizationUri = clientRegistration.getAuthorizeUri();
+		String authorizationUri = clientRegistration.getProviderDetails().getAuthorizationUri().toString();
 		AuthorizationRequestRedirectFilter filter =
 				setupFilter(filterProcessingBaseUri, authorizationUri, clientRegistration);
 

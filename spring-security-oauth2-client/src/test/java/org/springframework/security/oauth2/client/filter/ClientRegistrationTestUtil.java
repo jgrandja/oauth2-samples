@@ -16,8 +16,10 @@
 package org.springframework.security.oauth2.client.filter;
 
 import org.springframework.security.oauth2.client.registration.ClientRegistration;
+import org.springframework.security.oauth2.client.registration.ClientRegistrationProperties;
 import org.springframework.security.oauth2.client.registration.ClientRegistrationRepository;
 import org.springframework.security.oauth2.client.registration.InMemoryClientRegistrationRepository;
+import org.springframework.security.oauth2.core.AuthorizationGrantType;
 
 import java.util.Arrays;
 import java.util.stream.Collectors;
@@ -32,32 +34,42 @@ class ClientRegistrationTestUtil {
 	}
 
 	static ClientRegistration googleClientRegistration() {
-		ClientRegistration clientRegistration = new ClientRegistration();
-		clientRegistration.setClientId("google-client-id");
-		clientRegistration.setClientSecret("secret");
-		clientRegistration.setClientType(ClientRegistration.ClientType.OPENID_CONNECT);
-		clientRegistration.setClientName("Google Client");
-		clientRegistration.setClientAlias("google");
-		clientRegistration.setAuthorizeUri("https://accounts.google.com/o/oauth2/auth");
-		clientRegistration.setTokenUri("https://accounts.google.com/o/oauth2/token");
-		clientRegistration.setUserInfoUri("https://www.googleapis.com/oauth2/v3/userinfo");
-		clientRegistration.setRedirectUri("http://localhost:8080/oauth2/client/google");
-		clientRegistration.setScopes(Arrays.stream(new String[] {"openid", "email"}).collect(Collectors.toSet()));
-		return clientRegistration;
+		return googleClientRegistration("http://localhost:8080/oauth2/client/google");
+	}
+
+	static ClientRegistration googleClientRegistration(String redirectUri) {
+		ClientRegistrationProperties clientRegistrationProperties = new ClientRegistrationProperties();
+		clientRegistrationProperties.setClientId("google-client-id");
+		clientRegistrationProperties.setClientSecret("secret");
+		clientRegistrationProperties.setAuthorizedGrantType(AuthorizationGrantType.AUTHORIZATION_CODE);
+		clientRegistrationProperties.setOpenIdProvider(true);
+		clientRegistrationProperties.setClientName("Google Client");
+		clientRegistrationProperties.setClientAlias("google");
+		clientRegistrationProperties.setAuthorizationUri("https://accounts.google.com/o/oauth2/auth");
+		clientRegistrationProperties.setTokenUri("https://accounts.google.com/o/oauth2/token");
+		clientRegistrationProperties.setUserInfoUri("https://www.googleapis.com/oauth2/v3/userinfo");
+		clientRegistrationProperties.setRedirectUri(redirectUri);
+		clientRegistrationProperties.setScopes(Arrays.stream(new String[] {"openid", "email"}).collect(Collectors.toSet()));
+		return new ClientRegistration.Builder(clientRegistrationProperties).build();
 	}
 
 	static ClientRegistration githubClientRegistration() {
-		ClientRegistration clientRegistration = new ClientRegistration();
-		clientRegistration.setClientId("github-client-id");
-		clientRegistration.setClientSecret("secret");
-		clientRegistration.setClientType(ClientRegistration.ClientType.OAUTH2);
-		clientRegistration.setClientName("GitHub Client");
-		clientRegistration.setClientAlias("github");
-		clientRegistration.setAuthorizeUri("https://github.com/login/oauth/authorize");
-		clientRegistration.setTokenUri("https://github.com/login/oauth/access_token");
-		clientRegistration.setUserInfoUri("https://api.github.com/user");
-		clientRegistration.setRedirectUri("http://localhost:8080/oauth2/client/github");
-		clientRegistration.setScopes(Arrays.stream(new String[] {"openid", "user:email"}).collect(Collectors.toSet()));
-		return clientRegistration;
+		return githubClientRegistration("http://localhost:8080/oauth2/client/github");
+	}
+
+	static ClientRegistration githubClientRegistration(String redirectUri) {
+		ClientRegistrationProperties clientRegistrationProperties = new ClientRegistrationProperties();
+		clientRegistrationProperties.setClientId("github-client-id");
+		clientRegistrationProperties.setClientSecret("secret");
+		clientRegistrationProperties.setAuthorizedGrantType(AuthorizationGrantType.AUTHORIZATION_CODE);
+		clientRegistrationProperties.setOpenIdProvider(false);
+		clientRegistrationProperties.setClientName("GitHub Client");
+		clientRegistrationProperties.setClientAlias("github");
+		clientRegistrationProperties.setAuthorizationUri("https://github.com/login/oauth/authorize");
+		clientRegistrationProperties.setTokenUri("https://github.com/login/oauth/access_token");
+		clientRegistrationProperties.setUserInfoUri("https://api.github.com/user");
+		clientRegistrationProperties.setRedirectUri(redirectUri);
+		clientRegistrationProperties.setScopes(Arrays.stream(new String[] {"openid", "user:email"}).collect(Collectors.toSet()));
+		return new ClientRegistration.Builder(clientRegistrationProperties).build();
 	}
 }

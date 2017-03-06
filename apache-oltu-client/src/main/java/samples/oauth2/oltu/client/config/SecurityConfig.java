@@ -25,6 +25,7 @@ import org.springframework.security.oauth2.client.authentication.AuthorizationCo
 import org.springframework.security.oauth2.client.authentication.AuthorizationGrantTokenExchanger;
 import org.springframework.security.oauth2.client.authentication.oltu.OltuAuthorizationCodeGrantTokenExchanger;
 import org.springframework.security.oauth2.client.registration.ClientRegistration;
+import org.springframework.security.oauth2.client.registration.ClientRegistrationProperties;
 import org.springframework.security.oauth2.client.userdetails.UserInfoUserDetailsService;
 import org.springframework.security.oauth2.client.userdetails.oltu.OltuUserInfoUserDetailsService;
 
@@ -55,14 +56,24 @@ public class SecurityConfig extends WebSecurityConfigurerAdapter {
 
 	@ConfigurationProperties(prefix = "security.oauth2.client.google")
 	@Bean
+	public ClientRegistrationProperties googleClientRegistrationProperties() {
+		return new ClientRegistrationProperties();
+	}
+
+	@Bean
 	public ClientRegistration googleClientRegistration() {
-		return new ClientRegistration();
+		return new ClientRegistration.Builder(this.googleClientRegistrationProperties()).build();
 	}
 
 	@ConfigurationProperties(prefix = "security.oauth2.client.github")
 	@Bean
+	public ClientRegistrationProperties githubClientRegistrationProperties() {
+		return new ClientRegistrationProperties();
+	}
+
+	@Bean
 	public ClientRegistration githubClientRegistration() {
-		return new ClientRegistration();
+		return new ClientRegistration.Builder(this.githubClientRegistrationProperties()).build();
 	}
 
 	private AuthorizationGrantTokenExchanger<AuthorizationCodeGrantAuthenticationToken> authorizationCodeGrantTokenExchanger() {
