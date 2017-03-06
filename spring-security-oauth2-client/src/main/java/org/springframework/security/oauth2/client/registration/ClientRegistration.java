@@ -16,6 +16,7 @@
 package org.springframework.security.oauth2.client.registration;
 
 import org.springframework.security.oauth2.core.AuthorizationGrantType;
+import org.springframework.security.oauth2.core.ClientAuthenticationMethod;
 import org.springframework.util.Assert;
 import org.springframework.util.CollectionUtils;
 
@@ -33,6 +34,7 @@ import java.util.Set;
 public class ClientRegistration {
 	private String clientId;
 	private String clientSecret;
+	private ClientAuthenticationMethod clientAuthenticationMethod = ClientAuthenticationMethod.HEADER;
 	private AuthorizationGrantType authorizedGrantType;
 	private URI redirectUri;
 	private Set<String> scopes = Collections.emptySet();
@@ -49,6 +51,10 @@ public class ClientRegistration {
 
 	public final String getClientSecret() {
 		return this.clientSecret;
+	}
+
+	public final ClientAuthenticationMethod getClientAuthenticationMethod() {
+		return this.clientAuthenticationMethod;
 	}
 
 	public final AuthorizationGrantType getAuthorizedGrantType() {
@@ -112,6 +118,7 @@ public class ClientRegistration {
 		public Builder(ClientRegistrationProperties clientRegistrationProperties) {
 			this(clientRegistrationProperties.getClientId());
 			this.clientSecret(clientRegistrationProperties.getClientSecret());
+			this.clientAuthenticationMethod(clientRegistrationProperties.getClientAuthenticationMethod());
 			this.authorizedGrantType(clientRegistrationProperties.getAuthorizedGrantType());
 			this.redirectUri(clientRegistrationProperties.getRedirectUri());
 			if (!CollectionUtils.isEmpty(clientRegistrationProperties.getScopes())) {
@@ -129,6 +136,11 @@ public class ClientRegistration {
 
 		public final Builder clientSecret(String clientSecret) {
 			this.clientRegistration.clientSecret = clientSecret;
+			return this;
+		}
+
+		public final Builder clientAuthenticationMethod(ClientAuthenticationMethod clientAuthenticationMethod) {
+			this.clientRegistration.clientAuthenticationMethod = clientAuthenticationMethod;
 			return this;
 		}
 
@@ -193,6 +205,7 @@ public class ClientRegistration {
 		private void validateClientWithAuthorizationCodeGrantType() {
 			Assert.hasText(this.clientRegistration.clientId, "clientId cannot be empty");
 			Assert.hasText(this.clientRegistration.clientSecret, "clientSecret cannot be empty");
+			Assert.notNull(this.clientRegistration.clientAuthenticationMethod, "clientAuthenticationMethod cannot be null");
 			Assert.notNull(this.clientRegistration.redirectUri, "redirectUri cannot be null");
 			Assert.notEmpty(this.clientRegistration.scopes, "scopes cannot be empty");
 			Assert.notNull(this.clientRegistration.providerDetails.authorizationUri, "authorizationUri cannot be null");

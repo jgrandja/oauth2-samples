@@ -18,16 +18,13 @@ package org.springframework.security.oauth2.core;
 /**
  * @author Joe Grandja
  */
-public enum AuthorizationGrantType {
-	AUTHORIZATION_CODE("authorization_code"),
-	IMPLICIT("implicit"),
-	PASSWORD("password"),
-	CLIENT_CREDENTIALS("client_credentials"),
-	REFRESH_TOKEN("refresh_token");
+public enum ClientAuthenticationMethod {
+	HEADER("header"),
+	FORM("form");
 
 	private final String value;
 
-	AuthorizationGrantType(String value) {
+	ClientAuthenticationMethod(String value) {
 		this.value = value;
 	}
 

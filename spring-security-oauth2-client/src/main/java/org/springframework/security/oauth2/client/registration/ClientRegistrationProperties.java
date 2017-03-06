@@ -16,6 +16,7 @@
 package org.springframework.security.oauth2.client.registration;
 
 import org.springframework.security.oauth2.core.AuthorizationGrantType;
+import org.springframework.security.oauth2.core.ClientAuthenticationMethod;
 
 import java.util.Set;
 
@@ -25,6 +26,7 @@ import java.util.Set;
 public class ClientRegistrationProperties {
 	private String clientId;
 	private String clientSecret;
+	private ClientAuthenticationMethod clientAuthenticationMethod = ClientAuthenticationMethod.HEADER;
 	private AuthorizationGrantType authorizedGrantType;
 	private String redirectUri;
 	private Set<String> scopes;
@@ -50,6 +52,14 @@ public class ClientRegistrationProperties {
 
 	public void setClientSecret(String clientSecret) {
 		this.clientSecret = clientSecret;
+	}
+
+	public ClientAuthenticationMethod getClientAuthenticationMethod() {
+		return this.clientAuthenticationMethod;
+	}
+
+	public void setClientAuthenticationMethod(ClientAuthenticationMethod clientAuthenticationMethod) {
+		this.clientAuthenticationMethod = clientAuthenticationMethod;
 	}
 
 	public AuthorizationGrantType getAuthorizedGrantType() {

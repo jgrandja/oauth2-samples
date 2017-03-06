@@ -19,6 +19,7 @@ package org.springframework.security.oauth2.client.authentication.nimbus;
 import com.nimbusds.oauth2.sdk.*;
 import com.nimbusds.oauth2.sdk.auth.ClientAuthentication;
 import com.nimbusds.oauth2.sdk.auth.ClientSecretBasic;
+import com.nimbusds.oauth2.sdk.auth.ClientSecretPost;
 import com.nimbusds.oauth2.sdk.auth.Secret;
 import com.nimbusds.oauth2.sdk.http.HTTPRequest;
 import com.nimbusds.oauth2.sdk.id.ClientID;
@@ -28,6 +29,7 @@ import org.springframework.security.oauth2.client.authentication.AuthorizationCo
 import org.springframework.security.oauth2.client.authentication.AuthorizationGrantTokenExchanger;
 import org.springframework.security.oauth2.client.registration.ClientRegistration;
 import org.springframework.security.oauth2.core.AccessToken;
+import org.springframework.security.oauth2.core.ClientAuthenticationMethod;
 import org.springframework.security.oauth2.core.OAuth2AuthenticationException;
 import org.springframework.security.oauth2.core.OAuth2Error;
 import org.springframework.security.oauth2.core.protocol.TokenResponseAttributes;
@@ -61,7 +63,12 @@ public class NimbusAuthorizationCodeGrantTokenExchanger implements Authorization
 		// Set the credentials to authenticate the client at the token endpoint
 		ClientID clientId = new ClientID(clientRegistration.getClientId());
 		Secret clientSecret = new Secret(clientRegistration.getClientSecret());
-		ClientAuthentication clientAuthentication = new ClientSecretBasic(clientId, clientSecret);
+		ClientAuthentication clientAuthentication;
+		if (ClientAuthenticationMethod.FORM.equals(clientRegistration.getClientAuthenticationMethod())) {
+			clientAuthentication = new ClientSecretPost(clientId, clientSecret);
+		} else {
+			clientAuthentication = new ClientSecretBasic(clientId, clientSecret);
+		}
 
 		TokenResponse tokenResponse;
 		try {
