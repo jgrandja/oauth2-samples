@@ -18,6 +18,7 @@ package org.springframework.security.oauth2.core.protocol;
 import org.springframework.security.oauth2.core.AccessToken;
 import org.springframework.util.Assert;
 
+import java.time.Duration;
 import java.util.Collections;
 import java.util.Map;
 import java.util.Set;
@@ -28,7 +29,7 @@ import java.util.Set;
 public class TokenResponseAttributes {
 	private final String accessToken;
 	private final AccessToken.TokenType accessTokenType;
-	private final long expiresIn;
+	private final Duration expiresIn;
 	private final Set<String> scopes;
 	private final String refreshToken;
 	private final Map<String,String> additionalParameters;
@@ -57,7 +58,7 @@ public class TokenResponseAttributes {
 		this.accessTokenType = accessTokenType;
 
 		Assert.isTrue(expiresIn >= 0, "expiresIn must be a positive number");
-		this.expiresIn = expiresIn;
+		this.expiresIn = Duration.ofSeconds(expiresIn);
 
 		this.scopes = Collections.unmodifiableSet(scopes != null ? scopes : Collections.emptySet());
 		this.refreshToken = refreshToken;
@@ -73,7 +74,7 @@ public class TokenResponseAttributes {
 		return this.accessTokenType;
 	}
 
-	public final long getExpiresIn() {
+	public final Duration getExpiresIn() {
 		return this.expiresIn;
 	}
 
