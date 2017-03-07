@@ -41,7 +41,7 @@ import java.net.URI;
 import java.util.HashMap;
 import java.util.Map;
 
-import static org.springframework.security.oauth2.client.config.annotation.web.configurers.OAuth2ClientSecurityConfigurer.getDefaultClientRegistrationRepository;
+import static org.springframework.security.oauth2.client.config.annotation.web.configurers.OAuth2LoginSecurityConfigurer.getDefaultClientRegistrationRepository;
 
 /**
  * @author Joe Grandja

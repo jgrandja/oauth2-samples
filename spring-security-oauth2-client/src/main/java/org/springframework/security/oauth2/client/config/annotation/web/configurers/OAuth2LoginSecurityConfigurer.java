@@ -48,8 +48,8 @@ import static org.springframework.security.oauth2.client.authentication.ui.Abstr
 /**
  * @author Joe Grandja
  */
-public final class OAuth2ClientSecurityConfigurer<B extends HttpSecurityBuilder<B>> extends
-		AbstractHttpConfigurer<OAuth2ClientSecurityConfigurer<B>, B> {
+public final class OAuth2LoginSecurityConfigurer<B extends HttpSecurityBuilder<B>> extends
+		AbstractHttpConfigurer<OAuth2LoginSecurityConfigurer<B>, B> {
 
 	private final AuthorizationRequestRedirectFilterConfigurer<B> authorizationRequestRedirectFilterConfigurer;
 
@@ -60,45 +60,45 @@ public final class OAuth2ClientSecurityConfigurer<B extends HttpSecurityBuilder<
 	private boolean loginPageFilterEnabled;
 
 
-	public OAuth2ClientSecurityConfigurer() {
+	public OAuth2LoginSecurityConfigurer() {
 		this.authorizationRequestRedirectFilterConfigurer = new AuthorizationRequestRedirectFilterConfigurer<>();
 		this.authorizationCodeGrantFilterConfigurer = new AuthorizationCodeGrantFilterConfigurer<>();
 		this.userInfoEndpointConfig = new UserInfoEndpointConfig();
 		this.loginPageFilterEnabled = true;
 	}
 
-	public OAuth2ClientSecurityConfigurer<B> clients(ClientRegistration... clientRegistrations) {
-		Assert.notEmpty(clientRegistrations, "clientRegistrationRepository cannot be empty");
+	public OAuth2LoginSecurityConfigurer<B> clients(ClientRegistration... clientRegistrations) {
+		Assert.notEmpty(clientRegistrations, "clientRegistrations cannot be empty");
 		return clients(new InMemoryClientRegistrationRepository(Arrays.asList(clientRegistrations)));
 	}
 
-	public OAuth2ClientSecurityConfigurer<B> clients(ClientRegistrationRepository clientRegistrationRepository) {
+	public OAuth2LoginSecurityConfigurer<B> clients(ClientRegistrationRepository clientRegistrationRepository) {
 		Assert.notNull(clientRegistrationRepository, "clientRegistrationRepository cannot be null");
 		Assert.notEmpty(clientRegistrationRepository.getRegistrations(), "clientRegistrationRepository cannot be empty");
 		this.getBuilder().setSharedObject(ClientRegistrationRepository.class, clientRegistrationRepository);
 		return this;
 	}
 
-	public OAuth2ClientSecurityConfigurer<B> clientsPage(String clientsPage) {
+	public OAuth2LoginSecurityConfigurer<B> clientsPage(String clientsPage) {
 		Assert.notNull(clientsPage, "clientsPage cannot be null");
 		this.authorizationCodeGrantFilterConfigurer.clientsPage(clientsPage);
 		this.loginPageFilterEnabled = false;
 		return this;
 	}
 
-	public OAuth2ClientSecurityConfigurer<B> authorizationEndpoint(String authorizationUri) {
+	public OAuth2LoginSecurityConfigurer<B> authorizationEndpoint(String authorizationUri) {
 		Assert.notNull(authorizationUri, "authorizationUri cannot be null");
 		this.authorizationRequestRedirectFilterConfigurer.authorizationProcessingUri(authorizationUri);
 		return this;
 	}
 
-	public OAuth2ClientSecurityConfigurer<B> authorizationRequestBuilder(AuthorizationRequestUriBuilder authorizationRequestBuilder) {
+	public OAuth2LoginSecurityConfigurer<B> authorizationRequestBuilder(AuthorizationRequestUriBuilder authorizationRequestBuilder) {
 		Assert.notNull(authorizationRequestBuilder, "authorizationRequestBuilder cannot be null");
 		this.authorizationRequestRedirectFilterConfigurer.authorizationRequestBuilder(authorizationRequestBuilder);
 		return this;
 	}
 
-	public OAuth2ClientSecurityConfigurer<B> authorizationCodeGrantTokenExchanger(
+	public OAuth2LoginSecurityConfigurer<B> authorizationCodeGrantTokenExchanger(
 			AuthorizationGrantTokenExchanger<AuthorizationCodeGrantAuthenticationToken> authorizationCodeGrantTokenExchanger) {
 
 		Assert.notNull(authorizationCodeGrantTokenExchanger, "authorizationCodeGrantTokenExchanger cannot be null");
@@ -115,21 +115,21 @@ public final class OAuth2ClientSecurityConfigurer<B extends HttpSecurityBuilder<
 		private UserInfoEndpointConfig() {
 		}
 
-		public OAuth2ClientSecurityConfigurer<B> userInfoService(UserInfoUserDetailsService userInfoService) {
+		public OAuth2LoginSecurityConfigurer<B> userInfoService(UserInfoUserDetailsService userInfoService) {
 			Assert.notNull(userInfoService, "userInfoService cannot be null");
-			OAuth2ClientSecurityConfigurer.this.authorizationCodeGrantFilterConfigurer.userInfoUserDetailsService(userInfoService);
+			OAuth2LoginSecurityConfigurer.this.authorizationCodeGrantFilterConfigurer.userInfoUserDetailsService(userInfoService);
 			return this.and();
 		}
 
-		public OAuth2ClientSecurityConfigurer<B> userInfoTypeMapping(Class<? extends OAuth2UserDetails> userInfoType, URI userInfoUri) {
+		public OAuth2LoginSecurityConfigurer<B> userInfoTypeMapping(Class<? extends OAuth2UserDetails> userInfoType, URI userInfoUri) {
 			Assert.notNull(userInfoType, "userInfoType cannot be null");
 			Assert.notNull(userInfoUri, "userInfoUri cannot be null");
-			OAuth2ClientSecurityConfigurer.this.authorizationCodeGrantFilterConfigurer.userInfoTypeMapping(userInfoType, userInfoUri);
+			OAuth2LoginSecurityConfigurer.this.authorizationCodeGrantFilterConfigurer.userInfoTypeMapping(userInfoType, userInfoUri);
 			return this.and();
 		}
 
-		public OAuth2ClientSecurityConfigurer<B> and() {
-			return OAuth2ClientSecurityConfigurer.this;
+		public OAuth2LoginSecurityConfigurer<B> and() {
+			return OAuth2LoginSecurityConfigurer.this;
 		}
 	}
 
@@ -149,8 +149,8 @@ public final class OAuth2ClientSecurityConfigurer<B extends HttpSecurityBuilder<
 		this.initDefaultLoginFilter(http);
 	}
 
-	public static OAuth2ClientSecurityConfigurer<HttpSecurity> oauth2Client() {
-		return new OAuth2ClientSecurityConfigurer<>();
+	public static OAuth2LoginSecurityConfigurer<HttpSecurity> oauth2Login() {
+		return new OAuth2LoginSecurityConfigurer<>();
 	}
 
 	protected static ClientRegistrationRepository getDefaultClientRegistrationRepository(ApplicationContext context) {

@@ -29,7 +29,7 @@ import org.springframework.security.oauth2.client.registration.ClientRegistratio
 import org.springframework.security.oauth2.client.userdetails.UserInfoUserDetailsService;
 import org.springframework.security.oauth2.client.userdetails.oltu.OltuUserInfoUserDetailsService;
 
-import static org.springframework.security.oauth2.client.config.annotation.web.configurers.OAuth2ClientSecurityConfigurer.oauth2Client;
+import static org.springframework.security.oauth2.client.config.annotation.web.configurers.OAuth2LoginSecurityConfigurer.oauth2Login;
 
 /**
  *
@@ -47,7 +47,7 @@ public class SecurityConfig extends WebSecurityConfigurerAdapter {
 					.antMatchers("/favicon.ico").permitAll()
 					.anyRequest().fullyAuthenticated()
 					.and()
-				.apply(oauth2Client()
+				.apply(oauth2Login()
 						.authorizationCodeGrantTokenExchanger(authorizationCodeGrantTokenExchanger())
 						.userInfoEndpoint()
 							.userInfoService(userInfoService()));

@@ -69,7 +69,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.Matchers.any;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.when;
-import static org.springframework.security.oauth2.client.config.annotation.web.configurers.OAuth2ClientSecurityConfigurer.oauth2Client;
+import static org.springframework.security.oauth2.client.config.annotation.web.configurers.OAuth2LoginSecurityConfigurer.oauth2Login;
 
 /**
  * Integration tests for the OAuth2 filters {@link AuthorizationRequestRedirectFilter}
@@ -388,7 +388,7 @@ public class NimbusOAuth2ClientApplicationTests {
 						.antMatchers("/favicon.ico").permitAll()
 						.anyRequest().fullyAuthenticated()
 						.and()
-					.apply(oauth2Client()
+					.apply(oauth2Login()
 							.authorizationCodeGrantTokenExchanger(this.mockAuthorizationCodeGrantTokenExchanger())
 							.userInfoEndpoint()
 								.userInfoService(this.mockUserInfoEndpointService()));

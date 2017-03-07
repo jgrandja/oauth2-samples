@@ -15,6 +15,8 @@
  */
 package org.springframework.security.oauth2.client.registration;
 
+import org.springframework.util.Assert;
+
 import java.util.Collections;
 import java.util.List;
 import java.util.Optional;
@@ -26,6 +28,7 @@ public class InMemoryClientRegistrationRepository implements ClientRegistrationR
 	private final List<ClientRegistration> clientRegistrations;
 
 	public InMemoryClientRegistrationRepository(List<ClientRegistration> clientRegistrations) {
+		Assert.notEmpty(clientRegistrations, "clientRegistrations cannot be empty");
 		this.clientRegistrations = Collections.unmodifiableList(clientRegistrations);
 	}
 
