@@ -55,9 +55,8 @@ public abstract class AbstractOAuth2UserDetailsBuilder<O extends OAuth2UserDetai
 	protected final OAuth2UserAttribute findIdentifier(List<OAuth2UserAttribute> userAttributes) {
 		Optional<OAuth2UserAttribute> identifierAttribute = userAttributes.stream()
 				.filter(e -> e.getName().equalsIgnoreCase(this.identifierAttributeName)).findFirst();
-		if (!identifierAttribute.isPresent()) {
-			// TODO Throw
-		}
+		Assert.isTrue(identifierAttribute.isPresent(), "Unable to find identifier attribute '" +
+				this.identifierAttributeName + "' while attempting to build the OAuth2UserDetails");
 		return identifierAttribute.get();
 	}
 
